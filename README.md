@@ -30,31 +30,44 @@ An **installable skill** for AI agents (Claude Code, OpenCode, Cursor, Codex, Ge
 
 ## Instalación / Installation
 
+> **Importante sobre versionado:** `npx skills` usa la sintaxis `@<skill-name>` (no `@<versión>`) para seleccionar qué skill del repo instalar. Para fijar una versión concreta, instala desde un tag de Git (`git clone --branch`) o fija el commit. El CLI instala siempre el HEAD de la rama por defecto, que en este repo apunta a la última release (actualmente `v1.0.0`).
+>
+> **About versioning:** `npx skills` uses the `@<skill-name>` syntax (not `@<version>`) to pick which skill to install from a repo. To pin a specific version, use `git clone --branch <tag>` or pin the commit. The CLI always installs the default branch HEAD, which in this repo points to the latest release (currently `v1.0.0`).
+
 ### Vía skills.sh (recomendado / recommended)
 
 ```bash
-# Global (todos los proyectos) / Global (all projects)
+# Instalar todas las skills del repo (default)
+# Install all skills from the repo (default)
 npx skills add kuanticacl/skill-planok -g -y
 
-# Solo proyecto actual / Project-only
-npx skills add kuanticacl/skill-planok -y
+# Instalar la skill específica por nombre
+# Install a specific skill by name
+npx skills add kuanticacl/skill-planok@planok-api -g -y
 ```
 
-### Manual
+### Manual (clonar a `~/.claude/skills/`)
 
 ```bash
-# Global en Claude Code
+# Última versión (HEAD de main) / Latest (main HEAD)
 git clone https://github.com/kuanticacl/skill-planok.git \
+  ~/.claude/skills/planok-api
+
+# Versión fija (tag v1.0.0) / Pin to a specific tag
+git clone --branch v1.0.0 https://github.com/kuanticacl/skill-planok.git \
   ~/.claude/skills/planok-api
 ```
 
 ### Verificar instalación / Verify
 
 ```bash
-npx skills check
+npx skills list -g
+# Debería listar / Should list: planok-api
 ```
 
 La skill quedará registrada como `planok-api` y se activará automáticamente cuando el agente detecte palabras clave como *endpoints*, *swagger*, *leads*, *cotizaciones*, *UTM*, *Pok Pago*, etc.
+
+The skill is registered as `planok-api` and activates automatically when the agent detects trigger keywords like *endpoints*, *swagger*, *leads*, *cotizaciones*, *UTM*, *Pok Pago*, etc.
 
 ---
 
