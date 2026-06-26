@@ -158,6 +158,7 @@ MIT © 2026 KUANTICA — ver [LICENSE](./LICENSE).
 
 ## Links
 
-- Repo: https://github.com/kuanticacl/skill-planok
-- Skills registry: https://skills.sh/kuanticacl/skill-planok
-- Issues: https://github.com/kuanticacl/skill-planok/issues
+- **Repo:** https://github.com/kuanticacl/skill-planok
+- **Releases:** https://github.com/kuanticacl/skill-planok/releases
+- **Issues:** https://github.com/kuanticacl/skill-planok/issues
+- **Skills registry:** [skills.sh](https://skills.sh/) — buscar `planok-api` (la indexación automática puede tardar unos minutos tras el push)
