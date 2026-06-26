@@ -3,3 +3,19 @@ interface:
   short_description: Experto en integraciones y endpoints de PlanOK CRM API.
   icon: 🔌
   accent_color: "#2563eb"
+
+metadata:
+  version: "1.0.0"
+  author: KUANTICA
+  license: MIT
+  repository: https://github.com/kuanticacl/skill-planok
+  documentation: https://github.com/kuanticacl/skill-planok/blob/main/SKILL.md
+  issues: https://github.com/kuanticacl/skill-planok/issues
+  releases: https://github.com/kuanticacl/skill-planok/releases
+  tags:
+    - crm
+    - api
+    - openapi
+    - swagger
+    - real-estate
+    - chile
