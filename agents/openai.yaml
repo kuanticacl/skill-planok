@@ -1,0 +1,5 @@
+interface:
+  display_name: PlanOK API
+  short_description: Experto en integraciones y endpoints de PlanOK CRM API.
+  icon: 🔌
+  accent_color: "#2563eb"
