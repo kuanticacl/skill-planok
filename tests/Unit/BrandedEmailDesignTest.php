@@ -17,7 +17,7 @@ class BrandedEmailDesignTest extends TestCase
 
         $blocks = $design['blocks'];
         $this->assertSame('header', $blocks[0]['type']);
-        $this->assertStringEndsWith('/brand/quiebre-logo.png', $blocks[0]['props']['logoUrl']);
+        $this->assertStringEndsWith('/brand/quiebre-logo-dark.png', $blocks[0]['props']['logoUrl']);
         $this->assertSame('footer', end($blocks)['type']);
         $this->assertTrue(end($blocks)['props']['showUnsubscribe']);
         $this->assertNotContains('html', array_column($blocks, 'type'));

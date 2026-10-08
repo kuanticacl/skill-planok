@@ -18,7 +18,7 @@ class BrandedEmailDesign
 
     public static function logoUrl(): string
     {
-        return url('/brand/quiebre-logo.png');
+        return url('/brand/quiebre-logo-dark.png');
     }
 
     /** @return array<string, mixed> */

@@ -66,6 +66,15 @@ class LandingKit
             $created[] = 'plantilla: Confirmación de asesoría';
         }
 
+        // Logo negro original en las plantillas por defecto que se crearon con el logo naranja.
+        foreach ([self::NEWSLETTER_TEMPLATE, self::ADVISORY_TEMPLATE, \App\Services\Proposals\ProposalMailer::SLUG] as $slug) {
+            $t = EmailTemplate::where('slug', $slug)->first();
+            if ($t && str_contains((string) $t->html, '/brand/quiebre-logo.png')) {
+                $t->update(['html' => str_replace('/brand/quiebre-logo.png', '/brand/quiebre-logo-dark.png', $t->html)]);
+                $created[] = "logo negro: $slug";
+            }
+        }
+
         return $created;
     }
 
