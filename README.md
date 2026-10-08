@@ -218,12 +218,25 @@ variables. Alternativa directa: agregar `"email_template": "bienvenida"` en la m
   Se verifica la firma Svix; sin secret configurado se rechazan todas las llamadas.
 - **Historial de envíos:** todos los correos (boletines, API, automatizaciones, pruebas) con estado, eventos y variables usadas.
 
+## 7. Inteligencia artificial (opcional)
+
+Integrada con el **SDK oficial `laravel/ai`**. Todo es opcional: sin proveedor configurado el CRM funciona igual (el puntaje de leads es automático y no usa IA).
+
+- **Proveedores** (*Inteligencia artificial → Proveedores*): OpenAI, Claude (Anthropic), OpenRouter, MiniMax, Gemini, DeepSeek, Groq, Mistral, xAI o cualquier API compatible con OpenAI (URL base propia). Pega la API key, **Guardar y probar**, y marca uno **por defecto**. Permisos: `ai.manage` (configurar) y `ai.use` (usar).
+- **Seguridad de las claves:** se guardan **cifradas** en la base (cast `encrypted`, depende de `APP_KEY`), nunca se envían al navegador (solo `••••1234`), no se escriben en `.env` y los errores se muestran sin la clave. Cada llamada queda en `ai_runs` (proveedor, tokens, duración) para controlar el consumo.
+- **Asistente de mailings:** en *Plantillas → Nueva* («Crear con IA»), botón **IA** del editor y ✨ junto al asunto (6 propuestas). La IA solo redacta; el **diseño lo impone el sistema** (`BrandedEmailDesign`): logo oficial (`public/brand/quiebre-logo.png`, requiere `APP_URL` público), naranja `#FF5300`, tipografía, botones en píldora y pie con baja. Descarta HTML libre, colores propios y enlaces/imágenes que no sean de quiebre.cl o entregados por ti. No recibe datos de leads.
+- **Puntaje y perfilamiento de leads (0–100):** `LeadScorer` es determinista y explicable (Perfil y contacto 30 · Intención y origen 20 · Avance comercial 30 · Dinamismo 20). Se recalcula con cada dato nuevo (edición, etapa, seguimientos, notas, aperturas/clics de correo) y cada noche (`leads:rescore`, requiere el cron del scheduler). Temperatura A/B/C/D, filtro y orden en el Kanban. El **peso del origen** (0–10) se configura en *Orígenes y API*. La ficha muestra el desglose, el % de perfil completo, los datos que faltan (con su impacto) y señales inferidas.
+- **Análisis con IA por lead** (pestaña *Perfil e IA*): resumen, señales/riesgos, próximos pasos con canal y plazo, primer mensaje sugerido, preguntas de calificación y mejoras de perfil que **tú aplicas con un clic**. Puede ajustar el puntaje ±10 con su motivo. Opción *Analizar leads automáticamente* en la configuración.
+- **Privacidad:** por defecto no se envían nombre, correo, teléfono ni notas al proveedor; actívalo en *Preferencias* si lo necesitas.
+
 ## Estructura
 
 ```
 app/Services/LeadService.php            leads: creación, movimiento, asignación, historial, disparo de automatizaciones
 app/Services/Email/                     motor de plantillas, proveedores (Resend/log), composición, audiencias, envío por lotes
-app/Jobs/                               SendEmailMessage, SendCampaignBatch, StartCampaign
+app/Jobs/                               SendEmailMessage, SendCampaignBatch, StartCampaign, AnalyzeLead
+app/Services/Ai/                        AiGateway (SDK laravel/ai), catálogo de proveedores, asistente de mailings, diseño de marca
+app/Services/Leads/                     LeadScorer (puntaje/perfil) y LeadAnalyst (IA)
 app/Http/Controllers/Api/               API de leads y de envío de emails
 app/Http/Controllers/Email/             plantillas, boletines, listas, automatizaciones, historial, ajustes
 app/Http/Controllers/Public|Webhooks/   tracking, baja, "ver en el navegador" y webhook de Resend

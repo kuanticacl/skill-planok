@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lead;
+use App\Services\Leads\LeadScorer;
 use App\Models\LeadNote;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +21,7 @@ class LeadNoteController extends Controller
         ]);
 
         $lead->notes()->create([...$data, 'user_id' => $request->user()->id]);
+        LeadScorer::refresh($lead);
 
         return $this->respond($request, [], $request->boolean('is_private') ? 'Nota privada guardada (solo tú la ves).' : 'Nota guardada.');
     }
@@ -34,6 +36,7 @@ class LeadNoteController extends Controller
         );
 
         $note->delete();
+        LeadScorer::refresh($lead);
 
         return $this->respond($request, [], 'Nota eliminada.');
     }

@@ -84,6 +84,14 @@ return [
                 'email_settings.manage' => 'Configurar Resend, API keys y bajas',
             ],
         ],
+        'ai' => [
+            'label' => 'Inteligencia artificial',
+            'icon' => 'sparkles',
+            'permissions' => [
+                'ai.use' => 'Usar el asistente de IA (mailings y análisis de leads)',
+                'ai.manage' => 'Configurar proveedores de IA y API keys',
+            ],
+        ],
         'settings' => [
             'label' => 'Configuración del CRM',
             'icon' => 'settings-2',
@@ -113,7 +121,7 @@ return [
             'permissions' => [
                 'dashboard.view',
                 'leads.view', 'leads.create', 'leads.update', 'leads.move', 'leads.notes',
-                'clients.view',
+                'clients.view', 'ai.use',
             ],
         ],
         'supervisor' => [
@@ -125,7 +133,7 @@ return [
                 'leads.view', 'leads.view_all', 'leads.create', 'leads.update', 'leads.move', 'leads.assign', 'leads.notes',
                 'clients.view', 'clients.create', 'clients.update',
                 'users.view',
-                'templates.view', 'campaigns.view', 'email_logs.view',
+                'templates.view', 'campaigns.view', 'email_logs.view', 'ai.use',
             ],
         ],
         'lectura' => [

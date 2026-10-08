@@ -2,6 +2,7 @@
 import { Link } from '@inertiajs/vue3';
 import {
     ArrowRightLeft,
+    Gauge,
     Building2,
     CalendarClock,
     CalendarDays,
@@ -23,6 +24,7 @@ import {
 import { computed, reactive, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 import CloseStageDialog from '@/components/kanban/CloseStageDialog.vue';
+import LeadProfile from '@/components/leads/LeadProfile.vue';
 import SourceIcon from '@/components/SourceIcon.vue';
 import TagInput from '@/components/TagInput.vue';
 import { Button } from '@/components/ui/button';
@@ -35,7 +37,7 @@ import { Textarea } from '@/components/ui/textarea';
 import UserInitials from '@/components/UserInitials.vue';
 import { formatDateTime, timeAgo } from '@/lib/format';
 import { sendJson } from '@/lib/http';
-import { followUpClass, followUpInfo, formatMoney, priorityMeta, toLocalInput, whatsappUrl } from '@/lib/leadUi';
+import { followUpClass, followUpInfo, formatMoney, gradeMeta, priorityMeta, toLocalInput, whatsappUrl } from '@/lib/leadUi';
 import { cn } from '@/lib/utils';
 import { assign, edit, move, quick } from '@/routes/leads';
 import { store as storeActivity } from '@/routes/leads/activities';
@@ -172,11 +174,23 @@ const metaEntries = computed(() => Object.entries(lead.value.meta ?? {}));
 const showValue = (type: string, v: unknown) => (type === 'checkbox' ? (v ? 'Sí' : 'No') : String(v));
 const wa = computed(() => whatsappUrl(lead.value.phone));
 const page = computed(() => props.layout === 'page');
+const tab = ref('followup');
+const sc = computed(() => props.data.scoring);
 </script>
 
 <template>
     <div :class="cn('flex flex-col gap-5', page && 'lg:grid lg:grid-cols-3 lg:items-start')">
         <div :class="cn('flex min-w-0 flex-col gap-5', page && 'lg:col-span-2')">
+            <!-- Puntaje del lead -->
+            <button type="button" class="flex items-center gap-3 rounded-2xl border bg-card px-4 py-3 text-left transition hover:border-primary/40" title="Ver por qué tiene este puntaje" @click="tab = 'profile'">
+                <span class="grid size-11 shrink-0 place-items-center rounded-full text-lg font-bold text-white" :style="{ backgroundColor: gradeMeta[sc.grade].color }">{{ sc.score }}</span>
+                <span class="min-w-0 flex-1">
+                    <span class="block text-sm font-semibold">{{ gradeMeta[sc.grade].label }}</span>
+                    <span class="block text-xs text-muted-foreground">Perfil {{ sc.completeness }}% completo<template v-if="sc.missing.length"> · falta {{ sc.missing[0].label.toLowerCase() }}</template></span>
+                </span>
+                <span class="text-xs font-medium text-primary">Ver perfil</span>
+            </button>
+
             <!-- Gestión rápida -->
             <div class="grid gap-3 rounded-2xl border bg-card p-4 sm:grid-cols-2">
                 <div>
@@ -242,9 +256,10 @@ const page = computed(() => props.layout === 'page');
             </p>
 
             <!-- Seguimiento / Notas / Datos -->
-            <Tabs default-value="followup">
+            <Tabs v-model="tab">
                 <TabsList>
                     <TabsTrigger value="followup"><ListChecks /> Seguimiento</TabsTrigger>
+                    <TabsTrigger value="profile"><Gauge /> Perfil e IA</TabsTrigger>
                     <TabsTrigger value="notes"><StickyNote /> Notas ({{ data.notes.length }})</TabsTrigger>
                     <TabsTrigger v-if="!page" value="data"><Globe /> Datos</TabsTrigger>
                 </TabsList>
@@ -274,6 +289,10 @@ const page = computed(() => props.layout === 'page');
                             <p class="text-xs text-muted-foreground">{{ a.user ?? 'Sistema' }} · {{ formatDateTime(a.occurred_at) }} ({{ timeAgo(a.occurred_at) }})</p>
                         </li>
                     </ol>
+                </TabsContent>
+
+                <TabsContent value="profile" class="mt-3">
+                    <LeadProfile :data="data" @changed="emit('changed')" />
                 </TabsContent>
 
                 <TabsContent value="notes" class="mt-3 flex flex-col gap-4">

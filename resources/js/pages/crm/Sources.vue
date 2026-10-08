@@ -42,6 +42,7 @@ type Source = {
     color: string;
     icon: string;
     is_active: boolean;
+    score_weight: number;
     is_system: boolean;
     leads_count: number;
     api_key: string;
@@ -55,7 +56,7 @@ const props = defineProps<{ sources: Source[]; endpoint: string }>();
 
 const dialogOpen = ref(false);
 const editing = ref<Source | null>(null);
-const form = useForm({ name: '', color: '#1AA0E4', icon: 'globe', is_active: true });
+const form = useForm({ name: '', color: '#1AA0E4', icon: 'globe', is_active: true, score_weight: 0 });
 
 const openCreate = () => {
     editing.value = null;
@@ -65,7 +66,7 @@ const openCreate = () => {
 };
 const openEdit = (s: Source) => {
     editing.value = s;
-    form.defaults({ name: s.name, color: s.color, icon: s.icon, is_active: s.is_active }).reset();
+    form.defaults({ name: s.name, color: s.color, icon: s.icon, is_active: s.is_active, score_weight: s.score_weight }).reset();
     form.clearErrors();
     dialogOpen.value = true;
 };
@@ -256,6 +257,9 @@ const sample = (s?: Source) => `curl -X POST ${props.endpoint} \\
                             <SourceIcon :name="n" />
                         </button>
                     </div>
+                </FormField>
+                <FormField label="Calidad del origen para el puntaje (0–10)" :error="form.errors.score_weight" hint="Suma al puntaje de cada lead de este origen. Ej: referidos y demos = 8–10, formularios fríos = 2–4.">
+                    <Input v-model.number="form.score_weight" type="number" min="0" max="10" step="1" />
                 </FormField>
                 <label v-if="!editing?.is_system" class="flex items-center gap-3 text-sm">
                     <Switch :model-value="form.is_active" @update:model-value="(v: boolean) => (form.is_active = v)" />

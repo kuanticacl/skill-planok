@@ -74,6 +74,13 @@ class EmailMessage extends Model
 
     public function record(string $type, array $data = []): EmailEvent
     {
-        return $this->events()->create(['type' => $type, 'data' => $data ?: null, 'occurred_at' => now()]);
+        $event = $this->events()->create(['type' => $type, 'data' => $data ?: null, 'occurred_at' => now()]);
+
+        // Abrir o hacer clic en un correo es una señal de interés: actualiza el puntaje del lead.
+        if ($this->lead_id && in_array($type, ['opened', 'clicked'], true)) {
+            \App\Services\Leads\LeadScorer::refresh($this->lead_id);
+        }
+
+        return $event;
     }
 }

@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Jobs\AnalyzeLead;
 use App\Models\Lead;
+use App\Services\Leads\LeadScorer;
 use App\Models\LeadActivity;
 use App\Models\LeadField;
 use App\Models\PipelineStage;
@@ -39,6 +41,9 @@ class LeadService
 
             return $lead;
         });
+
+        LeadScorer::refresh($lead);
+        AnalyzeLead::dispatchIfEnabled($lead);
 
         // Fuera de la transacción: un fallo de email nunca debe deshacer el alta del lead.
         app(AutomationRunner::class)->fire('lead.created', $lead->fresh(['source', 'stage']));
@@ -83,6 +88,11 @@ class LeadService
             $this->logAssignment($lead, $actor);
         }
 
+        LeadScorer::refresh($lead);
+        if ($changed) {
+            AnalyzeLead::dispatchIfEnabled($lead);
+        }
+
         return $lead;
     }
 
@@ -110,6 +120,7 @@ class LeadService
         });
 
         if ($before !== $lead->stage_id) {
+            LeadScorer::refresh($lead);
             $this->fireStageChanged($lead, $before);
         }
 
@@ -156,19 +167,27 @@ class LeadService
         $lead->assigned_to = $userId;
         $lead->save();
         $this->logAssignment($lead, $actor);
+        LeadScorer::refresh($lead);
 
         return $lead;
     }
 
     public function log(Lead $lead, string $type, ?User $actor, ?string $description = null, array $properties = [], $occurredAt = null): LeadActivity
     {
-        return $lead->activities()->create([
+        $activity = $lead->activities()->create([
             'user_id' => $actor?->id,
             'type' => $type,
             'description' => $description,
             'properties' => $properties ?: null,
             'occurred_at' => $occurredAt ?? now(),
         ]);
+
+        // Un seguimiento humano (llamada, reunión…) mejora el perfil del lead.
+        if (! in_array($type, LeadActivity::AUTOMATIC, true)) {
+            LeadScorer::refresh($lead);
+        }
+
+        return $activity;
     }
 
     private function logStageChange(Lead $lead, ?int $from, int $to, ?User $actor, array $closing = []): void

@@ -28,7 +28,7 @@ import { create, index as leadsIndex } from '@/routes/leads';
 import type { BoardColumn, StageRef, UserOption } from '@/types';
 
 type SourceTile = { id: number; name: string; color: string; icon: string; is_active: boolean; count: number; pct: number };
-type RawFilters = { period: string; sort: string; q: string | null; sources: string[]; assignees: string[]; priorities: string[]; tag: string | null; overdue: boolean; no_followup: boolean };
+type RawFilters = { period: string; sort: string; q: string | null; sources: string[]; assignees: string[]; priorities: string[]; grades: string[]; tag: string | null; overdue: boolean; no_followup: boolean };
 
 const props = defineProps<{
     filters: RawFilters;
@@ -52,7 +52,7 @@ const page = usePage();
 
 const toLocal = (r: RawFilters): Filters => ({
     q: r.q ?? '', period: r.period, sort: r.sort, sources: [...r.sources], assignees: [...r.assignees],
-    priorities: [...r.priorities], tag: r.tag ?? '', overdue: r.overdue, no_followup: r.no_followup,
+    priorities: [...r.priorities], grades: [...(r.grades ?? [])], tag: r.tag ?? '', overdue: r.overdue, no_followup: r.no_followup,
 });
 const f = ref<Filters>(toLocal(props.filters));
 
@@ -65,6 +65,7 @@ const query = computed<Record<string, string>>(() => {
     if (v.sources.length) q.sources = v.sources.join(',');
     if (v.assignees.length) q.assignees = v.assignees.join(',');
     if (v.priorities.length) q.priorities = v.priorities.join(',');
+    if (v.grades.length) q.grades = v.grades.join(',');
     if (v.tag) q.tag = v.tag;
     if (v.overdue) q.overdue = '1';
     if (v.no_followup) q.no_followup = '1';

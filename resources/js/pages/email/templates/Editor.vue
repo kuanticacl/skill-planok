@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { useEventListener } from '@vueuse/core';
-import { ArrowLeft, Code, Eye, Layers, LayoutTemplate, Plug, Plus, Save, Send, Smartphone, Monitor, Wand2 } from '@lucide/vue';
+import { ArrowLeft, Code, Eye, Layers, LayoutTemplate, Plug, Plus, Save, Send, Smartphone, Monitor, Sparkles, Wand2 } from '@lucide/vue';
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
+import AiMailAssistant from '@/components/email/AiMailAssistant.vue';
+import type { AiDesignResult } from '@/components/email/AiMailAssistant.vue';
 import ApiSnippets from '@/components/email/ApiSnippets.vue';
 import BlockList from '@/components/email/BlockList.vue';
 import BlockPalette from '@/components/email/BlockPalette.vue';
@@ -27,6 +29,7 @@ import type { Block, BlockType, Design } from '@/lib/emailBuilder';
 import { starters } from '@/lib/emailStarters';
 import { HttpError, sendJson } from '@/lib/http';
 import { cn } from '@/lib/utils';
+import { index as aiIndex } from '@/routes/ai';
 import { edit, index, preview, store, update } from '@/routes/templates';
 import type { VarMeta } from '@/types';
 
@@ -50,6 +53,7 @@ const props = defineProps<{
     categories: Record<string, string>;
     systemVariables: { key: string; description: string }[];
     brand: { name: string; address: string; logo: string };
+    ai: { enabled: boolean; can_configure: boolean };
 }>();
 
 defineOptions({ layout: { breadcrumbs: [{ title: 'Plantillas', href: index() }] } });
@@ -87,6 +91,9 @@ const leftTab = ref('add');
 const rightTab = ref('props');
 const testOpen = ref(false);
 const apiOpen = ref(false);
+const aiOpen = ref(false);
+const subjectIdeas = ref<string[]>([]);
+const subjectBusy = ref(false);
 
 const selected = computed(() => design.value.blocks.find((b) => b.id === selectedId.value) ?? null);
 const systemKeys = computed(() => props.systemVariables.map((s) => s.key));
@@ -124,6 +131,7 @@ onBeforeUnmount(() => clearTimeout(timer));
 // ---------------------------------------------------------------- bloques
 const addBlock = (type: BlockType) => {
     const block = newBlock(type);
+    if (type === 'header') block.props.logoUrl = props.brand.logo;
     const i = design.value.blocks.findIndex((b) => b.id === selectedId.value);
     design.value.blocks.splice(i >= 0 ? i + 1 : design.value.blocks.length, 0, block);
     selectedId.value = block.id;
@@ -145,6 +153,37 @@ const selectBlock = (id: string) => {
     rightTab.value = 'props';
 };
 
+// ---------------------------------------------------------------- IA (opcional)
+const applyAi = (r: AiDesignResult) => {
+    design.value = r.design;
+    form.subject = r.subject || form.subject;
+    form.preheader = r.preheader || form.preheader;
+    form.name = form.name || r.subject || 'Correo generado con IA';
+    form.editor = 'blocks';
+    started.value = true;
+    selectedId.value = null;
+    leftTab.value = 'structure';
+    toast.success('Correo generado con la identidad de Quiebre', { description: r.notes || 'Revisa el contenido antes de enviarlo.' });
+};
+const plainContent = () =>
+    design.value.blocks
+        .flatMap((b) => [b.props.text, b.props.title, b.props.label])
+        .filter((x) => typeof x === 'string' && x)
+        .join('\n');
+const suggestSubjects = async () => {
+    subjectBusy.value = true;
+    subjectIdeas.value = [];
+    try {
+        const res = await sendJson<{ subjects: string[] }>('POST', '/email/ai/subjects', { subject: form.subject, context: blockMode.value ? plainContent() : code.value.replace(/<[^>]+>/g, ' ').slice(0, 5000) });
+        subjectIdeas.value = res.subjects;
+        if (!res.subjects.length) toast.info('La IA no devolvió propuestas. Intenta de nuevo.');
+    } catch (e) {
+        toast.error(e instanceof HttpError ? (Object.values(e.fieldErrors)[0] ?? e.body?.message ?? 'No se pudieron generar asuntos.') : 'No se pudieron generar asuntos.');
+    } finally {
+        subjectBusy.value = false;
+    }
+};
+
 // ---------------------------------------------------------------- modo
 const switchToHtml = () => {
     code.value = compileDesign(design.value);
@@ -160,6 +199,7 @@ const switchToBlocks = () => {
 const pickStarter = (key: string) => {
     const s = starters.find((x) => x.key === key)!;
     design.value = JSON.parse(JSON.stringify(s.design));
+    design.value.blocks.filter((b) => b.type === 'header' && !b.props.logoUrl).forEach((b) => (b.props.logoUrl = props.brand.logo));
     form.name = form.name || s.name;
     form.subject = s.subject;
     form.preheader = s.preheader;
@@ -238,6 +278,11 @@ const apiEndpoint = computed(() => `${window.location.origin}/api/v1`);
             <h1 class="text-2xl font-semibold tracking-tight">Nueva plantilla de email</h1>
             <p class="mt-1 text-sm text-muted-foreground">Elige un punto de partida. Todo se puede cambiar después.</p>
         </div>
+        <button v-if="ai.enabled" type="button" class="flex items-center gap-4 rounded-2xl border border-primary/40 bg-primary/5 p-5 text-left transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md" @click="aiOpen = true">
+            <span class="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground"><Sparkles class="size-5" /></span>
+            <span><span class="block font-semibold">Crear con IA <span class="ml-1 rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary">Opcional</span></span><span class="text-sm text-muted-foreground">Describe el correo y la IA redacta asunto y contenido. El diseño siempre respeta la marca Quiebre y usa el logo oficial.</span></span>
+        </button>
+        <p v-else-if="ai.can_configure" class="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground"><Sparkles class="mr-1 inline size-4 text-primary" />¿Quieres redactar con IA? <Link :href="aiIndex()" class="font-medium text-primary underline-offset-2 hover:underline">Configura un proveedor</Link>.</p>
         <div class="grid gap-4 sm:grid-cols-2">
             <button v-for="s in starters" :key="s.key" type="button" class="group flex flex-col gap-2 rounded-2xl border bg-card p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md" @click="pickStarter(s.key)">
                 <div class="flex items-center gap-2">
@@ -273,6 +318,7 @@ const apiEndpoint = computed(() => `${window.location.origin}/api/v1`);
                 <Button variant="ghost" size="icon-sm" :class="device === 'desktop' && 'bg-accent text-accent-foreground'" title="Escritorio" @click="device = 'desktop'"><Monitor /></Button>
                 <Button variant="ghost" size="icon-sm" :class="device === 'mobile' && 'bg-accent text-accent-foreground'" title="Móvil" @click="device = 'mobile'"><Smartphone /></Button>
             </div>
+            <Button v-if="ai.enabled" variant="outline" size="sm" class="border-primary/40 text-primary" @click="aiOpen = true"><Sparkles /> IA</Button>
             <Button v-if="savedId" variant="outline" size="sm" @click="apiOpen = true"><Plug /> API</Button>
             <Button variant="outline" size="sm" @click="testOpen = true"><Send /> Probar</Button>
             <Button size="sm" :disabled="saving || !form.name || !form.subject || !htmlFinal.trim()" @click="save"><Spinner v-if="saving" /><Save v-else /> Guardar</Button>
@@ -280,7 +326,13 @@ const apiEndpoint = computed(() => `${window.location.origin}/api/v1`);
 
         <!-- Asunto + preheader -->
         <div class="grid gap-2 border-b bg-muted/30 px-3 py-2 md:grid-cols-2">
-            <div class="flex items-center gap-2"><label class="w-16 shrink-0 text-xs font-medium text-muted-foreground">Asunto</label><VariableField v-model="form.subject" class="flex-1" :variables="detected" :system="systemKeys" placeholder="Ej: Hola {{ first_name }}, gracias por escribirnos" /></div>
+            <div class="relative flex items-center gap-2"><label class="w-16 shrink-0 text-xs font-medium text-muted-foreground">Asunto</label><VariableField v-model="form.subject" class="flex-1" :variables="detected" :system="systemKeys" placeholder="Ej: Hola {{ first_name }}, gracias por escribirnos" />
+                <Button v-if="ai.enabled" variant="ghost" size="icon-sm" title="Sugerir asuntos con IA" :disabled="subjectBusy" @click="suggestSubjects"><Spinner v-if="subjectBusy" /><Sparkles v-else class="text-primary" /></Button>
+                <div v-if="subjectIdeas.length" class="absolute right-0 top-full z-30 mt-1 w-full max-w-xl rounded-2xl border bg-popover p-2 shadow-lg">
+                    <div class="flex items-center justify-between px-2 pb-1 text-[11px] text-muted-foreground"><span>Propuestas de la IA (clic para usar)</span><button type="button" class="hover:text-foreground" @click="subjectIdeas = []">Cerrar</button></div>
+                    <button v-for="(idea, i) in subjectIdeas" :key="i" type="button" class="block w-full rounded-xl px-2 py-1.5 text-left text-sm hover:bg-accent" @click="form.subject = idea; subjectIdeas = []">{{ idea }}</button>
+                </div>
+            </div>
             <div class="flex items-center gap-2"><label class="w-16 shrink-0 text-xs font-medium text-muted-foreground">Preheader</label><VariableField v-model="form.preheader" class="flex-1" :variables="detected" :system="systemKeys" placeholder="Texto que se ve junto al asunto en la bandeja" /></div>
         </div>
         <p v-if="errorMsg" class="border-b bg-destructive/10 px-3 py-1.5 text-xs text-destructive">{{ errorMsg }}</p>
@@ -357,6 +409,7 @@ const apiEndpoint = computed(() => `${window.location.origin}/api/v1`);
         </div>
     </div>
 
+    <AiMailAssistant v-model:open="aiOpen" :has-content="started && design.blocks.length > 0" @apply="applyAi" />
     <TestSendDialog v-model:open="testOpen" :default-to="page.props.auth.user.email" :payload="testPayload" />
 
     <Dialog v-model:open="apiOpen">

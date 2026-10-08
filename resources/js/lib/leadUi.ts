@@ -77,3 +77,11 @@ export function toLocalInput(iso: string | null | undefined): string {
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+
+/** Temperatura del lead según su puntaje (A = más caliente). */
+export const gradeMeta: Record<string, { label: string; short: string; color: string }> = {
+    A: { label: 'A · Caliente', short: 'Caliente', color: '#FF5300' },
+    B: { label: 'B · Tibio', short: 'Tibio', color: '#FFA165' },
+    C: { label: 'C · Frío', short: 'Frío', color: '#1AA0E4' },
+    D: { label: 'D · Bajo', short: 'Bajo', color: '#8A8A8A' },
+};

@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
 import { useKanbanPrefs } from '@/composables/useKanbanPrefs';
-import { priorityMeta } from '@/lib/leadUi';
+import { gradeMeta, priorityMeta } from '@/lib/leadUi';
 
 export type Filters = {
     q: string;
@@ -22,6 +22,7 @@ export type Filters = {
     sources: string[];
     assignees: string[];
     priorities: string[];
+    grades: string[];
     tag: string;
     overdue: boolean;
     no_followup: boolean;
@@ -42,16 +43,16 @@ const prefs = useKanbanPrefs();
 
 const activeCount = computed(
     () =>
-        f.value.sources.length + f.value.assignees.length + f.value.priorities.length + (f.value.tag ? 1 : 0) + (f.value.overdue ? 1 : 0) + (f.value.no_followup ? 1 : 0),
+        f.value.sources.length + f.value.assignees.length + f.value.priorities.length + f.value.grades.length + (f.value.tag ? 1 : 0) + (f.value.overdue ? 1 : 0) + (f.value.no_followup ? 1 : 0),
 );
 const dirty = computed(() => activeCount.value > 0 || f.value.q || f.value.period !== 'all');
 
-const toggleIn = (key: 'sources' | 'assignees' | 'priorities', value: string) => {
+const toggleIn = (key: 'sources' | 'assignees' | 'priorities' | 'grades', value: string) => {
     const list = f.value[key];
     f.value = { ...f.value, [key]: list.includes(value) ? list.filter((x) => x !== value) : [...list, value] };
 };
 const set = <K extends keyof Filters>(key: K, value: Filters[K]) => (f.value = { ...f.value, [key]: value });
-const clear = () => (f.value = { q: '', period: 'all', sort: f.value.sort, sources: [], assignees: [], priorities: [], tag: '', overdue: false, no_followup: false });
+const clear = () => (f.value = { q: '', period: 'all', sort: f.value.sort, sources: [], assignees: [], priorities: [], grades: [], tag: '', overdue: false, no_followup: false });
 const keep = (e: Event) => e.preventDefault();
 
 const showOptions: [keyof typeof prefs.value.show, string][] = [
@@ -97,6 +98,11 @@ const showOptions: [keyof typeof prefs.value.show, string][] = [
                 <DropdownMenuLabel>Prioridad</DropdownMenuLabel>
                 <DropdownMenuCheckboxItem v-for="(label, key) in priorities" :key="key" :model-value="f.priorities.includes(String(key))" @update:model-value="toggleIn('priorities', String(key))" @select="keep">
                     <span class="size-2 rounded-full" :style="{ backgroundColor: priorityMeta[key]?.color }" />{{ label }}
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Temperatura (puntaje)</DropdownMenuLabel>
+                <DropdownMenuCheckboxItem v-for="g in ['A', 'B', 'C', 'D']" :key="g" :model-value="f.grades.includes(g)" @update:model-value="toggleIn('grades', g)" @select="keep">
+                    <span class="size-2 rounded-full" :style="{ backgroundColor: gradeMeta[g].color }" />{{ gradeMeta[g].label }}
                 </DropdownMenuCheckboxItem>
                 <template v-if="canViewAll">
                     <DropdownMenuSeparator />

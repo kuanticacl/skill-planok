@@ -5,7 +5,7 @@ import SourceIcon from '@/components/SourceIcon.vue';
 import UserInitials from '@/components/UserInitials.vue';
 import type { KanbanPrefs } from '@/composables/useKanbanPrefs';
 import { timeAgo } from '@/lib/format';
-import { daysSince, followUpClass, followUpInfo, formatMoneyShort, priorityMeta, whatsappUrl } from '@/lib/leadUi';
+import { daysSince, followUpClass, followUpInfo, formatMoneyShort, gradeMeta, priorityMeta, whatsappUrl } from '@/lib/leadUi';
 import { cn } from '@/lib/utils';
 import type { LeadCard } from '@/types';
 
@@ -64,6 +64,7 @@ const stripe = computed(() => (props.lead.priority === 'urgent' || props.lead.pr
                     {{ [lead.job_title, lead.company].filter(Boolean).join(' · ') }}
                 </p>
             </div>
+            <span v-if="lead.score !== null && lead.score_grade && !closed" class="mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] leading-none font-bold text-white" :style="{ backgroundColor: gradeMeta[lead.score_grade].color }" :title="`Puntaje ${lead.score}/100 · ${gradeMeta[lead.score_grade].label} · perfil ${lead.profile_completeness ?? 0}% completo`">{{ lead.score }}</span>
             <UserInitials :name="lead.assignee?.name" />
         </div>
 

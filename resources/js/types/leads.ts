@@ -15,6 +15,9 @@ export type LeadCard = {
     assignee: { id: number; name: string } | null;
     custom: { label: string; value: string }[];
     priority: 'low' | 'normal' | 'high' | 'urgent';
+    score: number | null;
+    score_grade: 'A' | 'B' | 'C' | 'D' | null;
+    profile_completeness: number | null;
     estimated_value: number | null;
     tags: string[];
     next_follow_up_at: string | null;
@@ -60,7 +63,39 @@ export type LeadDetail = LeadCard & {
 export type LeadNote = { id: number; body: string; is_private: boolean; author: string; mine: boolean; created_at: string };
 export type LeadActivityItem = { id: number; type: string; description: string | null; user: string | null; occurred_at: string };
 
+export type ScoreItem = { label: string; points: number; max: number; ok: boolean; hint: string | null };
+export type ScoreGroup = { key: string; label: string; points: number; max: number; items: ScoreItem[] };
+export type Scoring = {
+    score: number;
+    grade: 'A' | 'B' | 'C' | 'D';
+    grade_label: string;
+    completeness: number;
+    breakdown: { groups: ScoreGroup[]; base: number; ai_adjustment: number; note: string | null };
+    missing: { field: string; label: string; why: string; impact: number }[];
+    signals: { key: string; label: string; value: string }[];
+    scored_at: string | null;
+};
+export type AiAnalysis = {
+    summary: string;
+    temperature: 'hot' | 'warm' | 'cold';
+    score_adjustment: number;
+    adjustment_reason: string;
+    buying_signals: string[];
+    risks: string[];
+    next_actions: { action: string; channel: 'call' | 'email' | 'whatsapp' | 'meeting' | 'task'; when: 'today' | 'this_week' | 'later'; why: string }[];
+    suggested_message: string;
+    questions_to_ask: string[];
+    profile_suggestions: { field: 'priority' | 'tags' | 'company' | 'job_title'; value: string; confidence: 'high' | 'medium' | 'low'; reason: string }[];
+    provider: string;
+    model: string | null;
+    generated_at: string;
+    shared_contact: boolean;
+};
+export type AiPanel = { can_use: boolean; available: boolean; can_configure: boolean; analysis: AiAnalysis | null; analyzed_at: string | null; stale: boolean };
+
 export type PanelData = {
+    scoring: Scoring;
+    ai: AiPanel;
     lead: LeadDetail;
     customFields: { key: string; label: string; type: string; value: unknown; active: boolean }[];
     notes: LeadNote[];

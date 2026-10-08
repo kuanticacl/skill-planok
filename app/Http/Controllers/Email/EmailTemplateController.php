@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Email;
 use App\Http\Controllers\Controller;
 use App\Models\EmailMessage;
 use App\Models\EmailTemplate;
+use App\Services\Ai\AiGateway;
+use App\Services\Ai\BrandedEmailDesign;
 use App\Services\Email\CampaignRunner;
 use App\Services\Email\EmailComposer;
 use App\Services\Email\MailSettings;
@@ -62,16 +64,18 @@ class EmailTemplateController extends Controller
             'categories' => EmailTemplate::CATEGORIES,
             'systemVariables' => $this->systemVariableDocs(),
             'brand' => $this->brand(),
+            'ai' => $this->aiState($request),
         ]);
     }
 
-    public function edit(EmailTemplate $template): Response
+    public function edit(Request $request, EmailTemplate $template): Response
     {
         return Inertia::render('email/templates/Editor', [
             'template' => $template->only(['id', 'name', 'slug', 'description', 'category', 'subject', 'preheader', 'editor', 'html', 'text', 'design', 'variables', 'is_active']),
             'categories' => EmailTemplate::CATEGORIES,
             'systemVariables' => $this->systemVariableDocs(),
             'brand' => $this->brand(),
+            'ai' => $this->aiState($request),
         ]);
     }
 
@@ -283,9 +287,20 @@ class EmailTemplateController extends Controller
         ];
     }
 
+    /** @return array{enabled: bool, can_configure: bool} */
+    private function aiState(Request $request): array
+    {
+        $user = $request->user();
+
+        return [
+            'enabled' => (bool) $user?->can('ai.use') && app(AiGateway::class)->isAvailable(),
+            'can_configure' => (bool) $user?->can('ai.manage'),
+        ];
+    }
+
     /** @return array<string, string> */
     private function brand(): array
     {
-        return ['name' => MailSettings::companyName(), 'address' => (string) MailSettings::footerAddress(), 'logo' => url('/logo-quiebre.svg')];
+        return ['name' => MailSettings::companyName(), 'address' => (string) MailSettings::footerAddress(), 'logo' => BrandedEmailDesign::logoUrl()];
     }
 }

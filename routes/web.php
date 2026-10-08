@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Ai\AiEmailController;
+use App\Http\Controllers\Ai\AiSettingsController;
+use App\Http\Controllers\Ai\LeadAiController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\Email\ApiKeyController;
 use App\Http\Controllers\Email\AutomationController;
@@ -55,6 +58,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('leads/{lead}/notes', [LeadNoteController::class, 'store'])->name('leads.notes.store');
         Route::delete('leads/{lead}/notes/{note}', [LeadNoteController::class, 'destroy'])->name('leads.notes.destroy');
         Route::post('leads/{lead}/activities', [LeadActivityController::class, 'store'])->name('leads.activities.store');
+        Route::post('leads/{lead}/score', [LeadAiController::class, 'rescore'])->name('leads.score');
+        Route::middleware(['can:ai.use', 'throttle:20,1'])->group(function () {
+            Route::post('leads/{lead}/ai/analyze', [LeadAiController::class, 'analyze'])->name('leads.ai.analyze');
+            Route::post('leads/{lead}/ai/apply', [LeadAiController::class, 'apply'])->name('leads.ai.apply');
+        });
     });
 
     // Usuarios
@@ -116,6 +124,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('api/{apiKey}', [ApiKeyController::class, 'destroy'])->name('api-keys.destroy');
         });
 
+        // Asistente de IA para mailings (opcional)
+        Route::middleware(['can:ai.use', 'can:templates.manage', 'throttle:20,1'])->prefix('ai')->group(function () {
+            Route::post('design', [AiEmailController::class, 'design'])->name('email.ai.design');
+            Route::post('subjects', [AiEmailController::class, 'subjects'])->name('email.ai.subjects');
+        });
+
         // Audiencias (listas)
         Route::middleware('can:lists.manage')->group(function () {
             Route::get('lists', [ContactListController::class, 'index'])->name('lists.index');
@@ -174,6 +188,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('templates/{template}', [EmailTemplateController::class, 'destroy'])->name('templates.destroy');
         });
         Route::get('templates/{template}/edit', [EmailTemplateController::class, 'edit'])->middleware('can:templates.view')->name('templates.edit');
+    });
+
+    // Inteligencia artificial: proveedores y API keys
+    Route::prefix('ai')->middleware('can:ai.manage')->group(function () {
+        Route::get('/', [AiSettingsController::class, 'index'])->name('ai.index');
+        Route::put('settings', [AiSettingsController::class, 'settings'])->name('ai.settings.update');
+        Route::put('providers/{slug}', [AiSettingsController::class, 'update'])->name('ai.providers.update');
+        Route::delete('providers/{slug}', [AiSettingsController::class, 'destroy'])->name('ai.providers.destroy');
+        Route::post('providers/{slug}/default', [AiSettingsController::class, 'makeDefault'])->name('ai.providers.default');
+        Route::post('providers/{slug}/test', [AiSettingsController::class, 'test'])->middleware('throttle:20,1')->name('ai.providers.test');
+        Route::get('providers/{slug}/models', [AiSettingsController::class, 'models'])->middleware('throttle:20,1')->name('ai.providers.models');
     });
 
     // Roles y permisos

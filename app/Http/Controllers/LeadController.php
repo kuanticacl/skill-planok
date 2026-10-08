@@ -10,7 +10,10 @@ use App\Models\LeadField;
 use App\Models\LeadSource;
 use App\Models\PipelineStage;
 use App\Models\User;
+use App\Services\Ai\AiGateway;
 use App\Services\LeadService;
+use App\Services\Leads\LeadAnalyst;
+use App\Services\Leads\LeadScorer;
 use App\Support\LeadPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -163,6 +166,8 @@ class LeadController extends Controller
                 'user' => $a->user?->name,
                 'occurred_at' => $a->occurred_at->toIso8601String(),
             ]),
+            'scoring' => $this->scoring($lead),
+            'ai' => $this->aiPanel($user, $lead),
             'priorities' => Lead::PRIORITIES,
             'stages' => PipelineStage::orderBy('sort_order')->get(['id', 'name', 'color', 'type']),
             'users' => $this->assignableUsers(),
@@ -174,6 +179,42 @@ class LeadController extends Controller
                 'note' => $user->can('note', $lead),
                 'assign' => $user->hasPermission('leads.assign') && $user->can('view', $lead),
             ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function scoring(Lead $lead): array
+    {
+        if ($lead->score === null || $lead->scored_at === null) {
+            app(LeadScorer::class)->score($lead);
+        }
+
+        return [
+            'score' => $lead->score,
+            'grade' => $lead->score_grade,
+            'grade_label' => LeadScorer::GRADES[$lead->score_grade]['label'] ?? '',
+            'completeness' => $lead->profile_completeness,
+            'breakdown' => $lead->score_breakdown,
+            'missing' => $lead->profile['missing'] ?? [],
+            'signals' => $lead->profile['signals'] ?? [],
+            'scored_at' => $lead->scored_at?->toIso8601String(),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function aiPanel(User $user, Lead $lead): array
+    {
+        $can = $user->hasPermission('ai.use');
+        $available = $can && app(AiGateway::class)->isAvailable();
+        $stale = $available && $lead->ai_analysis && app(LeadAnalyst::class)->hash($lead) !== $lead->ai_input_hash;
+
+        return [
+            'can_use' => $can,
+            'available' => $available,
+            'can_configure' => $user->hasPermission('ai.manage'),
+            'analysis' => $can ? $lead->ai_analysis : null,
+            'analyzed_at' => $lead->ai_analyzed_at?->toIso8601String(),
+            'stale' => $stale,
         ];
     }
 

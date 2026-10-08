@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 // Boletines programados: requiere el cron de Laravel (* * * * * php artisan schedule:run).
 Schedule::command('campaigns:dispatch-due')->everyMinute()->withoutOverlapping();
+Schedule::command('leads:rescore --open')->dailyAt('03:30')->withoutOverlapping();

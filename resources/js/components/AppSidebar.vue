@@ -10,6 +10,7 @@ import {
     MailX,
     Newspaper,
     Settings,
+    Sparkles,
     Zap,
     Globe,
     LayoutDashboard,
@@ -38,6 +39,7 @@ import { dashboard } from '@/routes';
 import { index as clients } from '@/routes/clients';
 import { index as fields } from '@/routes/fields';
 import { index as leads } from '@/routes/leads';
+import { index as ai } from '@/routes/ai';
 import { index as apiKeys } from '@/routes/api-keys';
 import { index as automations } from '@/routes/automations';
 import { index as campaigns } from '@/routes/campaigns';
@@ -82,6 +84,10 @@ const groups: NavGroup[] = [
             { title: 'API e integraciones', href: apiKeys(), icon: Plug, permission: 'email_settings.manage' },
             { title: 'Configuración de email', href: emailSettings(), icon: Settings, permission: 'email_settings.manage' },
         ],
+    },
+    {
+        label: 'Inteligencia artificial',
+        items: [{ title: 'Proveedores de IA', href: ai(), icon: Sparkles, permission: 'ai.manage' }],
     },
     {
         label: 'Configuración CRM',

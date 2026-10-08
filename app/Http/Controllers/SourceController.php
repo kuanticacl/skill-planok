@@ -24,6 +24,7 @@ class SourceController extends Controller
                     'color' => $s->color,
                     'icon' => $s->icon,
                     'is_active' => $s->is_active,
+                    'score_weight' => (int) $s->score_weight,
                     'is_system' => $s->is_system,
                     'leads_count' => $s->leads_count,
                     'api_key' => $s->api_key, // visible solo para quienes gestionan orígenes
@@ -57,6 +58,12 @@ class SourceController extends Controller
         }
 
         $source->update($data);
+
+        if ($source->wasChanged('score_weight')) {
+            // La calidad del origen cambió: se refleja en el puntaje de sus leads.
+            $scorer = app(\App\Services\Leads\LeadScorer::class);
+            \App\Models\Lead::where('source_id', $source->id)->chunkById(200, fn ($leads) => $leads->each(fn ($l) => $scorer->score($l)));
+        }
 
         $this->toast("Origen «{$source->name}» actualizado.");
 
@@ -96,11 +103,15 @@ class SourceController extends Controller
     /** @return array<string, mixed> */
     private function validated(Request $request, ?LeadSource $source = null): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'name' => ['required', 'string', 'max:80', Rule::unique('lead_sources', 'name')->ignore($source?->id)],
             'color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'icon' => ['required', 'string', 'max:40', 'regex:/^[a-z0-9-]+$/'],
             'is_active' => ['boolean'],
+            'score_weight' => ['nullable', 'integer', 'between:0,10'],
         ]);
+        $data['score_weight'] = (int) ($data['score_weight'] ?? 0);
+
+        return $data;
     }
 }

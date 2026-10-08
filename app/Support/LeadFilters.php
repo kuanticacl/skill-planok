@@ -28,6 +28,7 @@ class LeadFilters
         'value' => 'Mayor valor',
         'followup' => 'Próximo seguimiento',
         'priority' => 'Prioridad',
+        'score' => 'Mayor puntaje',
     ];
 
     /** @param array<string, mixed> $values */
@@ -45,6 +46,7 @@ class LeadFilters
             'sources' => self::list($request->input('sources')),
             'assignees' => self::list($request->input('assignees')),
             'priorities' => self::list($request->input('priorities')),
+            'grades' => array_values(array_intersect(self::list($request->input('grades')), ['A', 'B', 'C', 'D'])),
             'tag' => self::str($request->input('tag')),
             'overdue' => $request->boolean('overdue'),
             'no_followup' => $request->boolean('no_followup'),
@@ -63,6 +65,7 @@ class LeadFilters
             'sources' => implode(',', $v['sources']) ?: null,
             'assignees' => implode(',', $v['assignees']) ?: null,
             'priorities' => implode(',', $v['priorities']) ?: null,
+            'grades' => implode(',', $v['grades']) ?: null,
             'tag' => $v['tag'],
             'overdue' => $v['overdue'] ? '1' : null,
             'no_followup' => $v['no_followup'] ? '1' : null,
@@ -88,6 +91,7 @@ class LeadFilters
             ->when($since && ! $skip('period'), fn ($q) => $q->where('created_at', '>=', $since))
             ->when($v['sources'] && ! $skip('sources'), fn ($q) => $q->whereIn('source_id', $v['sources']))
             ->when($v['priorities'] && ! $skip('priorities'), fn ($q) => $q->whereIn('priority', $v['priorities']))
+            ->when($v['grades'] && ! $skip('grades'), fn ($q) => $q->whereIn('score_grade', $v['grades']))
             ->when($v['tag'] && ! $skip('tag'), fn ($q) => $q->where('tags', 'like', '%"'.str_replace(['%', '_', '"'], '', $v['tag']).'"%'))
             ->when($v['overdue'] && ! $skip('overdue'), fn ($q) => $q->whereNotNull('next_follow_up_at')->where('next_follow_up_at', '<', now())->whereNull('closed_at'))
             ->when($v['no_followup'] && ! $skip('no_followup'), fn ($q) => $q->whereNull('next_follow_up_at')->whereNull('closed_at'))
@@ -126,6 +130,7 @@ class LeadFilters
             'value' => $query->orderByRaw('estimated_value IS NULL')->orderByDesc('estimated_value')->orderByDesc('id'),
             'followup' => $query->orderByRaw('next_follow_up_at IS NULL')->orderBy('next_follow_up_at')->orderByDesc('id'),
             'priority' => $query->orderByRaw("CASE priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END")->orderByDesc('id'),
+            'score' => $query->orderByDesc('score')->orderByDesc('id'),
             default => $query->orderBy('position')->orderByDesc('id'),
         };
     }
