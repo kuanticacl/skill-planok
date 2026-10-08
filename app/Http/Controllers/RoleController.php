@@ -41,7 +41,7 @@ class RoleController extends Controller
             'name' => $request->input('name'),
             'slug' => $this->uniqueSlug($request->input('name')),
             'description' => $request->input('description'),
-            'permissions' => array_values($request->input('permissions', [])),
+            'permissions' => $this->normalize($request->input('permissions', [])),
         ]);
 
         $this->toast("Rol «{$role->name}» creado.");
@@ -75,7 +75,7 @@ class RoleController extends Controller
         $role->update([
             'name' => $request->input('name'),
             'description' => $request->input('description'),
-            'permissions' => array_values($request->input('permissions', [])),
+            'permissions' => $this->normalize($request->input('permissions', [])),
         ]);
 
         $this->toast("Rol «{$role->name}» actualizado.");
@@ -115,6 +115,17 @@ class RoleController extends Controller
                 ->map(fn (string $label, string $permission) => ['key' => $permission, 'label' => $label])
                 ->values(),
         ])->values()->all();
+    }
+
+    /** @param array<int, string> $permissions */
+    private function normalize(array $permissions): array
+    {
+        // Ver todos los leads incluye poder ver leads.
+        if (in_array('leads.view_all', $permissions, true)) {
+            $permissions[] = 'leads.view';
+        }
+
+        return array_values(array_unique($permissions));
     }
 
     private function uniqueSlug(string $name): string

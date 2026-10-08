@@ -1,0 +1,71 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Client;
+use App\Models\Lead;
+use App\Models\LeadField;
+use App\Models\LeadSource;
+use App\Models\PipelineStage;
+use App\Models\Role;
+use App\Models\User;
+use App\Services\LeadService;
+use Illuminate\Database\Seeder;
+
+/** Datos de ejemplo para probar el CRM: php artisan db:seed --class=DemoSeeder */
+class DemoSeeder extends Seeder
+{
+    public function run(LeadService $service): void
+    {
+        mt_srand(7);
+
+        $comercial = Role::where('slug', 'comercial')->value('id');
+        $team = collect([['Camila Rojas', 'camila@quiebre.cl'], ['Diego Fuentes', 'diego@quiebre.cl'], ['Valentina Mora', 'valentina@quiebre.cl']])
+            ->map(fn ($u) => User::firstOrCreate(['email' => $u[1]], [
+                'name' => $u[0], 'password' => 'password', 'role_id' => $comercial, 'email_verified_at' => now(), 'job_title' => 'Ejecutivo comercial',
+            ]));
+
+        LeadField::firstOrCreate(['key' => 'proyecto_de_interes'], [
+            'label' => 'Proyecto de interés', 'type' => 'select', 'options' => ['Torre Norte', 'Parque Sur', 'Edificio Centro'],
+            'show_on_card' => true, 'sort_order' => 0,
+        ]);
+
+        $clients = collect(['Inmobiliaria Cities', 'Bricsa', 'Ecomac', 'Evoluciona', 'Besalco Inmobiliaria'])
+            ->map(fn ($n) => Client::firstOrCreate(['name' => $n], ['email' => 'contacto@'.strtolower(str_replace(' ', '', $n)).'.cl', 'phone' => '+5622'.mt_rand(1000000, 9999999), 'city' => 'Santiago']));
+
+        $sources = LeadSource::where('slug', '!=', LeadSource::MANUAL_SLUG)->get();
+        $stages = PipelineStage::orderBy('sort_order')->get();
+        $names = [['Sofía', 'Araya'], ['Matías', 'Soto'], ['Javiera', 'Muñoz'], ['Felipe', 'Reyes'], ['Constanza', 'Díaz'], ['Nicolás', 'Pizarro'], ['Francisca', 'Vera'], ['Tomás', 'Contreras'], ['Antonia', 'Silva'], ['Benjamín', 'Rojas']];
+        $utms = [['google', 'cpc', 'proyecto-otono'], ['facebook', 'paid_social', 'leads-verano'], ['instagram', 'story', 'torre-norte'], ['newsletter', 'email', 'oct-2026'], [null, null, null]];
+
+        foreach (range(1, 48) as $i) {
+            [$first, $last] = $names[array_rand($names)];
+            $source = $sources->random();
+            $utm = $utms[array_rand($utms)];
+
+            $lead = $service->create([
+                'first_name' => $first, 'last_name' => $last,
+                'email' => strtolower(\Str::ascii($first.'.'.$last)).$i.'@correo.cl',
+                'phone' => '+569'.mt_rand(10000000, 99999999),
+                'company' => mt_rand(0, 1) ? $clients->random()->name : null,
+                'job_title' => ['Gerente comercial', 'Jefe de ventas', 'Corredor', 'Inversionista'][mt_rand(0, 3)],
+                'message' => 'Quiero información sobre sus servicios de marketing inmobiliario.',
+                'client_id' => mt_rand(0, 3) === 0 ? $clients->random()->id : null,
+                'source_id' => $source->id,
+                'assigned_to' => mt_rand(0, 4) === 0 ? null : $team->random()->id,
+                'utm_source' => $utm[0], 'utm_medium' => $utm[1], 'utm_campaign' => $utm[2],
+                'ip_address' => mt_rand(180, 190).'.'.mt_rand(1, 250).'.'.mt_rand(1, 250).'.'.mt_rand(1, 250),
+                'user_agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)',
+                'country' => 'Chile', 'region' => 'Región Metropolitana', 'city' => ['Santiago', 'Providencia', 'Las Condes', 'Ñuñoa'][mt_rand(0, 3)],
+                'landing_url' => 'https://www.ejemplo.cl/contacto',
+                'custom' => mt_rand(0, 1) ? ['proyecto_de_interes' => ['Torre Norte', 'Parque Sur', 'Edificio Centro'][mt_rand(0, 2)]] : null,
+            ]);
+
+            $stage = $stages->random();
+            if ($stage->id !== $lead->stage_id) {
+                $service->move($lead, $stage->id);
+            }
+            Lead::whereKey($lead->id)->update(['created_at' => now()->subDays(mt_rand(0, 60))->subMinutes(mt_rand(0, 900))]);
+        }
+    }
+}

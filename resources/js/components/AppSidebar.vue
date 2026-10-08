@@ -9,6 +9,7 @@ import {
     Plug,
     ShieldCheck,
     UserCog,
+    Users,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
@@ -28,6 +29,7 @@ import { usePermissions } from '@/composables/usePermissions';
 import { dashboard } from '@/routes';
 import { index as clients } from '@/routes/clients';
 import { index as fields } from '@/routes/fields';
+import { index as leads } from '@/routes/leads';
 import { index as roles } from '@/routes/roles';
 import { index as sources } from '@/routes/sources';
 import { index as stages } from '@/routes/stages';
@@ -48,6 +50,7 @@ const groups: NavGroup[] = [
                 icon: LayoutDashboard,
                 permission: 'dashboard.view',
             },
+            { title: 'Leads', href: leads(), icon: Users, permission: 'leads.view' },
             { title: 'Clientes', href: clients(), icon: Building2, permission: 'clients.view' },
         ],
     },

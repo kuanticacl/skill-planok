@@ -67,13 +67,12 @@ const user = computed(() => page.props.auth.user);
                     id="email"
                     type="email"
                     class="mt-1 block w-full"
-                    name="email"
                     :default-value="user.email"
-                    required
-                    autocomplete="username"
-                    placeholder="Correo electrónico"
+                    disabled
                 />
-                <InputError class="mt-2" :message="errors.email" />
+                <p class="text-xs text-muted-foreground">
+                    El correo lo administra un administrador del CRM.
+                </p>
             </div>
 
             <!-- @chisel-email-verification -->

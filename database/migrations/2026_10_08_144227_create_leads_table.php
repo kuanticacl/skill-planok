@@ -25,7 +25,7 @@ return new class extends Migration
             $table->foreignId('source_id')->constrained('lead_sources')->restrictOnDelete();
             $table->foreignId('stage_id')->constrained('pipeline_stages')->restrictOnDelete();
             $table->foreignId('assigned_to')->nullable()->constrained('users')->nullOnDelete();
-            $table->unsignedInteger('position')->default(0); // orden dentro de la columna del Kanban
+            $table->bigInteger('position')->default(0); // orden dentro de la columna del Kanban (menor = más arriba)
 
             // UTM
             $table->string('utm_source')->nullable();

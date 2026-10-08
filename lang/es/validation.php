@@ -32,6 +32,12 @@ return [
     'numeric' => ':Attribute debe ser un número.',
     'regex' => 'El formato de :attribute no es válido.',
     'required' => 'El campo :attribute es obligatorio.',
+    'required_with' => 'El campo :attribute es obligatorio cuando :values está presente.',
+    'required_without' => 'Indica :attribute o :values.',
+    'required_without_all' => 'Indica al menos uno de: :values.',
+    'date_format' => ':Attribute no coincide con el formato :format.',
+    'after_or_equal' => ':Attribute debe ser una fecha posterior o igual a :date.',
+    'before_or_equal' => ':Attribute debe ser una fecha anterior o igual a :date.',
     'required_if' => 'El campo :attribute es obligatorio cuando :other es :value.',
     'size' => [
         'string' => ':Attribute debe tener :size caracteres.',
@@ -66,5 +72,8 @@ return [
         'stage_id' => 'etapa',
         'assigned_to' => 'responsable',
         'body' => 'contenido',
+        'occurred_at' => 'fecha',
+        'client_id' => 'cliente',
+        'is_private' => 'privacidad',
     ],
 ];

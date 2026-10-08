@@ -17,6 +17,7 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        return $this->profileRules($this->user()->id);
+        // El correo lo administra un usuario con permiso en «Usuarios».
+        return ['name' => $this->nameRules()];
     }
 }
