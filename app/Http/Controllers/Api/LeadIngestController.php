@@ -19,7 +19,7 @@ class LeadIngestController extends Controller
         'first_name', 'last_name', 'name', 'email', 'phone', 'job_title', 'company', 'message',
         'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
         'ip', 'user_agent', 'referrer', 'landing_url',
-        'country', 'region', 'city', 'latitude', 'longitude', 'custom', 'meta', 'email_template', 'email_variables',
+        'country', 'region', 'city', 'latitude', 'longitude', 'custom', 'meta', 'email_template', 'email_variables', 'audience',
     ];
 
     public function store(Request $request, LeadService $leads): JsonResponse
@@ -54,6 +54,7 @@ class LeadIngestController extends Controller
             'meta' => ['nullable', 'array'],
             'email_template' => ['nullable', 'string', 'max:80'],
             'email_variables' => ['nullable', 'array'],
+            'audience' => ['nullable', 'string', 'max:120'],
         ]);
 
         // "name" completo → nombre y apellido
@@ -84,6 +85,12 @@ class LeadIngestController extends Controller
             'meta' => $meta ?: null,
         ], null, ['channel' => 'api', 'source' => $source->slug]);
 
+        // Opcional: suscribir al lead a una audiencia (se crea si no existe) para boletines.
+        $audience = null;
+        if (filled($data['audience'] ?? null) && $lead->email) {
+            $audience = $this->subscribe($lead, trim($data['audience']));
+        }
+
         // Opcional: enviar una plantilla al lead recién creado con los datos recibidos.
         $emailStatus = null;
         if (! empty($data['email_template'])) {
@@ -93,12 +100,27 @@ class LeadIngestController extends Controller
         return response()->json([
             'data' => [
                 'email' => $emailStatus,
+                'audience' => $audience,
                 'id' => $lead->id,
                 'source' => $source->slug,
                 'stage' => $lead->stage?->name,
                 'created_at' => $lead->created_at->toIso8601String(),
             ],
         ], 201);
+    }
+
+    /** @return array{name: string, status: string} */
+    private function subscribe(Lead $lead, string $name): array
+    {
+        $list = \App\Models\ContactList::whereRaw('lower(name) = ?', [mb_strtolower($name)])->first()
+            ?? \App\Models\ContactList::create(['name' => $name, 'description' => 'Creada desde la API de leads']);
+
+        $entry = \App\Models\ContactListEntry::updateOrCreate(
+            ['contact_list_id' => $list->id, 'email' => mb_strtolower($lead->email)],
+            ['name' => $lead->full_name ?: null, 'data' => array_filter(['empresa' => $lead->company, 'lead_id' => $lead->id])],
+        );
+
+        return ['name' => $list->name, 'status' => $entry->wasRecentlyCreated ? 'subscribed' : 'already_subscribed'];
     }
 
     /**

@@ -95,4 +95,16 @@ class LeadApiTest extends TestCase
         $this->assertSame('Torre Norte', $lead->custom['proyecto']);
         $this->assertSame('xyz', $lead->meta['extra']['campo_raro']);
     }
+
+    public function test_audience_subscribes_the_lead_email_without_duplicates()
+    {
+        $r = $this->post(['first_name' => 'Ana', 'email' => 'Ana@b.cl', 'audience' => 'Boletín Top Inmobiliario']);
+        $r->assertCreated()->assertJsonPath('data.audience.status', 'subscribed');
+
+        $this->post(['first_name' => 'Ana', 'email' => 'ana@b.cl', 'audience' => 'boletín top inmobiliario'])
+            ->assertJsonPath('data.audience.status', 'already_subscribed');
+
+        $this->assertSame(1, \App\Models\ContactList::count());
+        $this->assertSame(1, \App\Models\ContactListEntry::count());
+    }
 }

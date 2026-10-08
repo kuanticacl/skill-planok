@@ -95,6 +95,7 @@ curl -X POST https://TU-DOMINIO/api/v1/leads \
 - Se aceptan `utm_*`, `ip`, `user_agent`, `referrer`, `landing_url`, `country`, `region`, `city`, `latitude`, `longitude`.
 - Campos personalizados dentro de `custom` (o sueltos) con su **clave**. Cualquier otro dato se guarda en los metadatos
   del lead y queda **disponible como variable** en los emails.
+- `audience` (nombre) suscribe el correo del lead a esa audiencia de *Email marketing → Audiencias* (se crea si no existe); ideal para formularios de boletín. La respuesta incluye `audience.status`.
 - `email_template` (slug) envía además esa plantilla al lead recién creado; `email_variables` agrega variables extra.
 - Sin `ip`/`user_agent` se toman de la petición; la ubicación se completa con headers del CDN (`CF-IPCountry`, `X-Vercel-IP-*`…).
   **Si llamas desde el backend de un sitio, envía la `ip` del visitante.**
