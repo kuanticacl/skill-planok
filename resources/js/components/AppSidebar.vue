@@ -19,6 +19,8 @@ import {
     ShieldCheck,
     UserCog,
     Users,
+    FileSignature,
+    Package,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
@@ -51,6 +53,8 @@ import { index as suppressions } from '@/routes/suppressions';
 import { index as templates } from '@/routes/templates';
 import { index as sources } from '@/routes/sources';
 import { index as stages } from '@/routes/stages';
+import { index as proposals } from '@/routes/proposals';
+import { index as services } from '@/routes/services';
 import { index as users } from '@/routes/users';
 import type { NavItem } from '@/types';
 
@@ -70,6 +74,8 @@ const groups: NavGroup[] = [
             },
             { title: 'Leads', href: leads(), icon: Users, permission: 'leads.view' },
             { title: 'Clientes', href: clients(), icon: Building2, permission: 'clients.view' },
+            { title: 'Propuestas', href: proposals(), icon: FileSignature, permission: 'proposals.view' },
+            { title: 'Servicios y tarifas', href: services(), icon: Package, permission: 'services.view' },
         ],
     },
     {

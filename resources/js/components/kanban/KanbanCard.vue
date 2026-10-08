@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Clock, Flame, Mail, MessageCircle, Phone, Tag, TriangleAlert } from '@lucide/vue';
+import { Clock, FileSignature, Flame, Mail, MessageCircle, Phone, Tag, TriangleAlert } from '@lucide/vue';
 import { computed } from 'vue';
 import SourceIcon from '@/components/SourceIcon.vue';
 import UserInitials from '@/components/UserInitials.vue';
@@ -87,6 +87,13 @@ const stripe = computed(() => (props.lead.priority === 'urgent' || props.lead.pr
                 <div v-for="c in lead.custom" :key="c.label" class="flex gap-1"><dt class="text-muted-foreground">{{ c.label }}:</dt><dd class="truncate font-medium">{{ c.value }}</dd></div>
             </dl>
         </template>
+
+        <div v-if="lead.proposal" class="mt-2 flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px]" :title="`Propuesta ${lead.proposal.number} · ${lead.proposal.status_label}${lead.proposal.count > 1 ? ' (' + lead.proposal.count + ' propuestas)' : ''}`">
+            <FileSignature class="size-3.5 shrink-0 text-primary" />
+            <span class="font-medium">{{ formatMoneyShort(lead.proposal.total_net) || 'Propuesta' }}</span>
+            <span class="rounded-full px-1.5 py-px font-semibold text-white" :style="{ backgroundColor: lead.proposal.status_color }">{{ lead.proposal.status_label }}</span>
+            <span v-if="lead.proposal.count > 1" class="text-muted-foreground">+{{ lead.proposal.count - 1 }}</span>
+        </div>
 
         <div v-if="(prefs.show.value && lead.estimated_value) || (prefs.show.followup && followUp)" class="mt-2 flex flex-wrap items-center gap-1.5">
             <span v-if="prefs.show.value && lead.estimated_value" class="rounded-full bg-brand-green/10 px-2 py-0.5 text-[11px] font-semibold text-brand-green">{{ formatMoneyShort(lead.estimated_value) }}</span>

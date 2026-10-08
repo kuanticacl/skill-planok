@@ -119,7 +119,8 @@ class DashboardController extends Controller
     {
         $query = $filters->apply(Lead::query(), $user)
             ->where('stage_id', $stageId)
-            ->with(['source:id,name,color,icon', 'assignee:id,name'])
+            ->with(['source:id,name,color,icon', 'assignee:id,name', 'latestProposal'])
+            ->withCount('proposals')
             ->withMax('activities as last_activity_at', 'occurred_at');
 
         return $filters->sort($query);

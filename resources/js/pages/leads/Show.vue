@@ -22,6 +22,7 @@ const data = computed<PanelData>(() => ({
     users: props.users,
     priorities: props.priorities,
     followUpTypes: props.followUpTypes,
+    proposals: props.proposals,
     scoring: props.scoring,
     ai: props.ai,
     can: props.can,

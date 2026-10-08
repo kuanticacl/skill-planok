@@ -65,8 +65,11 @@ const pending = ref<Pending | null>(null);
 
 const persistMove = async (lead: LeadCard, col: BoardColumn, afterId: number | null, extra: Record<string, unknown> = {}) => {
     try {
-        await sendJson('PUT', move(lead.id).url, { stage_id: col.id, after_id: props.manual ? afterId : null, ...extra });
+        const res = await sendJson<{ needs_proposal?: boolean }>('PUT', move(lead.id).url, { stage_id: col.id, after_id: props.manual ? afterId : null, ...extra });
         refresh();
+        if (res.needs_proposal) {
+            toast(`«${lead.full_name}» está en ${col.name} y aún no tiene propuesta`, { action: { label: 'Crear propuesta', onClick: () => router.visit(`/proposals/create?lead=${lead.id}`) }, duration: 9000 });
+        }
     } catch {
         toast.error('No se pudo mover el lead. Se restauró el tablero.');
         refresh();

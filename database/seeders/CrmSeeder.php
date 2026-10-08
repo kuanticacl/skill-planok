@@ -13,18 +13,20 @@ class CrmSeeder extends Seeder
     {
         if (PipelineStage::count() === 0) {
             $stages = [
-                ['Ingreso', '#1AA0E4', 'open'],
-                ['Contactado', '#6419DB', 'open'],
-                ['Agendado', '#DF1E79', 'open'],
-                ['Propuesta', '#FF5300', 'open'],
-                ['Concretado', '#0D9F85', 'won'],
-                ['Descartado', '#8A8A8A', 'lost'],
+                ['Ingreso', '#1AA0E4', 'open', false],
+                ['Contactado', '#6419DB', 'open', false],
+                ['Agendado', '#DF1E79', 'open', false],
+                ['Propuesta', '#FF5300', 'open', true],
+                ['Concretado', '#0D9F85', 'won', true],
+                ['Descartado', '#8A8A8A', 'lost', false],
             ];
 
-            foreach ($stages as $i => [$name, $color, $type]) {
-                PipelineStage::create(['name' => $name, 'color' => $color, 'type' => $type, 'sort_order' => $i]);
+            foreach ($stages as $i => [$name, $color, $type, $needsProposal]) {
+                PipelineStage::create(['name' => $name, 'color' => $color, 'type' => $type, 'sort_order' => $i, 'requires_proposal' => $needsProposal ?? false]);
             }
         }
+
+        $this->call(ServiceSeeder::class);
 
         if (LeadSource::count() === 0) {
             $sources = [

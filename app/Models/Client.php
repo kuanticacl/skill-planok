@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['name', 'legal_name', 'tax_id', 'email', 'phone', 'website', 'address', 'city', 'notes', 'is_active', 'created_by'])]
+#[Fillable(['name', 'legal_name', 'activity', 'tax_id', 'email', 'phone', 'website', 'address', 'commune', 'city', 'contact_name', 'contact_role', 'notes', 'is_active', 'created_by'])]
 class Client extends Model
 {
     use SoftDeletes;
@@ -21,6 +21,11 @@ class Client extends Model
     public function leads(): HasMany
     {
         return $this->hasMany(Lead::class);
+    }
+
+    public function proposals(): HasMany
+    {
+        return $this->hasMany(Proposal::class);
     }
 
     public function creator(): BelongsTo

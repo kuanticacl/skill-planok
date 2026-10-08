@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { GripVertical, Pencil, Plus, Trash2 } from '@lucide/vue';
+import { FileSignature, GripVertical, Pencil, Plus, Trash2 } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import draggable from 'vuedraggable';
 import ColorPicker from '@/components/ColorPicker.vue';
@@ -19,9 +19,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Spinner } from '@/components/ui/spinner';
+import { Switch } from '@/components/ui/switch';
 import { destroy, index, reorder, store, update } from '@/routes/stages';
 
-type Stage = { id: number; name: string; color: string; type: string; leads_count: number };
+type Stage = { id: number; name: string; color: string; type: string; leads_count: number; requires_proposal: boolean };
 
 defineOptions({
     layout: { breadcrumbs: [{ title: 'Etapas del Kanban', href: index() }] },
@@ -38,17 +39,17 @@ const persistOrder = () => {
 
 const dialogOpen = ref(false);
 const editing = ref<Stage | null>(null);
-const form = useForm({ name: '', color: '#1AA0E4', type: 'open' });
+const form = useForm({ name: '', color: '#1AA0E4', type: 'open', requires_proposal: false });
 
 const openCreate = () => {
     editing.value = null;
-    form.defaults({ name: '', color: '#1AA0E4', type: 'open' }).reset();
+    form.defaults({ name: '', color: '#1AA0E4', type: 'open', requires_proposal: false }).reset();
     form.clearErrors();
     dialogOpen.value = true;
 };
 const openEdit = (s: Stage) => {
     editing.value = s;
-    form.defaults({ name: s.name, color: s.color, type: s.type }).reset();
+    form.defaults({ name: s.name, color: s.color, type: s.type, requires_proposal: s.requires_proposal }).reset();
     form.clearErrors();
     dialogOpen.value = true;
 };
@@ -110,6 +111,7 @@ const typeStyle: Record<string, string> = {
                     <span class="w-5 text-center text-xs font-semibold text-muted-foreground">{{ i + 1 }}</span>
                     <span class="size-4 shrink-0 rounded-full" :style="{ backgroundColor: s.color }" />
                     <span class="flex-1 font-medium">{{ s.name }}</span>
+                    <Badge v-if="s.requires_proposal" class="border-transparent bg-primary/10 text-primary" title="Pide propuesta comercial"><FileSignature class="size-3" />Propuesta</Badge>
                     <Badge :class="['border-transparent', typeStyle[s.type]]">{{ types[s.type] }}</Badge>
                     <span class="w-16 text-right text-xs text-muted-foreground">{{ s.leads_count }} leads</span>
                     <Button variant="ghost" size="icon-sm" title="Editar" @click="openEdit(s)"><Pencil /></Button>
@@ -143,6 +145,10 @@ const typeStyle: Record<string, string> = {
                         <option v-for="(label, key) in types" :key="key" :value="key">{{ label }}</option>
                     </NativeSelect>
                 </FormField>
+                <label class="flex items-start gap-3 rounded-xl border bg-muted/30 p-3 text-sm">
+                    <Switch :model-value="form.requires_proposal" class="mt-0.5" @update:model-value="(v: boolean) => (form.requires_proposal = v)" />
+                    <span><strong>Requiere propuesta comercial</strong><span class="block text-xs text-muted-foreground">Al mover un lead a esta etapa sin propuesta, el CRM te ofrece crearla y la muestra en la tarjeta.</span></span>
+                </label>
                 <DialogFooter class="gap-2">
                     <Button type="button" variant="outline" @click="dialogOpen = false">Cancelar</Button>
                     <Button type="submit" :disabled="form.processing"><Spinner v-if="form.processing" /> Guardar</Button>

@@ -72,6 +72,16 @@ class Lead extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
+    public function proposals(): HasMany
+    {
+        return $this->hasMany(Proposal::class)->latest('id');
+    }
+
+    public function latestProposal(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Proposal::class)->latestOfMany();
+    }
+
     public function notes(): HasMany
     {
         return $this->hasMany(LeadNote::class)->latest();

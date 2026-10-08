@@ -23,6 +23,7 @@ class StageController extends Controller
                     'name' => $s->name,
                     'color' => $s->color,
                     'type' => $s->type,
+                    'requires_proposal' => $s->requires_proposal,
                     'leads_count' => $s->leads_count,
                 ]),
             'types' => PipelineStage::TYPES,
@@ -101,6 +102,7 @@ class StageController extends Controller
             'name' => ['required', 'string', 'max:60', Rule::unique('pipeline_stages', 'name')->ignore($stage?->id)],
             'color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'type' => ['required', Rule::in(array_keys(PipelineStage::TYPES))],
+            'requires_proposal' => ['boolean'],
         ]);
     }
 }

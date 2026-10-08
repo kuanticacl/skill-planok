@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import {
     ArrowRightLeft,
+    FileSignature,
     Gauge,
     Building2,
     CalendarClock,
@@ -95,7 +96,12 @@ const changeStage = () => {
         closing.value = { stageId: target.id, type: target.type, name: target.name };
         return;
     }
-    run(() => sendJson('PUT', move(lead.value.id).url, { stage_id: target.id }), `Movido a ${target.name}`);
+    run(async () => offerProposal(await sendJson<{ needs_proposal?: boolean }>('PUT', move(lead.value.id).url, { stage_id: target.id })), `Movido a ${target.name}`);
+};
+const offerProposal = (res: { needs_proposal?: boolean }) => {
+    if (res?.needs_proposal && props.data.can.create_proposal) {
+        toast('Esta etapa pide una propuesta comercial', { action: { label: 'Crear propuesta', onClick: () => router.visit(`/proposals/create?lead=${lead.value.id}`) }, duration: 9000 });
+    }
 };
 const confirmClose = (extra: { lost_reason: string | null; estimated_value: number | null }) => {
     const c = closing.value;
@@ -152,6 +158,7 @@ const typeMeta: Record<string, { icon: typeof Phone; color: string }> = {
     whatsapp: { icon: MessageCircle, color: '#25D366' },
     meeting: { icon: CalendarDays, color: '#DF1E79' },
     task: { icon: ListChecks, color: '#FFA165' },
+    proposal: { icon: FileSignature, color: '#FF5300' },
     other: { icon: CircleDot, color: '#8A8A8A' },
 };
 const meta = (t: string) => typeMeta[t] ?? typeMeta.other;
@@ -259,6 +266,7 @@ const sc = computed(() => props.data.scoring);
             <Tabs v-model="tab">
                 <TabsList>
                     <TabsTrigger value="followup"><ListChecks /> Seguimiento</TabsTrigger>
+                    <TabsTrigger v-if="can.proposals" value="proposals"><FileSignature /> Propuestas ({{ data.proposals.length }})</TabsTrigger>
                     <TabsTrigger value="profile"><Gauge /> Perfil e IA</TabsTrigger>
                     <TabsTrigger value="notes"><StickyNote /> Notas ({{ data.notes.length }})</TabsTrigger>
                     <TabsTrigger v-if="!page" value="data"><Globe /> Datos</TabsTrigger>
@@ -289,6 +297,17 @@ const sc = computed(() => props.data.scoring);
                             <p class="text-xs text-muted-foreground">{{ a.user ?? 'Sistema' }} · {{ formatDateTime(a.occurred_at) }} ({{ timeAgo(a.occurred_at) }})</p>
                         </li>
                     </ol>
+                </TabsContent>
+
+                <TabsContent v-if="can.proposals" value="proposals" class="mt-3 flex flex-col gap-3">
+                    <div class="flex items-center justify-between gap-2 rounded-2xl border bg-card p-4">
+                        <p class="text-sm text-muted-foreground">{{ data.proposals.length ? 'Puedes crear otra propuesta o una nueva versión para este lead.' : 'Este lead aún no tiene propuestas comerciales.' }}</p>
+                        <Button v-if="can.create_proposal" size="sm" as-child><Link :href="`/proposals/create?lead=${lead.id}`"><FileSignature /> Nueva propuesta</Link></Button>
+                    </div>
+                    <Link v-for="pr in data.proposals" :key="pr.id" :href="`/proposals/${pr.id}`" class="flex items-center justify-between gap-3 rounded-2xl border bg-card p-4 transition hover:border-primary/40">
+                        <span class="min-w-0"><span class="block truncate text-sm font-semibold">{{ pr.title }}</span><span class="text-xs text-muted-foreground">{{ pr.number }} · {{ timeAgo(pr.created_at) }}<template v-if="pr.valid_until"> · vence {{ pr.valid_until }}</template></span></span>
+                        <span class="flex shrink-0 flex-col items-end gap-1"><strong class="text-sm">{{ formatMoney(pr.total_net) }}</strong><span class="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white" :style="{ backgroundColor: pr.status_color }">{{ pr.status_label }}</span></span>
+                    </Link>
                 </TabsContent>
 
                 <TabsContent value="profile" class="mt-3">

@@ -50,6 +50,10 @@ export type ClientRow = {
     id: number;
     name: string;
     legal_name: string | null;
+    activity: string | null;
+    commune: string | null;
+    contact_name: string | null;
+    contact_role: string | null;
     tax_id: string | null;
     email: string | null;
     phone: string | null;

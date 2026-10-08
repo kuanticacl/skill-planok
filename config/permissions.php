@@ -49,6 +49,18 @@ return [
                 'clients.delete' => 'Eliminar clientes',
             ],
         ],
+        'proposals' => [
+            'label' => 'Propuestas comerciales',
+            'icon' => 'file-signature',
+            'permissions' => [
+                'proposals.view' => 'Ver propuestas',
+                'proposals.create' => 'Crear y editar propuestas',
+                'proposals.send' => 'Enviar y cambiar el estado de propuestas',
+                'proposals.delete' => 'Eliminar propuestas',
+                'services.view' => 'Ver el catálogo de servicios',
+                'services.manage' => 'Administrar el catálogo de servicios y tarifas',
+            ],
+        ],
         'users' => [
             'label' => 'Usuarios',
             'icon' => 'user-cog',
@@ -121,7 +133,7 @@ return [
             'permissions' => [
                 'dashboard.view',
                 'leads.view', 'leads.create', 'leads.update', 'leads.move', 'leads.notes',
-                'clients.view', 'ai.use',
+                'clients.view', 'ai.use', 'proposals.view', 'proposals.create', 'services.view',
             ],
         ],
         'supervisor' => [
@@ -131,7 +143,7 @@ return [
             'permissions' => [
                 'dashboard.view',
                 'leads.view', 'leads.view_all', 'leads.create', 'leads.update', 'leads.move', 'leads.assign', 'leads.notes',
-                'clients.view', 'clients.create', 'clients.update',
+                'clients.view', 'clients.create', 'clients.update', 'proposals.view', 'proposals.create', 'proposals.send', 'proposals.delete', 'services.view', 'services.manage',
                 'users.view',
                 'templates.view', 'campaigns.view', 'email_logs.view', 'ai.use',
             ],

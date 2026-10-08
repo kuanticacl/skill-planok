@@ -166,6 +166,13 @@ class LeadController extends Controller
                 'user' => $a->user?->name,
                 'occurred_at' => $a->occurred_at->toIso8601String(),
             ]),
+            'proposals' => $user->hasPermission('proposals.view')
+                ? $lead->proposals()->get()->map(fn ($p) => [
+                    'id' => $p->id, 'number' => $p->number, 'title' => $p->title, 'status' => $p->effectiveStatus(),
+                    'status_label' => \App\Models\Proposal::STATUSES[$p->effectiveStatus()], 'status_color' => \App\Models\Proposal::STATUS_COLORS[$p->effectiveStatus()],
+                    'total_net' => $p->total_net, 'total_gross' => $p->total_gross, 'valid_until' => $p->valid_until?->toDateString(), 'created_at' => $p->created_at?->toIso8601String(),
+                ])
+                : [],
             'scoring' => $this->scoring($lead),
             'ai' => $this->aiPanel($user, $lead),
             'priorities' => Lead::PRIORITIES,
@@ -178,6 +185,8 @@ class LeadController extends Controller
                 'delete' => $user->can('delete', $lead),
                 'note' => $user->can('note', $lead),
                 'assign' => $user->hasPermission('leads.assign') && $user->can('view', $lead),
+                'proposals' => $user->hasPermission('proposals.view'),
+                'create_proposal' => $user->hasPermission('proposals.create'),
             ],
         ];
     }
@@ -297,7 +306,12 @@ class LeadController extends Controller
             'estimated_value' => $data['estimated_value'] ?? null,
         ]);
 
-        return $this->respond($request, ['position' => $lead->position, 'stage_id' => $lead->stage_id]);
+        // Etapas como «Propuesta» piden tener una propuesta asociada: se avisa para crearla.
+        $needsProposal = PipelineStage::whereKey($lead->stage_id)->value('requires_proposal')
+            && $request->user()->hasPermission('proposals.create')
+            && ! $lead->proposals()->exists();
+
+        return $this->respond($request, ['position' => $lead->position, 'stage_id' => $lead->stage_id, 'needs_proposal' => (bool) $needsProposal]);
     }
 
     public function assign(Request $request, Lead $lead): JsonResponse|RedirectResponse

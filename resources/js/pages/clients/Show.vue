@@ -30,7 +30,7 @@ const info = [
     { icon: Mail, value: props.client.email },
     { icon: Phone, value: props.client.phone },
     { icon: Globe, value: props.client.website },
-    { icon: MapPin, value: [props.client.address, props.client.city].filter(Boolean).join(', ') },
+    { icon: MapPin, value: [props.client.address, props.client.commune, props.client.city].filter(Boolean).join(', ') },
 ].filter((i) => i.value);
 </script>
 
@@ -38,7 +38,7 @@ const info = [
     <Head :title="client.name" />
 
     <div class="flex flex-col gap-6 p-4 md:p-6">
-        <PageHeader :title="client.name" :description="client.legal_name ?? undefined">
+        <PageHeader :title="client.name" :description="[client.legal_name, client.tax_id].filter(Boolean).join(' · ') || undefined">
             <template #actions>
                 <Badge :class="client.is_active ? 'border-transparent bg-brand-green/10 text-brand-green' : 'border-transparent bg-muted text-muted-foreground'">
                     {{ client.is_active ? 'Activo' : 'Inactivo' }}
@@ -58,6 +58,11 @@ const info = [
                         <p class="font-medium">{{ client.tax_id ?? '—' }}</p>
                     </div>
                 </div>
+                <dl class="mb-4 grid gap-2 text-sm">
+                    <div v-if="client.legal_name"><dt class="text-xs text-muted-foreground">Razón social</dt><dd class="font-medium">{{ client.legal_name }}</dd></div>
+                    <div v-if="client.activity"><dt class="text-xs text-muted-foreground">Giro</dt><dd>{{ client.activity }}</dd></div>
+                    <div v-if="client.contact_name"><dt class="text-xs text-muted-foreground">Contacto</dt><dd>{{ client.contact_name }}<span v-if="client.contact_role" class="text-muted-foreground"> · {{ client.contact_role }}</span></dd></div>
+                </dl>
                 <ul class="grid gap-3 text-sm">
                     <li v-for="i in info" :key="i.value as string" class="flex items-start gap-2.5">
                         <component :is="i.icon" class="mt-0.5 size-4 shrink-0 text-muted-foreground" />

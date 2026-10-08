@@ -229,6 +229,17 @@ Integrada con el **SDK oficial `laravel/ai`**. Todo es opcional: sin proveedor c
 - **Análisis con IA por lead** (pestaña *Perfil e IA*): resumen, señales/riesgos, próximos pasos con canal y plazo, primer mensaje sugerido, preguntas de calificación y mejoras de perfil que **tú aplicas con un clic**. Puede ajustar el puntaje ±10 con su motivo. Opción *Analizar leads automáticamente* en la configuración.
 - **Privacidad:** por defecto no se envían nombre, correo, teléfono ni notas al proveedor; actívalo en *Preferencias* si lo necesitas.
 
+## 8. Clientes, servicios y propuestas comerciales
+
+- **Clientes como empresas:** nombre de fantasía, razón social, **RUT** (se valida el dígito verificador y se formatea como `76.123.456-0`), giro, dirección, comuna, ciudad y contacto principal.
+- **Servicios y tarifas** (*Servicios y tarifas*): catálogo de servicios pre armados con categoría, modalidad (**pago único** o **mensual**), tarifa neta en CLP, descripción y entregables. Permisos `services.view` / `services.manage`.
+- **Propuestas** (*Propuestas*): se arman con servicios del catálogo (ajustables por propuesta sin tocar el catálogo) y **servicios únicos** creados solo para ese cliente. Soportan duración en meses para servicios mensuales, descuento (% o monto), IVA, vigencia y secciones editables (resumen, objetivos, alcance, plan, condiciones). Los totales siempre los recalcula el servidor.
+- **Documento de marca:** la propuesta se ve (y se descarga como PDF desde «Descargar PDF», con estilos de impresión A4) con la identidad de Quiebre: logo, naranja `#FF5300`, Asap, tarjetas redondeadas y botones en píldora. El mismo documento se usa en la vista previa en vivo, en la ficha y en el enlace público.
+- **Enlace público** `/p/{token}` (sin iniciar sesión, `noindex`): registra la primera vista y las visitas, y permite **aceptar o rechazar** con nombre y comentario (queda IP y fecha). Cada hito queda en el historial del lead. Se puede enviar por correo desde el CRM (plantilla transaccional *Propuesta comercial*, editable en Plantillas; requiere el worker de colas) o compartir el enlace por WhatsApp y marcarla como enviada.
+- **Versiones:** un lead o cliente puede tener varias propuestas; «Nueva versión» duplica una existente como borrador. Una propuesta aceptada o rechazada queda bloqueada.
+- **Kanban:** en *Etapas del Kanban* marca las etapas que **requieren propuesta** (por defecto «Propuesta» y «Concretado»). Al mover un lead a una de ellas sin propuesta, el CRM ofrece crearla; la tarjeta muestra la última propuesta (monto y estado) y la ficha del lead tiene la pestaña *Propuestas*. Al enviar una propuesta, si el lead no tiene valor estimado, se usa el de la propuesta.
+- **Ayuda de IA (opcional, `ai.use`):** redactar la propuesta completa (resumen, objetivos, alcance, plan), mejorar cada sección (más breve, persuasivo, formal, corregir o con tus instrucciones), describir servicios y entregables, y **sugerir servicios del catálogo** según la necesidad y el mensaje del lead. La IA no recibe nombres: trabaja con los marcadores `[CLIENTE]` y `[CONTACTO]`; las condiciones comerciales son fijas y no las inventa.
+
 ## Estructura
 
 ```

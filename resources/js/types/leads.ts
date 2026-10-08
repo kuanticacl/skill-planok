@@ -27,6 +27,7 @@ export type LeadCard = {
     last_activity_at: string | null;
     created_at: string;
     stage?: StageRef;
+    proposal?: { id: number; number: string; status: string; status_label: string; status_color: string; total_net: number; count: number } | null;
 };
 
 export type BoardColumn = {
@@ -93,7 +94,10 @@ export type AiAnalysis = {
 };
 export type AiPanel = { can_use: boolean; available: boolean; can_configure: boolean; analysis: AiAnalysis | null; analyzed_at: string | null; stale: boolean };
 
+export type LeadProposal = { id: number; number: string; title: string; status: string; status_label: string; status_color: string; total_net: number; total_gross: number; valid_until: string | null; created_at: string };
+
 export type PanelData = {
+    proposals: LeadProposal[];
     scoring: Scoring;
     ai: AiPanel;
     lead: LeadDetail;
@@ -104,6 +108,6 @@ export type PanelData = {
     users: UserOption[];
     priorities: Record<string, string>;
     followUpTypes: Record<string, string>;
-    can: { update: boolean; move: boolean; delete: boolean; note: boolean; assign: boolean };
+    can: { update: boolean; move: boolean; delete: boolean; note: boolean; assign: boolean; proposals?: boolean; create_proposal?: boolean };
 };
 

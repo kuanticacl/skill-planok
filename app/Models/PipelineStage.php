@@ -6,10 +6,15 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'color', 'type', 'sort_order'])]
+#[Fillable(['name', 'color', 'type', 'sort_order', 'requires_proposal'])]
 class PipelineStage extends Model
 {
     public const TYPES = ['open' => 'En curso', 'won' => 'Concretado', 'lost' => 'Descartado'];
+
+    protected function casts(): array
+    {
+        return ['requires_proposal' => 'boolean'];
+    }
 
     public function leads(): HasMany
     {

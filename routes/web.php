@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Ai\AiEmailController;
+use App\Http\Controllers\Ai\AiProposalController;
 use App\Http\Controllers\Ai\AiSettingsController;
 use App\Http\Controllers\Ai\LeadAiController;
 use App\Http\Controllers\ClientController;
@@ -17,6 +18,9 @@ use App\Http\Controllers\LeadActivityController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LeadNoteController;
 use App\Http\Controllers\LeadFieldController;
+use App\Http\Controllers\Proposals\ProposalController;
+use App\Http\Controllers\Public\ProposalViewController as PublicProposalController;
+use App\Http\Controllers\Proposals\ServiceController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SourceController;
 use App\Http\Controllers\StageController;
@@ -36,6 +40,10 @@ Route::get('/', function (Request $request) {
 
     return $user ? to_route('profile.edit') : to_route('login');
 })->name('home');
+
+// Propuesta comercial para el cliente: enlace privado (token), sin iniciar sesión.
+Route::get('p/{token}', [PublicProposalController::class, 'show'])->name('proposals.public');
+Route::post('p/{token}/respond', [PublicProposalController::class, 'answer'])->middleware('throttle:10,1')->name('proposals.public.respond');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->middleware('can:dashboard.view')->name('dashboard');
@@ -106,6 +114,44 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('fields/reorder', [LeadFieldController::class, 'reorder'])->name('fields.reorder');
             Route::put('fields/{field}', [LeadFieldController::class, 'update'])->name('fields.update');
             Route::delete('fields/{field}', [LeadFieldController::class, 'destroy'])->name('fields.destroy');
+        });
+    });
+
+    // Propuestas comerciales y catálogo de servicios
+    Route::prefix('proposals')->group(function () {
+        Route::get('/', [ProposalController::class, 'index'])->middleware('can:proposals.view')->name('proposals.index');
+        Route::middleware('can:proposals.create')->group(function () {
+            Route::get('create', [ProposalController::class, 'create'])->name('proposals.create');
+            Route::post('/', [ProposalController::class, 'store'])->name('proposals.store');
+            Route::post('preview', [ProposalController::class, 'preview'])->name('proposals.preview');
+            Route::get('{proposal}/edit', [ProposalController::class, 'edit'])->name('proposals.edit');
+            Route::put('{proposal}', [ProposalController::class, 'update'])->name('proposals.update');
+            Route::post('{proposal}/duplicate', [ProposalController::class, 'duplicate'])->name('proposals.duplicate');
+        });
+        Route::middleware('can:proposals.send')->group(function () {
+            Route::post('{proposal}/send', [ProposalController::class, 'send'])->name('proposals.send');
+            Route::post('{proposal}/mark-sent', [ProposalController::class, 'markSentManually'])->name('proposals.mark-sent');
+            Route::put('{proposal}/status', [ProposalController::class, 'status'])->name('proposals.status');
+        });
+        Route::delete('{proposal}', [ProposalController::class, 'destroy'])->middleware('can:proposals.delete')->name('proposals.destroy');
+        Route::middleware('can:proposals.view')->group(function () {
+            Route::get('{proposal}', [ProposalController::class, 'show'])->name('proposals.show');
+            Route::get('{proposal}/document', [ProposalController::class, 'document'])->name('proposals.document');
+        });
+    });
+    Route::middleware(['can:ai.use', 'throttle:20,1'])->prefix('proposals/ai')->group(function () {
+        Route::post('draft', [AiProposalController::class, 'draft'])->middleware('can:proposals.create')->name('proposals.ai.draft');
+        Route::post('improve', [AiProposalController::class, 'improve'])->middleware('can:proposals.create')->name('proposals.ai.improve');
+        Route::post('suggest', [AiProposalController::class, 'suggest'])->middleware('can:proposals.create')->name('proposals.ai.suggest');
+        Route::post('service', [AiProposalController::class, 'service'])->name('proposals.ai.service');
+    });
+    Route::get('leads/{lead}/proposals', [ProposalController::class, 'forLead'])->middleware('can:proposals.view')->name('leads.proposals');
+    Route::prefix('services')->group(function () {
+        Route::get('/', [ServiceController::class, 'index'])->middleware('can:services.view')->name('services.index');
+        Route::middleware('can:services.manage')->group(function () {
+            Route::post('/', [ServiceController::class, 'store'])->name('services.store');
+            Route::put('{service}', [ServiceController::class, 'update'])->name('services.update');
+            Route::delete('{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
         });
     });
 
