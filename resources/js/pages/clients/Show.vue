@@ -69,7 +69,7 @@ const info = [
                         <span class="break-all">{{ i.value }}</span>
                     </li>
                 </ul>
-                <p v-if="client.notes" class="mt-4 border-t pt-4 text-sm whitespace-pre-line text-muted-foreground">{{ client.notes }}</p>
+                <div v-if="client.notes_html" class="rich mt-4 border-t pt-4 text-sm text-muted-foreground" v-html="client.notes_html" />
             </DataCard>
 
             <DataCard class="lg:col-span-2">

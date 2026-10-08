@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['name', 'category', 'description', 'deliverables', 'billing', 'unit', 'price', 'is_active', 'sort_order'])]
+#[Fillable(['name', 'category', 'description', 'deliverables', 'billing', 'unit', 'currency', 'price', 'is_active', 'sort_order'])]
 class Service extends Model
 {
     use SoftDeletes;
@@ -15,6 +15,6 @@ class Service extends Model
 
     protected function casts(): array
     {
-        return ['deliverables' => 'array', 'is_active' => 'boolean', 'price' => 'integer'];
+        return ['deliverables' => 'array', 'is_active' => 'boolean', 'price' => 'float'];
     }
 }

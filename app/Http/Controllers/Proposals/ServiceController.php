@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Proposals;
 
 use App\Http\Controllers\Controller;
 use App\Models\Service;
+use App\Support\ProposalText;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,7 +17,8 @@ class ServiceController extends Controller
     {
         return Inertia::render('proposals/Services', [
             'services' => Service::orderBy('category')->orderBy('sort_order')->orderBy('id')->get()
-                ->map(fn (Service $s) => $s->only(['id', 'name', 'category', 'description', 'deliverables', 'billing', 'unit', 'price', 'is_active'])),
+                ->map(fn (Service $s) => $s->only(['id', 'name', 'category', 'description', 'deliverables', 'billing', 'unit', 'currency', 'price', 'is_active'])),
+            'uf' => app(\App\Services\UfService::class)->today(),
             'categories' => Service::distinct()->orderBy('category')->pluck('category'),
             'ai' => ['enabled' => $request->user()->hasPermission('ai.use') && app(\App\Services\Ai\AiGateway::class)->isAvailable()],
             'can' => ['manage' => $request->user()->hasPermission('services.manage')],
@@ -53,15 +55,17 @@ class ServiceController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:160'],
             'category' => ['required', 'string', 'max:60'],
-            'description' => ['nullable', 'string', 'max:3000'],
+            'description' => ['nullable', 'string', 'max:20000'],
             'deliverables' => ['nullable', 'array', 'max:20'],
             'deliverables.*' => ['string', 'max:200'],
             'billing' => ['required', 'in:one_time,monthly'],
             'unit' => ['required', 'string', 'max:30'],
-            'price' => ['required', 'integer', 'min:0', 'max:9999999999'],
+            'currency' => ['required', 'in:UF,CLP'],
+            'price' => ['required', 'numeric', 'min:0', 'max:99999999999'],
             'is_active' => ['boolean'],
         ], ['name.required' => 'Indica el nombre del servicio.', 'price.required' => 'Indica la tarifa.']);
 
+        $data['description'] = isset($data['description']) ? ProposalText::sanitize($data['description']) : null;
         $data['deliverables'] = array_values(array_filter(array_map('trim', $data['deliverables'] ?? []))) ?: null;
 
         return $data;

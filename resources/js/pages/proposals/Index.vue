@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useDebouncedFilters } from '@/composables/useDebouncedFilters';
-import { formatMoney, formatMoneyShort } from '@/lib/leadUi';
+import { formatAmount, formatMoneyShort } from '@/lib/leadUi';
 import { cn } from '@/lib/utils';
 import { create, index, show } from '@/routes/proposals';
 import { index as services } from '@/routes/services';
@@ -76,8 +76,8 @@ const fmt = (d: string | null) => (d ? new Intl.DateTimeFormat('es-CL', { dateSt
                         <TableCell>{{ p.company ?? '—' }}<p v-if="p.contact" class="text-xs text-muted-foreground">{{ p.contact }}</p></TableCell>
                         <TableCell><span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-white" :style="{ backgroundColor: p.status_color }">{{ p.status_label }}</span></TableCell>
                         <TableCell class="text-right font-semibold">
-                            {{ formatMoney(p.total_net) }}
-                            <p v-if="p.total_monthly" class="text-[11px] font-normal text-muted-foreground">{{ formatMoneyShort(p.total_monthly) }}/mes</p>
+                            {{ formatAmount(p.total_net, p.currency) }}
+                            <p v-if="p.total_monthly" class="text-[11px] font-normal text-muted-foreground">{{ formatAmount(p.total_monthly, p.currency) }}/mes</p>
                         </TableCell>
                         <TableCell class="text-muted-foreground">{{ fmt(p.valid_until) }}</TableCell>
                         <TableCell class="text-muted-foreground">{{ p.owner ?? '—' }}</TableCell>

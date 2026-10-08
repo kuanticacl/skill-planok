@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import RichTextEditor from '@/components/RichTextEditor.vue';
 import { AlignCenter, AlignLeft, AlignRight } from '@lucide/vue';
 import ColorField from '@/components/email/ColorField.vue';
 import ImageField from '@/components/email/ImageField.vue';
@@ -39,6 +40,7 @@ defineProps<{ block: Block; variables: string[]; system: string[] }>();
                 <option v-for="o in f.options" :key="o.value" :value="o.value">{{ o.label }}</option>
             </NativeSelect>
             <Input v-else-if="f.type === 'number'" v-model.number="block.props[f.key]" type="number" :min="f.min" :max="f.max" step="any" />
+            <RichTextEditor v-else-if="f.type === 'rich'" v-model="block.props[f.key]" :variables="variables" :system="system" :min-height="130" />
             <VariableField v-else-if="f.variables" v-model="block.props[f.key]" :multiline="f.type === 'textarea'" :variables="variables" :system="system" :rows="f.type === 'textarea' ? 5 : undefined" />
             <Input v-else v-model="block.props[f.key]" :type="f.type === 'url' ? 'url' : 'text'" :placeholder="f.type === 'url' ? 'https://…' : ''" />
 

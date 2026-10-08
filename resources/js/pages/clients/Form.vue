@@ -4,11 +4,11 @@ import { computed, watch } from 'vue';
 import DataCard from '@/components/DataCard.vue';
 import FormField from '@/components/FormField.vue';
 import PageHeader from '@/components/PageHeader.vue';
+import RichTextEditor from '@/components/RichTextEditor.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
 import { formatRut } from '@/lib/rut';
 import { index, store, update } from '@/routes/clients';
 import type { ClientRow } from '@/types';
@@ -82,7 +82,7 @@ const submit = () => {
                     <FormField label="Correo" for="email" :error="form.errors.email"><Input id="email" v-model="form.email" type="email" /></FormField>
                     <FormField label="Teléfono" for="phone" :error="form.errors.phone"><Input id="phone" v-model="form.phone" /></FormField>
                     <FormField label="Notas" for="notes" :error="form.errors.notes" class="sm:col-span-2">
-                        <Textarea id="notes" v-model="form.notes" rows="3" />
+                        <RichTextEditor v-model="form.notes" compact :min-height="90" placeholder="Notas internas sobre este cliente…" />
                     </FormField>
                     <label class="flex items-center gap-3 text-sm sm:col-span-2">
                         <Switch :model-value="form.is_active" @update:model-value="(v: boolean) => (form.is_active = v)" />

@@ -15,6 +15,7 @@ use App\Services\LeadService;
 use App\Services\Leads\LeadAnalyst;
 use App\Services\Leads\LeadScorer;
 use App\Support\LeadPresenter;
+use App\Support\ProposalText;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -154,6 +155,7 @@ class LeadController extends Controller
             'notes' => $lead->notes()->visibleTo($user)->with('author:id,name')->get()->map(fn ($n) => [
                 'id' => $n->id,
                 'body' => $n->body,
+                'body_html' => ProposalText::html($n->body),
                 'is_private' => $n->is_private,
                 'author' => $n->author?->name ?? 'Usuario eliminado',
                 'mine' => $n->user_id === $user->id,
@@ -170,7 +172,7 @@ class LeadController extends Controller
                 ? $lead->proposals()->get()->map(fn ($p) => [
                     'id' => $p->id, 'number' => $p->number, 'title' => $p->title, 'status' => $p->effectiveStatus(),
                     'status_label' => \App\Models\Proposal::STATUSES[$p->effectiveStatus()], 'status_color' => \App\Models\Proposal::STATUS_COLORS[$p->effectiveStatus()],
-                    'total_net' => $p->total_net, 'total_gross' => $p->total_gross, 'valid_until' => $p->valid_until?->toDateString(), 'created_at' => $p->created_at?->toIso8601String(),
+                    'currency' => $p->currency, 'total_net' => $p->total_net, 'total_gross' => $p->total_gross, 'valid_until' => $p->valid_until?->toDateString(), 'created_at' => $p->created_at?->toIso8601String(),
                 ])
                 : [],
             'scoring' => $this->scoring($lead),

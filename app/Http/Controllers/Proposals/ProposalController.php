@@ -11,6 +11,8 @@ use App\Models\User;
 use App\Services\Ai\AiGateway;
 use App\Services\LeadService;
 use App\Services\Proposals\ProposalBuilder;
+use App\Services\UfService;
+use App\Support\ProposalText;
 use App\Services\Proposals\ProposalMailer;
 use App\Services\Proposals\ProposalPdf;
 use App\Services\Proposals\ProposalView;
@@ -39,7 +41,7 @@ class ProposalController extends Controller
 
         $rows->getCollection()->transform(fn (Proposal $p) => $this->row($p));
 
-        $summary = Proposal::query()->visibleTo($user)->selectRaw('status, count(*) c, sum(total_net) net')->groupBy('status')->get()->keyBy('status');
+        $summary = Proposal::query()->visibleTo($user)->selectRaw("status, count(*) c, sum(CASE WHEN currency = 'UF' THEN total_net * COALESCE(uf_value, 0) ELSE total_net END) net")->groupBy('status')->get()->keyBy('status');
 
         return Inertia::render('proposals/Index', [
             'proposals' => $rows,
@@ -59,6 +61,7 @@ class ProposalController extends Controller
 
         return Inertia::render('proposals/Builder', $this->builderProps($request, null, [
             'title' => $title,
+            'currency' => 'UF',
             'client_id' => $client?->id,
             'lead_id' => $lead?->id,
             'recipient' => ProposalBuilder::recipientFor($client, $lead),
@@ -78,7 +81,7 @@ class ProposalController extends Controller
         $this->authorizeView($request, $proposal);
 
         return Inertia::render('proposals/Builder', $this->builderProps($request, $proposal, [
-            ...$proposal->only(['title', 'client_id', 'lead_id', 'recipient', 'sections', 'contract_months', 'discount_type', 'discount_value', 'tax_rate', 'internal_notes']),
+            ...$proposal->only(['title', 'currency', 'client_id', 'lead_id', 'recipient', 'sections', 'contract_months', 'discount_type', 'discount_value', 'tax_rate', 'internal_notes']),
             'valid_until' => $proposal->valid_until?->toDateString(),
             'items' => $proposal->items->map(fn ($i) => $i->only(['service_id', 'name', 'description', 'deliverables', 'billing', 'unit', 'quantity', 'unit_price', 'discount_pct']))->all(),
         ]));
@@ -136,6 +139,7 @@ class ProposalController extends Controller
                 'responded_by' => $proposal->responded_by,
                 'response_note' => $proposal->response_note,
                 'internal_notes' => $proposal->internal_notes,
+                'internal_notes_html' => ProposalText::html($proposal->internal_notes),
                 'total_one_time' => $proposal->total_one_time,
                 'total_monthly' => $proposal->total_monthly,
                 'total_tax' => $proposal->total_tax,
@@ -258,11 +262,17 @@ class ProposalController extends Controller
 
     private function markSent(Proposal $proposal, User $user, string $log): void
     {
+        $wasDraft = $proposal->status === 'draft';
         $proposal->forceFill(['status' => in_array($proposal->status, ['viewed'], true) ? 'viewed' : 'sent', 'sent_at' => now(), 'issued_at' => $proposal->issued_at ?? now()])->save();
 
-        // Si el lead aún no tiene valor estimado, se usa el de la propuesta.
+        // Al emitir, la UF del día queda guardada en la propuesta (valor y fecha de referencia).
+        if ($wasDraft) {
+            $this->builder->freezeUf($proposal);
+        }
+
+        // Si el lead aún no tiene valor estimado, se usa el de la propuesta (en pesos).
         if ($proposal->lead && ! $proposal->lead->estimated_value && $proposal->total_net > 0) {
-            app(LeadService::class)->update($proposal->lead, ['estimated_value' => $proposal->total_net], $user);
+            app(LeadService::class)->update($proposal->lead, ['estimated_value' => $proposal->clp($proposal->total_net)], $user);
         }
         $this->touchLead($proposal, $user, $log);
     }
@@ -303,8 +313,12 @@ class ProposalController extends Controller
             'client' => $p->client?->only(['id', 'name']),
             'lead' => $p->lead ? ['id' => $p->lead->id, 'name' => $p->lead->full_name] : null,
             'owner' => $p->owner?->name,
+            'currency' => $p->currency,
+            'uf_value' => $p->uf_value,
+            'uf_date' => $p->uf_date?->toDateString(),
             'total_net' => $p->total_net,
             'total_gross' => $p->total_gross,
+            'total_gross_clp' => $p->clp($p->total_gross),
             'total_monthly' => $p->total_monthly,
             'total_one_time' => $p->total_one_time,
             'valid_until' => $p->valid_until?->toDateString(),
@@ -332,8 +346,9 @@ class ProposalController extends Controller
         return [
             'proposal' => $proposal ? ['id' => $proposal->id, 'number' => $proposal->number, 'status' => $proposal->effectiveStatus(), 'is_final' => $proposal->isFinal()] : null,
             'initial' => $initial,
+            'uf' => app(UfService::class)->today(),
             'services' => Service::where('is_active', true)->orderBy('category')->orderBy('sort_order')->get()
-                ->map(fn (Service $s) => $s->only(['id', 'name', 'category', 'description', 'deliverables', 'billing', 'unit', 'price'])),
+                ->map(fn (Service $s) => $s->only(['id', 'name', 'category', 'description', 'deliverables', 'billing', 'unit', 'currency', 'price'])),
             'clients' => Client::where('is_active', true)->orderBy('name')->get()->map(fn (Client $c) => [
                 'id' => $c->id, 'name' => $c->name, 'recipient' => ProposalBuilder::recipientFor($c, null),
             ]),
@@ -366,23 +381,24 @@ class ProposalController extends Controller
             'recipient.phone' => ['nullable', 'string', 'max:40'],
             'sections' => ['nullable', 'array', 'max:15'],
             'sections.*.title' => ['nullable', 'string', 'max:160'],
-            'sections.*.body' => ['nullable', 'string', 'max:8000'],
+            'sections.*.body' => ['nullable', 'string', 'max:30000'],
             'valid_until' => ['nullable', 'date'],
             'contract_months' => ['nullable', 'integer', 'min:1', 'max:60'],
+            'currency' => ['required', 'in:UF,CLP'],
             'discount_type' => ['required', 'in:percent,amount'],
-            'discount_value' => ['nullable', 'integer', 'min:0', 'max:9999999999'],
+            'discount_value' => ['nullable', 'numeric', 'min:0', 'max:99999999999'],
             'tax_rate' => ['required', 'integer', 'min:0', 'max:30'],
-            'internal_notes' => ['nullable', 'string', 'max:3000'],
+            'internal_notes' => ['nullable', 'string', 'max:20000'],
             'items' => ['nullable', 'array', 'max:40'],
             'items.*.service_id' => ['nullable', 'integer', 'exists:services,id'],
             'items.*.name' => ['required', 'string', 'max:200'],
-            'items.*.description' => ['nullable', 'string', 'max:3000'],
+            'items.*.description' => ['nullable', 'string', 'max:20000'],
             'items.*.deliverables' => ['nullable', 'array', 'max:20'],
             'items.*.deliverables.*' => ['nullable', 'string', 'max:200'],
             'items.*.billing' => ['required', 'in:one_time,monthly'],
             'items.*.unit' => ['nullable', 'string', 'max:30'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01', 'max:100000'],
-            'items.*.unit_price' => ['required', 'integer', 'min:0', 'max:9999999999'],
+            'items.*.unit_price' => ['required', 'numeric', 'min:0', 'max:99999999999'],
             'items.*.discount_pct' => ['nullable', 'integer', 'min:0', 'max:100'],
         ];
     }

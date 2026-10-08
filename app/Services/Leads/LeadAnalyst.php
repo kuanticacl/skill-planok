@@ -59,7 +59,7 @@ class LeadAnalyst
             $ctx['empresa'] = $lead->company;
             $ctx['correo'] = $lead->email;
             $ctx['telefono'] = $lead->phone;
-            $ctx['notas'] = $lead->notes()->where('is_private', false)->limit(5)->pluck('body')->map(fn ($b) => mb_substr($b, 0, 400))->all();
+            $ctx['notas'] = $lead->notes()->where('is_private', false)->limit(5)->pluck('body')->map(fn ($b) => mb_substr(\App\Support\ProposalText::plain($b), 0, 400))->all();
         } else {
             $ctx['tiene_empresa'] = filled($lead->company);
             $ctx['tiene_telefono'] = filled($lead->phone);

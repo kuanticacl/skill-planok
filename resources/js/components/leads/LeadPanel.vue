@@ -26,6 +26,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 import CloseStageDialog from '@/components/kanban/CloseStageDialog.vue';
 import LeadProfile from '@/components/leads/LeadProfile.vue';
+import RichTextEditor from '@/components/RichTextEditor.vue';
 import SourceIcon from '@/components/SourceIcon.vue';
 import TagInput from '@/components/TagInput.vue';
 import { Button } from '@/components/ui/button';
@@ -34,11 +35,10 @@ import { NativeSelect } from '@/components/ui/native-select';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
 import UserInitials from '@/components/UserInitials.vue';
 import { formatDateTime, timeAgo } from '@/lib/format';
 import { sendJson } from '@/lib/http';
-import { followUpClass, followUpInfo, formatMoney, gradeMeta, priorityMeta, toLocalInput, whatsappUrl } from '@/lib/leadUi';
+import { followUpClass, followUpInfo, formatAmount, formatMoney, gradeMeta, priorityMeta, toLocalInput, whatsappUrl } from '@/lib/leadUi';
 import { cn } from '@/lib/utils';
 import { assign, edit, move, quick } from '@/routes/leads';
 import { store as storeActivity } from '@/routes/leads/activities';
@@ -306,7 +306,7 @@ const sc = computed(() => props.data.scoring);
                     </div>
                     <Link v-for="pr in data.proposals" :key="pr.id" :href="`/proposals/${pr.id}`" class="flex items-center justify-between gap-3 rounded-2xl border bg-card p-4 transition hover:border-primary/40">
                         <span class="min-w-0"><span class="block truncate text-sm font-semibold">{{ pr.title }}</span><span class="text-xs text-muted-foreground">{{ pr.number }} · {{ timeAgo(pr.created_at) }}<template v-if="pr.valid_until"> · vence {{ pr.valid_until }}</template></span></span>
-                        <span class="flex shrink-0 flex-col items-end gap-1"><strong class="text-sm">{{ formatMoney(pr.total_net) }}</strong><span class="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white" :style="{ backgroundColor: pr.status_color }">{{ pr.status_label }}</span></span>
+                        <span class="flex shrink-0 flex-col items-end gap-1"><strong class="text-sm">{{ formatAmount(pr.total_net, pr.currency) }}</strong><span class="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white" :style="{ backgroundColor: pr.status_color }">{{ pr.status_label }}</span></span>
                     </Link>
                 </TabsContent>
 
@@ -316,7 +316,7 @@ const sc = computed(() => props.data.scoring);
 
                 <TabsContent value="notes" class="mt-3 flex flex-col gap-4">
                     <form v-if="can.note" class="grid gap-3 rounded-2xl border bg-card p-4" @submit.prevent="addNote">
-                        <Textarea v-model="note.body" rows="3" placeholder="Escribe una nota interna sobre este lead…" />
+                        <RichTextEditor v-model="note.body" compact :min-height="80" placeholder="Escribe una nota interna sobre este lead…" />
                         <div class="flex items-center justify-between gap-3">
                             <label class="flex items-center gap-2.5 text-sm">
                                 <Switch :model-value="note.is_private" @update:model-value="(v: boolean) => (note.is_private = v)" />
@@ -327,7 +327,7 @@ const sc = computed(() => props.data.scoring);
                     </form>
                     <p v-if="!data.notes.length" class="rounded-2xl border border-dashed bg-card py-8 text-center text-sm text-muted-foreground">Aún no hay notas.</p>
                     <article v-for="n in data.notes" :key="n.id" class="rounded-2xl border p-4" :class="n.is_private ? 'border-primary/30 bg-accent/50' : 'bg-card'">
-                        <p class="text-sm whitespace-pre-line">{{ n.body }}</p>
+                        <div class="rich text-sm" v-html="n.body_html" />
                         <div class="mt-2 flex items-center justify-between text-xs text-muted-foreground">
                             <span class="flex items-center gap-1.5">
                                 <Lock v-if="n.is_private" class="size-3 text-primary" />{{ n.author }} · {{ timeAgo(n.created_at) }}

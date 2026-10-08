@@ -5,6 +5,10 @@ export type ProposalRow = {
     status: 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired';
     status_label: string;
     status_color: string;
+    currency: 'UF' | 'CLP';
+    uf_value: number | null;
+    uf_date: string | null;
+    total_gross_clp: number;
     company: string | null;
     contact: string | null;
     client: { id: number; name: string } | null;
@@ -44,4 +48,4 @@ export type ProposalItemInput = {
     discount_pct: number;
 };
 
-export type CatalogService = { id: number; name: string; category: string; description: string | null; deliverables: string[] | null; billing: 'one_time' | 'monthly'; unit: string; price: number };
+export type CatalogService = { id: number; name: string; category: string; description: string | null; deliverables: string[] | null; billing: 'one_time' | 'monthly'; unit: string; currency: 'UF' | 'CLP'; price: number };

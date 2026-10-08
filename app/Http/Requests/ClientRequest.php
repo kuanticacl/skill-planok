@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\ProposalText;
 use App\Support\Rut;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -32,7 +33,7 @@ class ClientRequest extends FormRequest
             'website' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:120'],
-            'notes' => ['nullable', 'string', 'max:5000'],
+            'notes' => ['nullable', 'string', 'max:20000'],
             'is_active' => ['boolean'],
         ];
     }
@@ -43,6 +44,10 @@ class ClientRequest extends FormRequest
         $data = parent::validated();
         if (! empty($data['tax_id'])) {
             $data['tax_id'] = Rut::format($data['tax_id']); // siempre 76.123.456-7
+        }
+
+        if (! empty($data['notes'])) {
+            $data['notes'] = ProposalText::sanitize((string) $data['notes']);
         }
 
         return $key ? data_get($data, $key, $default) : $data;

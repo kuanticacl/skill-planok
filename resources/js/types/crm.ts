@@ -61,6 +61,7 @@ export type ClientRow = {
     address: string | null;
     city: string | null;
     notes: string | null;
+    notes_html?: string;
     is_active: boolean;
     leads_count?: number;
     created_at: string;

@@ -34,6 +34,11 @@ php artisan config:clear >/dev/null 2>&1 || true
 php artisan migrate --force
 php artisan crm:install
 
+# Datos de muestra (un cliente + propuestas por origen): activar con SEED_DEMO=true; solo se cargan una vez.
+if [ "${SEED_DEMO:-false}" = "true" ]; then
+    php artisan crm:seed-demo
+fi
+
 # Enlace público de storage y cachés de producción.
 [ -L public/storage ] || php artisan storage:link || true
 php artisan config:cache

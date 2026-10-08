@@ -6,6 +6,8 @@ use App\Models\Client;
 use App\Models\Lead;
 use App\Models\Proposal;
 use App\Models\ProposalItem;
+use App\Services\UfService;
+use App\Support\ProposalText;
 use App\Support\Rut;
 use Illuminate\Support\Facades\DB;
 
@@ -20,7 +22,7 @@ class ProposalBuilder
             ['title' => 'Objetivos', 'body' => "- Generar leads calificados para sus proyectos\n- Mejorar la conversión de contacto a visita y de visita a venta\n- Medir el retorno de cada peso invertido con reportes claros"],
             ['title' => 'Alcance de los servicios', 'body' => 'A continuación se detallan los servicios incluidos, sus entregables y la modalidad de cobro de cada uno.'],
             ['title' => 'Plan de trabajo y plazos', 'body' => "- **Semana 1:** kick-off, accesos y diagnóstico\n- **Semana 2:** configuración y puesta en marcha\n- **Desde la semana 3:** optimización continua y reporte mensual"],
-            ['title' => 'Condiciones comerciales', 'body' => "- Valores netos en pesos chilenos; se agrega IVA\n- Los servicios mensuales se facturan por mes anticipado\n- Los servicios de pago único se facturan 50% al aceptar y 50% al entregar\n- La inversión publicitaria en plataformas (Meta, Google, etc.) no está incluida y la paga directamente el cliente"],
+            ['title' => 'Condiciones comerciales', 'body' => "- Valores netos expresados en la moneda indicada (UF o pesos); se agrega IVA\n- La UF de referencia es la del día de emisión de esta propuesta (queda indicada en el documento)\n- Los servicios mensuales se facturan por mes anticipado\n- Los servicios de pago único se facturan 50% al aceptar y 50% al entregar\n- La inversión publicitaria en plataformas (Meta, Google, etc.) no está incluida y la paga directamente el cliente"],
             ['title' => 'Aceptación', 'body' => 'Para aceptar esta propuesta, ingrese al enlace recibido y presione «Aceptar propuesta», o responda este correo indicando su conformidad.'],
         ];
     }
@@ -50,12 +52,12 @@ class ProposalBuilder
         $items = collect($data['items'] ?? [])->values()->map(fn ($i, $n) => new ProposalItem([
             'service_id' => $i['service_id'] ?? null,
             'name' => $i['name'],
-            'description' => $i['description'] ?? null,
+            'description' => isset($i['description']) ? ProposalText::sanitize((string) $i['description']) : null,
             'deliverables' => array_values(array_filter($i['deliverables'] ?? [])),
             'billing' => $i['billing'] ?? 'one_time',
             'unit' => $i['unit'] ?? 'servicio',
             'quantity' => $i['quantity'] ?? 1,
-            'unit_price' => (int) ($i['unit_price'] ?? 0),
+            'unit_price' => (float) ($i['unit_price'] ?? 0),
             'discount_pct' => (int) ($i['discount_pct'] ?? 0),
             'sort_order' => $n,
         ]));
@@ -70,22 +72,48 @@ class ProposalBuilder
             'client_id' => $data['client_id'] ?? null,
             'lead_id' => $data['lead_id'] ?? null,
             'recipient' => $recipient,
-            'sections' => collect($data['sections'] ?? [])->map(fn ($s) => ['title' => trim((string) ($s['title'] ?? '')), 'body' => trim((string) ($s['body'] ?? ''))])->filter(fn ($s) => $s['title'] !== '' || $s['body'] !== '')->values()->all(),
+            'sections' => collect($data['sections'] ?? [])->map(fn ($s) => ['title' => trim((string) ($s['title'] ?? '')), 'body' => ProposalText::isHtml($s['body'] ?? '') ? ProposalText::sanitize((string) $s['body']) : trim((string) ($s['body'] ?? ''))])->filter(fn ($s) => $s['title'] !== '' || $s['body'] !== '')->values()->all(),
             'valid_until' => $data['valid_until'] ?? null,
             'contract_months' => $data['contract_months'] ?? null,
             'discount_type' => $data['discount_type'] ?? 'percent',
-            'discount_value' => (int) ($data['discount_value'] ?? 0),
+            'discount_value' => (float) ($data['discount_value'] ?? 0),
+            'currency' => in_array($data['currency'] ?? 'UF', ['UF', 'CLP'], true) ? $data['currency'] : 'UF',
             'tax_rate' => (int) ($data['tax_rate'] ?? 19),
-            'internal_notes' => $data['internal_notes'] ?? null,
+            'internal_notes' => isset($data['internal_notes']) ? ProposalText::sanitize((string) $data['internal_notes']) : null,
         ]);
         if (! empty($data['user_id'])) {
             $p->user_id = $data['user_id'];
         }
 
         $p->setRelation('items', $items);
+        $this->snapshotUf($p);
         $this->recalculate($p);
 
         return $p;
+    }
+
+    /**
+     * La UF de referencia es la del día en que se trabaja la cotización mientras es borrador; al enviarla
+     * queda congelada (ver freezeUf).
+     */
+    public function snapshotUf(Proposal $p): void
+    {
+        if (($p->exists && $p->status !== 'draft') || ($p->uf_value && $p->exists && $p->uf_date?->isToday())) {
+            return;
+        }
+
+        if ($uf = app(UfService::class)->today()) {
+            $p->uf_value = $uf['value'];
+            $p->uf_date = $uf['date'];
+        }
+    }
+
+    /** Congela la UF al emitir/enviar: desde ahí el valor y el día quedan fijos. */
+    public function freezeUf(Proposal $p): void
+    {
+        if ($uf = app(UfService::class)->today()) {
+            $p->forceFill(['uf_value' => $uf['value'], 'uf_date' => $uf['date']])->save();
+        }
     }
 
     public function recalculate(Proposal $p): Proposal
@@ -93,9 +121,10 @@ class ProposalBuilder
         $t = ProposalCalculator::totals(
             $p->items->map(fn (ProposalItem $i) => $i->only(['billing', 'quantity', 'unit_price', 'discount_pct']))->all(),
             (string) $p->discount_type,
-            (int) $p->discount_value,
+            (float) $p->discount_value,
             $p->contract_months,
             (int) $p->tax_rate,
+            $p->decimals(),
         );
         $p->forceFill([
             'total_one_time' => $t['total_one_time'], 'total_monthly' => $t['total_monthly'],
@@ -128,6 +157,7 @@ class ProposalBuilder
     public function duplicate(Proposal $source, ?int $userId): Proposal
     {
         $data = [
+            'currency' => $source->currency,
             'title' => preg_replace('/ \(v\d+\)$/', '', $source->title).' (v'.(1 + Proposal::where('lead_id', $source->lead_id)->where('client_id', $source->client_id)->count()).')',
             'client_id' => $source->client_id,
             'lead_id' => $source->lead_id,

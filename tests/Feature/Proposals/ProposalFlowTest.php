@@ -25,7 +25,7 @@ class ProposalFlowTest extends TestCase
     private function proposalFor(?Lead $lead = null): Proposal
     {
         return app(ProposalBuilder::class)->save([
-            'title' => 'Propuesta de prueba',
+            'title' => 'Propuesta de prueba', 'currency' => 'CLP',
             'lead_id' => $lead?->id,
             'recipient' => ['company' => 'Los Robles', 'rut' => '761234560'],
             'sections' => ProposalBuilder::defaultSections(),

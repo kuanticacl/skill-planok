@@ -85,3 +85,13 @@ export const gradeMeta: Record<string, { label: string; short: string; color: st
     C: { label: 'C · Frío', short: 'Frío', color: '#1AA0E4' },
     D: { label: 'D · Bajo', short: 'Bajo', color: '#8A8A8A' },
 };
+
+const ufFmt = new Intl.NumberFormat('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const ufShort = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 1 });
+/** UF con 2 decimales: «UF 245,50». */
+export const formatUf = (v: number | null | undefined): string => `UF ${ufFmt.format(v ?? 0)}`;
+/** Monto en la moneda de la propuesta (UF o pesos). */
+export const formatAmount = (v: number | null | undefined, currency: string): string => (currency === 'UF' ? formatUf(v) : formatMoney(v) || '$0');
+export const formatAmountShort = (v: number | null | undefined, currency: string): string => (currency === 'UF' ? `UF ${ufShort.format(v ?? 0)}` : formatMoneyShort(v));
+/** Valor de la UF: «$41.122,74». */
+export const formatUfValue = (v: number | null | undefined): string => (v ? `$${ufFmt.format(v)}` : '—');

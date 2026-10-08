@@ -11,15 +11,16 @@ class ProposalCalculator
 {
     /**
      * @param  array<int, array{billing: string, quantity: float|int|string, unit_price: int|string, discount_pct?: int|string}>  $items
-     * @return array{subtotal_one_time: int, subtotal_monthly: int, months: int, discount: int, total_one_time: int, total_monthly: int, total_net: int, total_tax: int, total_gross: int}
+     * @return array{subtotal_one_time: float, subtotal_monthly: float, months: int, discount: float, total_one_time: float, total_monthly: float, total_net: float, total_tax: float, total_gross: float}
      */
-    public static function totals(array $items, string $discountType, int $discountValue, ?int $months, int $taxRate): array
+    public static function totals(array $items, string $discountType, float $discountValue, ?int $months, int $taxRate, int $decimals = 2): array
     {
+        $r = fn (float $n): float => round($n, $decimals);
         $oneTime = 0;
         $monthly = 0;
 
         foreach ($items as $i) {
-            $line = (int) round((float) $i['quantity'] * (int) $i['unit_price'] * (1 - ((int) ($i['discount_pct'] ?? 0)) / 100));
+            $line = $r((float) $i['quantity'] * (float) $i['unit_price'] * (1 - ((int) ($i['discount_pct'] ?? 0)) / 100));
             if (($i['billing'] ?? 'one_time') === 'monthly') {
                 $monthly += $line;
             } else {
@@ -29,24 +30,24 @@ class ProposalCalculator
 
         $m = max(1, (int) $months);
         $base = $oneTime + $monthly * $m;
-        $discount = $discountType === 'amount' ? min($discountValue, $base) : (int) round($base * min(100, $discountValue) / 100);
+        $discount = $discountType === 'amount' ? min($discountValue, $base) : $r($base * min(100, $discountValue) / 100);
         $factor = $base > 0 ? ($base - $discount) / $base : 1;
 
-        $totalOne = (int) round($oneTime * $factor);
-        $totalMonthly = (int) round($monthly * $factor);
-        $net = $totalOne + $totalMonthly * $m;
-        $tax = (int) round($net * $taxRate / 100);
+        $totalOne = $r($oneTime * $factor);
+        $totalMonthly = $r($monthly * $factor);
+        $net = $r($totalOne + $totalMonthly * $m);
+        $tax = $r($net * $taxRate / 100);
 
         return [
-            'subtotal_one_time' => $oneTime,
-            'subtotal_monthly' => $monthly,
+            'subtotal_one_time' => $r($oneTime),
+            'subtotal_monthly' => $r($monthly),
             'months' => $m,
-            'discount' => $discount,
+            'discount' => $r($discount),
             'total_one_time' => $totalOne,
             'total_monthly' => $totalMonthly,
             'total_net' => $net,
             'total_tax' => $tax,
-            'total_gross' => $net + $tax,
+            'total_gross' => $r($net + $tax),
         ];
     }
 }

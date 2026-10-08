@@ -27,7 +27,7 @@ export type LeadCard = {
     last_activity_at: string | null;
     created_at: string;
     stage?: StageRef;
-    proposal?: { id: number; number: string; status: string; status_label: string; status_color: string; total_net: number; count: number } | null;
+    proposal?: { id: number; number: string; status: string; status_label: string; status_color: string; currency: 'UF' | 'CLP'; total_net: number; count: number } | null;
 };
 
 export type BoardColumn = {
@@ -61,7 +61,7 @@ export type LeadDetail = LeadCard & {
     capture: Record<string, string | number | null>;
     meta: Record<string, unknown> | null;
 };
-export type LeadNote = { id: number; body: string; is_private: boolean; author: string; mine: boolean; created_at: string };
+export type LeadNote = { id: number; body: string; body_html: string; is_private: boolean; author: string; mine: boolean; created_at: string };
 export type LeadActivityItem = { id: number; type: string; description: string | null; user: string | null; occurred_at: string };
 
 export type ScoreItem = { label: string; points: number; max: number; ok: boolean; hint: string | null };
@@ -94,7 +94,7 @@ export type AiAnalysis = {
 };
 export type AiPanel = { can_use: boolean; available: boolean; can_configure: boolean; analysis: AiAnalysis | null; analyzed_at: string | null; stale: boolean };
 
-export type LeadProposal = { id: number; number: string; title: string; status: string; status_label: string; status_color: string; total_net: number; total_gross: number; valid_until: string | null; created_at: string };
+export type LeadProposal = { id: number; number: string; title: string; status: string; status_label: string; status_color: string; currency: 'UF' | 'CLP'; total_net: number; total_gross: number; valid_until: string | null; created_at: string };
 
 export type PanelData = {
     proposals: LeadProposal[];

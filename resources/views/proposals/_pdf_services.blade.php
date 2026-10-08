@@ -19,13 +19,13 @@
                         <tr>
                             <td style="width:46%">
                                 <div class="b">{{ $i->name }}</div>
-                                @if ($i->description)<div class="idesc">{!! nl2br(e($i->description)) !!}</div>@endif
+                                @if ($i->description)<div class="idesc">{!! \App\Support\ProposalText::html($i->description) !!}</div>@endif
                                 @if (! empty($i->deliverables))<ul class="deliv">@foreach ($i->deliverables as $d)<li>{{ $d }}</li>@endforeach</ul>@endif
                             </td>
                             <td class="r">{{ rtrim(rtrim(number_format($i->quantity, 2, ',', '.'), '0'), ',') }} {{ $i->unit }}</td>
                             <td class="r">{{ $m($i->unit_price) }}</td>
                             <td class="r">{{ $i->discount_pct ? $i->discount_pct.'%' : '—' }}</td>
-                            <td class="r b">{{ $m($i->lineTotal()) }}</td>
+                            <td class="r b">{{ $m($i->lineTotal($p->decimals())) }}</td>
                         </tr>
                     @endforeach
                     </tbody>
@@ -40,6 +40,7 @@
             <tr><td style="border-top:1px solid #E8E8E8;padding-top:6px"><b>Total neto</b></td><td class="r" style="border-top:1px solid #E8E8E8;padding-top:6px"><b>{{ $m($p->total_net) }}</b></td></tr>
             <tr><td>IVA {{ $p->tax_rate }}%</td><td class="r">{{ $m($p->total_tax) }}</td></tr>
             <tr class="grand"><td>Total con IVA</td><td class="r">{{ $m($p->total_gross) }}</td></tr>
+            @if ($isUf)<tr><td colspan="2" class="r" style="padding-top:6px;font-size:9px;color:#707070">Equivalente en pesos ≈ <b style="color:#393939">{{ $clpGross }}</b><br>Valor de referencia: 1 UF = {{ $ufFmt }} al {{ $ufDate }}</td></tr>@endif
         </table>
     @endif
 </div>

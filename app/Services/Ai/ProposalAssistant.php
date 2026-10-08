@@ -5,6 +5,7 @@ namespace App\Services\Ai;
 use App\Models\Lead;
 use App\Models\Service;
 use App\Services\Proposals\ProposalBuilder;
+use App\Support\ProposalText;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 
 /**
@@ -42,7 +43,7 @@ class ProposalAssistant
         );
 
         $allowed = ['Resumen ejecutivo', 'Objetivos', 'Alcance de los servicios', 'Plan de trabajo y plazos'];
-        $sections = collect($result['sections'] ?? [])->map(fn ($s) => ['title' => BrandedEmailDesign::clean($s['title'] ?? '', 120), 'body' => $this->clean($s['body'] ?? '', 4000)])
+        $sections = collect($result['sections'] ?? [])->map(fn ($s) => ['title' => BrandedEmailDesign::clean($s['title'] ?? '', 120), 'body' => ProposalText::html($this->clean($s['body'] ?? '', 4000))])
             ->filter(fn ($s) => $s['title'] !== '' && $s['body'] !== '')->take(6)->values()->all();
 
         // Condiciones y aceptación son fijas (no las inventa la IA).
@@ -63,7 +64,7 @@ class ProposalAssistant
         $result = $this->ai->structured(
             'proposal_improve',
             $this->system('Mejoras textos de propuestas comerciales de Quiebre. Conserva los marcadores [CLIENTE] y [CONTACTO], los datos y cifras que ya estén escritos (no inventes nuevos) y el formato (**negrita**, viñetas «- »). Devuelves solo el texto resultante.'),
-            "Sección: ".mb_substr((string) ($in['title'] ?? ''), 0, 120)."\nGiro del cliente: ".($in['recipient']['activity'] ?? 'inmobiliario')."\n{$instruction}\n\nTexto actual:\n".(mb_substr((string) ($in['text'] ?? ''), 0, 5000) ?: '(vacío: redáctalo desde cero según el título de la sección)'),
+            "Sección: ".mb_substr((string) ($in['title'] ?? ''), 0, 120)."\nGiro del cliente: ".($in['recipient']['activity'] ?? 'inmobiliario')."\n{$instruction}\n\nTexto actual:\n".(mb_substr(ProposalText::toMarkdown($in['text'] ?? ''), 0, 5000) ?: '(vacío: redáctalo desde cero según el título de la sección)'),
             fn (JsonSchema $s) => ['text' => $s->string()->required()],
         );
 
@@ -72,7 +73,7 @@ class ProposalAssistant
             throw new AiFailed('La IA no devolvió texto. Intenta de nuevo.');
         }
 
-        return $text;
+        return ProposalText::html($text);
     }
 
     /** @param array<string, mixed> $in @return array{description: string, deliverables: array<int, string>} */
@@ -89,7 +90,7 @@ class ProposalAssistant
         );
 
         return [
-            'description' => $this->clean($result['description'] ?? '', 1200),
+            'description' => ProposalText::html($this->clean($result['description'] ?? '', 1200)),
             'deliverables' => collect($result['deliverables'] ?? [])->map(fn ($d) => BrandedEmailDesign::clean($d, 160))->filter()->take(8)->values()->all(),
         ];
     }

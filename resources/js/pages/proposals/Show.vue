@@ -14,14 +14,14 @@ import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDateTime, timeAgo } from '@/lib/format';
-import { formatMoney } from '@/lib/leadUi';
+import { formatAmount, formatMoney, formatUfValue } from '@/lib/leadUi';
 import { destroy, document, duplicate, edit, index, markSent, pdf, send, show, status } from '@/routes/proposals';
 import { show as showLead } from '@/routes/leads';
 import type { ProposalRow, Recipient } from '@/types';
 
 type Detail = ProposalRow & {
     recipient: Recipient | null; public_url: string; sent_at: string | null; viewed_at: string | null; view_count: number;
-    responded_at: string | null; responded_by: string | null; response_note: string | null; internal_notes: string | null;
+    responded_at: string | null; responded_by: string | null; response_note: string | null; internal_notes: string | null; internal_notes_html: string;
     total_one_time: number; total_monthly: number; total_tax: number; contract_months: number | null;
 };
 
@@ -61,7 +61,9 @@ const timeline = computed(() => [
     { label: p.value.view_count ? `Vista por el cliente (${p.value.view_count} ${p.value.view_count === 1 ? 'vez' : 'veces'})` : 'Vista por el cliente', at: p.value.viewed_at, done: !!p.value.viewed_at },
     { label: p.value.status === 'rejected' ? 'Rechazada' : 'Aceptada', at: p.value.responded_at, done: !!p.value.responded_at },
 ]);
-const money = formatMoney;
+const money = (n: number) => formatAmount(n, props.proposal.currency);
+const clp = (n: number) => formatMoney(n) || '$0';
+const ufDay = computed(() => (props.proposal.uf_date ? new Intl.DateTimeFormat('es-CL', { dateStyle: 'long' }).format(new Date(props.proposal.uf_date + 'T12:00:00')) : ''));
 </script>
 
 <template>
@@ -106,6 +108,7 @@ const money = formatMoney;
                         <div class="flex justify-between"><dt class="text-muted-foreground">IVA</dt><dd>{{ money(proposal.total_tax) }}</dd></div>
                         <div class="flex justify-between rounded-xl bg-primary px-3 py-2 font-bold text-primary-foreground"><dt>Total</dt><dd>{{ money(proposal.total_gross) }}</dd></div>
                     </dl>
+                    <p v-if="proposal.currency === 'UF' && proposal.uf_value" class="mt-3 rounded-xl bg-muted/50 p-3 text-xs text-muted-foreground">≈ <strong class="text-foreground">{{ clp(proposal.total_gross_clp) }}</strong> en pesos<br>Valor UF de referencia: <strong class="text-foreground">{{ formatUfValue(proposal.uf_value) }}</strong> ({{ ufDay }}){{ proposal.status === 'draft' ? ' · se actualiza cada día hasta que se envía' : '' }}</p>
                 </DataCard>
 
                 <DataCard class="p-4">
@@ -137,7 +140,7 @@ const money = formatMoney;
                     </ul>
                 </DataCard>
 
-                <DataCard v-if="proposal.internal_notes" class="p-4"><h3 class="mb-1 text-sm font-semibold">Notas internas</h3><p class="text-sm whitespace-pre-line text-muted-foreground">{{ proposal.internal_notes }}</p></DataCard>
+                <DataCard v-if="proposal.internal_notes" class="p-4"><h3 class="mb-1 text-sm font-semibold">Notas internas</h3><div class="rich text-sm text-muted-foreground" v-html="proposal.internal_notes_html" /></DataCard>
             </div>
         </div>
     </div>

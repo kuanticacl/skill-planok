@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Lead;
 use App\Services\Leads\LeadScorer;
+use App\Support\ProposalText;
 use App\Models\LeadNote;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -16,10 +17,11 @@ class LeadNoteController extends Controller
         $this->authorize('note', $lead);
 
         $data = $request->validate([
-            'body' => ['required', 'string', 'max:5000'],
+            'body' => ['required', 'string', 'max:20000'],
             'is_private' => ['boolean'],
         ]);
 
+        $data['body'] = ProposalText::sanitize($data['body']) ?: e(strip_tags($data['body']));
         $lead->notes()->create([...$data, 'user_id' => $request->user()->id]);
         LeadScorer::refresh($lead);
 

@@ -1,7 +1,9 @@
 @php
     use App\Services\Proposals\ProposalView;
     use App\Models\Proposal;
-    $m = fn ($n) => ProposalView::money($n);
+    $m = fn ($n) => ProposalView::money($n, $currency);
+    $ufFmt = ProposalView::ufValue((float) $p->uf_value);
+    $clpGross = ProposalView::clp($p->clp($p->total_gross));
     $img = fn ($path) => 'file://'.$public.'/'.$path;
     $n = 0;
     $icon = ['instagram' => 'Instagram', 'linkedin' => 'LinkedIn', 'facebook' => 'Facebook', 'youtube' => 'YouTube', 'tiktok' => 'TikTok'];
@@ -55,6 +57,7 @@
         <td class="chip"><div class="l">Fecha</div><div class="v">{{ $issued }}</div></td><td style="width:7px"></td>
         @if ($valid)<td class="chip"><div class="l">Válida hasta</div><div class="v">{{ $valid }}</div></td><td style="width:7px"></td>@endif
         @if ($owner)<td class="chip"><div class="l">Responsable</div><div class="v">{{ $owner->name }}</div></td><td style="width:7px"></td>@endif
+        @if ($isUf)<td class="chip"><div class="l">UF de referencia · {{ $ufDate }}</div><div class="v">{{ $ufFmt }}</div></td><td style="width:7px"></td>@endif
         @if ($p->total_gross > 0)<td class="chip pu"><div class="l">Total con IVA</div><div class="v">{{ $m($p->total_gross) }}</div></td>@endif
     </tr></table>
 </td></tr></table>

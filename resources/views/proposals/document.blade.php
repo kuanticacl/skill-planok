@@ -3,7 +3,12 @@
     use App\Models\Proposal;
 
     $r = $p->recipient ?? [];
-    $money = fn ($n) => '$'.number_format((int) $n, 0, ',', '.');
+    $money = fn ($n) => \App\Services\Proposals\ProposalView::money($n, $p->currency);
+    $currency = $p->currency;
+    $isUf = $p->currency === 'UF' && $p->uf_value > 0;
+    $ufDate = $p->uf_date ? \Illuminate\Support\Carbon::parse($p->uf_date)->locale('es')->translatedFormat('d \\d\\e F \\d\\e Y') : null;
+    $ufFmt = \App\Services\Proposals\ProposalView::ufValue((float) $p->uf_value);
+    $clpGross = \App\Services\Proposals\ProposalView::clp($p->clp($p->total_gross));
     $months = max(1, (int) ($p->contract_months ?: 1));
     $items = $p->items;
     $once = $items->where('billing', 'one_time');
@@ -11,9 +16,9 @@
     $status = $p->effectiveStatus();
     $sections = collect($p->sections ?? [])->map(fn ($s) => ['title' => $s['title'], 'body' => ProposalText::html(ProposalText::fill($s['body'], $r))])->values();
     $servicesAt = $sections->search(fn ($s) => preg_match('/alcance|servicio/i', $s['title']));
-    $subOnce = $once->sum(fn ($i) => $i->lineTotal());
-    $subMonthly = $monthly->sum(fn ($i) => $i->lineTotal());
-    $discount = ($subOnce + $subMonthly * $months) - ($p->total_one_time + $p->total_monthly * $months);
+    $subOnce = round($once->sum(fn ($i) => $i->lineTotal($p->decimals())), $p->decimals());
+    $subMonthly = round($monthly->sum(fn ($i) => $i->lineTotal($p->decimals())), $p->decimals());
+    $discount = round(($subOnce + $subMonthly * $months) - ($p->total_one_time + $p->total_monthly * $months), $p->decimals());
     $date = fn ($d) => $d ? \Illuminate\Support\Carbon::parse($d)->locale('es')->translatedFormat('d \d\e F \d\e Y') : null;
     $company = $r['company'] ?? $r['legal_name'] ?? 'Cliente';
     $agency = \App\Support\Agency::profile();
@@ -124,7 +129,8 @@
             <div class="glass"><span>Fecha</span><strong>{{ $date($p->issued_at ?? now()) }}</strong></div>
             @if ($p->valid_until)<div class="glass"><span>Válida hasta</span><strong>{{ $date($p->valid_until) }}</strong></div>@endif
             @if ($p->owner)<div class="glass"><span>Responsable</span><strong>{{ $p->owner->name }}</strong></div>@endif
-            @if ($p->total_gross > 0)<div class="glass purple"><span>Total con IVA</span><strong>{{ $money($p->total_gross) }}</strong></div>@endif
+            @if ($isUf)<div class="glass"><span>UF de referencia · {{ $ufDate }}</span><strong>{{ $ufFmt }}</strong></div>@endif
+            @if ($p->total_gross > 0)<div class="glass purple"><span>Total con IVA</span><strong>{{ $money($p->total_gross) }}</strong>@if ($isUf)<small style="display:block;font-size:11px;opacity:.85">≈ {{ $clpGross }}</small>@endif</div>@endif
         </div>
     </section>
 

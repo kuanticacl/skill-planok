@@ -44,6 +44,7 @@ services:
       ADMIN_NAME: ${ADMIN_NAME:-Administrador Quiebre}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@quiebre.cl}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      SEED_DEMO: ${SEED_DEMO:-false}
     volumes:
       - crm-storage:/var/www/html/storage/app
     networks:

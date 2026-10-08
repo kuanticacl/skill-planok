@@ -11,7 +11,7 @@ class ProposalItem extends Model
 {
     protected function casts(): array
     {
-        return ['deliverables' => 'array', 'quantity' => 'float', 'unit_price' => 'integer', 'discount_pct' => 'integer'];
+        return ['deliverables' => 'array', 'quantity' => 'float', 'unit_price' => 'float', 'discount_pct' => 'integer'];
     }
 
     public function proposal(): BelongsTo
@@ -19,9 +19,11 @@ class ProposalItem extends Model
         return $this->belongsTo(Proposal::class);
     }
 
-    /** Total neto de la línea (CLP). */
-    public function lineTotal(): int
+    /** Total neto de la línea, en la moneda de la propuesta. */
+    public function lineTotal(?int $decimals = null): float
     {
-        return (int) round($this->quantity * $this->unit_price * (1 - $this->discount_pct / 100));
+        $decimals ??= $this->proposal?->decimals() ?? 2;
+
+        return round($this->quantity * $this->unit_price * (1 - $this->discount_pct / 100), $decimals);
     }
 }

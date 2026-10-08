@@ -4,6 +4,8 @@
  * Las variables ({{ nombre }}) se dejan intactas: las resuelve el servidor al enviar.
  */
 
+import { isHtml, sanitizeHtml } from '@/lib/richText';
+
 export type BlockType =
     | 'header'
     | 'heading'
@@ -35,7 +37,7 @@ export type Design = { settings: DesignSettings; blocks: Block[] };
 export type Field = {
     key: string;
     label: string;
-    type: 'text' | 'textarea' | 'color' | 'number' | 'select' | 'align' | 'toggle' | 'image' | 'url';
+    type: 'text' | 'textarea' | 'rich' | 'color' | 'number' | 'select' | 'align' | 'toggle' | 'image' | 'url';
     options?: { value: string; label: string }[];
     min?: number;
     max?: number;
@@ -108,7 +110,7 @@ export const BLOCKS: Record<BlockType, Meta> = {
         icon: 'align-left',
         props: () => ({ text: 'Escribe aquí tu mensaje. Puedes usar **negrita**, *cursiva*, [enlaces](https://www.quiebre.cl) y variables como {{ first_name }}.', size: 16, color: '', lineHeight: 1.6, align: 'left', padY: 8, padX: 32, bg: '' }),
         fields: [
-            { key: 'text', label: 'Contenido', type: 'textarea', variables: true, hint: '**negrita** · *cursiva* · [texto](https://enlace) · salto de línea = <br>' },
+            { key: 'text', label: 'Contenido', type: 'rich', variables: true, hint: 'Usa la barra para negrita, listas y enlaces. Inserta variables con { }.' },
             { key: 'size', label: 'Tamaño (px)', type: 'number', min: 11, max: 28 },
             { key: 'color', label: 'Color', type: 'color' },
             { key: 'lineHeight', label: 'Interlineado', type: 'number', min: 1, max: 2.4 },
@@ -259,6 +261,16 @@ const attr = (s: unknown) => String(s ?? '').replace(/"/g, '&quot;');
 
 /** Markdown mínimo: **negrita**, *cursiva*, [texto](url) y saltos de línea. */
 export function richText(input: unknown, linkColor: string): string {
+    // Texto del editor enriquecido (HTML): se sanea y se le dan estilos en línea compatibles con email.
+    if (isHtml(String(input ?? ''))) {
+        return sanitizeHtml(String(input))
+            .replace(/<p>/g, '<p style="margin:0 0 12px">')
+            .replace(/<ul>/g, '<ul style="margin:0 0 12px;padding-left:22px">')
+            .replace(/<ol>/g, '<ol style="margin:0 0 12px;padding-left:22px">')
+            .replace(/<li>/g, '<li style="margin:0 0 4px">')
+            .replace(/<h3>/g, '<h3 style="margin:0 0 8px;font-size:18px">')
+            .replace(/<a href="([^"]+)"[^>]*>/g, (_, url) => `<a href="${attr(url)}" style="color:${linkColor};text-decoration:underline">`);
+    }
     let t = escHtml(input);
     t = t.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, label, url) => `<a href="${attr(url)}" style="color:${linkColor};text-decoration:underline">${label}</a>`);
     t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');

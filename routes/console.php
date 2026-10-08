@@ -11,3 +11,7 @@ Artisan::command('inspire', function () {
 // Boletines programados: requiere el cron de Laravel (* * * * * php artisan schedule:run).
 Schedule::command('campaigns:dispatch-due')->everyMinute()->withoutOverlapping();
 Schedule::command('leads:rescore --open')->dailyAt('03:30')->withoutOverlapping();
+
+// UF diaria (findic.cl): se publica de madrugada; el segundo intento cubre caídas de la API.
+Schedule::command('uf:sync')->dailyAt('00:10')->withoutOverlapping();
+Schedule::command('uf:sync')->dailyAt('08:30')->withoutOverlapping();

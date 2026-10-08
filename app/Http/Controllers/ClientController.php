@@ -66,7 +66,7 @@ class ClientController extends Controller
             ]);
 
         return Inertia::render('clients/Show', [
-            'client' => $client->load('creator:id,name'),
+            'client' => [...$client->load('creator:id,name')->toArray(), 'notes_html' => \App\Support\ProposalText::html($client->notes)],
             'leads' => $leads,
         ]);
     }

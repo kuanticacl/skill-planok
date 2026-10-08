@@ -46,6 +46,7 @@ class LeadPresenter
                 'status' => $lead->latestProposal->effectiveStatus(),
                 'status_label' => \App\Models\Proposal::STATUSES[$lead->latestProposal->effectiveStatus()],
                 'status_color' => \App\Models\Proposal::STATUS_COLORS[$lead->latestProposal->effectiveStatus()],
+                'currency' => $lead->latestProposal->currency,
                 'total_net' => $lead->latestProposal->total_net,
                 'count' => (int) ($lead->proposals_count ?? 1),
             ] : null,

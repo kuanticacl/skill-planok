@@ -5,6 +5,7 @@ import { ArrowDown, ArrowLeft, ArrowUp, Building2, Eye, FileText, Package, Plus,
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 import FormField from '@/components/FormField.vue';
+import RichTextEditor from '@/components/RichTextEditor.vue';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -13,7 +14,8 @@ import { NativeSelect } from '@/components/ui/native-select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { HttpError, sendJson } from '@/lib/http';
-import { formatMoney } from '@/lib/leadUi';
+import { formatAmount, formatMoney, formatUfValue } from '@/lib/leadUi';
+import { stripHtml } from '@/lib/richText';
 import { formatRut } from '@/lib/rut';
 import { cn } from '@/lib/utils';
 import { edit, index, preview, store, update } from '@/routes/proposals';
@@ -23,7 +25,7 @@ import type { CatalogService, ProposalItemInput, Recipient } from '@/types';
 
 type Section = { title: string; body: string };
 type Initial = {
-    title: string; client_id: number | null; lead_id: number | null; recipient: Recipient; sections: Section[]; valid_until: string | null; contract_months: number | null;
+    title: string; currency: 'UF' | 'CLP'; client_id: number | null; lead_id: number | null; recipient: Recipient; sections: Section[]; valid_until: string | null; contract_months: number | null;
     discount_type: 'percent' | 'amount'; discount_value: number; tax_rate: number; internal_notes: string | null;
     items: Omit<ProposalItemInput, 'key'>[];
 };
@@ -32,6 +34,7 @@ const props = defineProps<{
     proposal: { id: number; number: string; status: string; is_final: boolean } | null;
     initial: Initial;
     services: CatalogService[];
+    uf: { value: number; date: string } | null;
     clients: { id: number; name: string; recipient: Recipient }[];
     lead: { id: number; first_name: string; last_name: string | null; company: string | null } | null;
     ai: { enabled: boolean; can_configure: boolean };
@@ -44,6 +47,7 @@ const i0 = props.initial;
 
 const form = reactive({
     title: i0.title,
+    currency: (i0.currency ?? 'UF') as 'UF' | 'CLP',
     client_id: i0.client_id as number | null,
     lead_id: i0.lead_id as number | null,
     valid_until: i0.valid_until ?? '',
@@ -77,8 +81,14 @@ const catalogGroups = computed(() => {
     props.services.filter((s) => !t || `${s.name} ${s.category}`.toLowerCase().includes(t)).forEach((s) => m.set(s.category, [...(m.get(s.category) ?? []), s]));
     return [...m.entries()];
 });
+const decimals = computed(() => (form.currency === 'UF' ? 2 : 0));
+const toCurrency = (price: number, from: 'UF' | 'CLP') => {
+    if (from === form.currency || !props.uf) return price;
+    const v = from === 'UF' ? price * props.uf.value : price / props.uf.value;
+    return Number(v.toFixed(decimals.value));
+};
 const addService = (s: CatalogService) => {
-    items.value.push({ key: uid(), service_id: s.id, name: s.name, description: s.description ?? '', deliverables: [...(s.deliverables ?? [])], billing: s.billing, unit: s.unit, quantity: 1, unit_price: s.price, discount_pct: 0 });
+    items.value.push({ key: uid(), service_id: s.id, name: s.name, description: s.description ?? '', deliverables: [...(s.deliverables ?? [])], billing: s.billing, unit: s.unit, quantity: 1, unit_price: toCurrency(s.price, s.currency), discount_pct: 0 });
     toast.success(`«${s.name}» agregado`);
 };
 const addCustom = () => items.value.push({ key: uid(), service_id: null, name: '', description: '', deliverables: [], billing: 'one_time', unit: 'servicio', quantity: 1, unit_price: 0, discount_pct: 0 });
@@ -95,22 +105,25 @@ const setDeliv = (i: ProposalItemInput, v: string) => (i.deliverables = v.split(
 
 // ---------------------------------------------------------------- totales (el servidor recalcula al guardar)
 const totals = computed(() => {
+    const d = decimals.value;
+    const r = (n: number) => Number(n.toFixed(d));
     let one = 0;
     let mon = 0;
     for (const i of items.value) {
-        const line = Math.round(i.quantity * i.unit_price * (1 - (i.discount_pct || 0) / 100));
+        const line = r(i.quantity * i.unit_price * (1 - (i.discount_pct || 0) / 100));
         i.billing === 'monthly' ? (mon += line) : (one += line);
     }
     const m = Math.max(1, form.contract_months || 1);
     const base = one + mon * m;
-    const discount = form.discount_type === 'amount' ? Math.min(form.discount_value || 0, base) : Math.round((base * Math.min(100, form.discount_value || 0)) / 100);
+    const discount = form.discount_type === 'amount' ? Math.min(form.discount_value || 0, base) : r((base * Math.min(100, form.discount_value || 0)) / 100);
     const f = base > 0 ? (base - discount) / base : 1;
-    const tOne = Math.round(one * f);
-    const tMon = Math.round(mon * f);
-    const net = tOne + tMon * m;
-    const tax = Math.round((net * form.tax_rate) / 100);
-    return { one: tOne, monthly: tMon, months: m, discount, net, tax, gross: net + tax, hasMonthly: mon > 0 };
+    const tOne = r(one * f);
+    const tMon = r(mon * f);
+    const net = r(tOne + tMon * m);
+    const tax = r((net * form.tax_rate) / 100);
+    return { one: tOne, monthly: tMon, months: m, discount: r(discount), net, tax, gross: r(net + tax), hasMonthly: mon > 0 };
 });
+const grossClp = computed(() => (form.currency === 'UF' && props.uf ? Math.round(totals.value.gross * props.uf.value) : totals.value.gross));
 
 // ---------------------------------------------------------------- contenido
 const addSection = () => sections.value.push({ title: 'Nueva sección', body: '' });
@@ -236,7 +249,7 @@ const writeItem = async (i: ProposalItemInput) => {
     }
 };
 const customPrompt = ref<{ idx: number; text: string } | null>(null);
-const money = (n: number) => formatMoney(n) || '$0';
+const money = (n: number) => formatAmount(n, form.currency);
 </script>
 
 <template>
@@ -250,7 +263,7 @@ const money = (n: number) => formatMoney(n) || '$0';
             <span v-if="proposal" class="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">{{ proposal.number }}</span>
             <span v-if="dirty" class="rounded-full bg-[#FFA165]/20 px-2 py-0.5 text-[11px] font-medium text-[#9A4B00]">Cambios sin guardar</span>
             <div class="ml-auto flex items-center gap-2">
-                <span class="hidden text-sm text-muted-foreground sm:inline">Total <strong class="text-foreground">{{ money(totals.gross) }}</strong> con IVA</span>
+                <span class="hidden text-sm text-muted-foreground sm:inline">Total <strong class="text-foreground">{{ money(totals.gross) }}</strong> con IVA<template v-if="form.currency === 'UF' && uf"> · ≈ {{ formatMoney(grossClp) || '$0' }}</template></span>
                 <Button size="sm" :disabled="saving || locked || !form.title.trim()" @click="save"><Spinner v-if="saving" /><Save v-else /> Guardar</Button>
             </div>
         </div>
@@ -306,17 +319,17 @@ const money = (n: number) => formatMoney(n) || '$0';
                                             <FormField label="Cobro"><NativeSelect v-model="it.billing"><option value="one_time">Pago único</option><option value="monthly">Mensual</option></NativeSelect></FormField>
                                             <FormField label="Cantidad"><Input v-model.number="it.quantity" type="number" min="0.01" step="1" /></FormField>
                                             <FormField label="Unidad"><Input v-model="it.unit" /></FormField>
-                                            <FormField label="Valor neto"><Input v-model.number="it.unit_price" type="number" min="0" step="1000" /></FormField>
+                                            <FormField :label="`Valor neto (${form.currency})`"><Input v-model.number="it.unit_price" type="number" min="0" :step="form.currency === 'UF' ? 0.5 : 1000" /></FormField>
                                             <FormField label="Dto. %"><Input v-model.number="it.discount_pct" type="number" min="0" max="100" /></FormField>
                                         </div>
                                         <FormField label="Descripción">
-                                            <Textarea v-model="it.description" rows="2" placeholder="Qué incluye y para qué sirve" />
+                                            <RichTextEditor v-model="it.description" compact :min-height="70" placeholder="Qué incluye y para qué sirve" />
                                         </FormField>
                                         <FormField label="Entregables (uno por línea)"><Textarea :model-value="delivText(it)" rows="2" @update:model-value="(v: string | number) => setDeliv(it, String(v))" /></FormField>
                                         <div class="flex flex-wrap items-center justify-between gap-2">
                                             <Button v-if="ai.enabled" type="button" size="sm" variant="ghost" class="text-primary" :disabled="aiBusy === `it-${it.key}`" @click="writeItem(it)"><Spinner v-if="aiBusy === `it-${it.key}`" /><Wand2 v-else /> Redactar con IA</Button>
                                             <span v-else />
-                                            <span class="text-sm"><Repeat v-if="it.billing === 'monthly'" class="mr-1 inline size-3.5 text-[#6419DB]" />Total línea{{ it.billing === 'monthly' ? ' / mes' : '' }}: <strong>{{ money(Math.round(it.quantity * it.unit_price * (1 - (it.discount_pct || 0) / 100))) }}</strong></span>
+                                            <span class="text-sm"><Repeat v-if="it.billing === 'monthly'" class="mr-1 inline size-3.5 text-[#6419DB]" />Total línea{{ it.billing === 'monthly' ? ' / mes' : '' }}: <strong>{{ money(Number((it.quantity * it.unit_price * (1 - (it.discount_pct || 0) / 100)).toFixed(decimals))) }}</strong></span>
                                         </div>
                                     </div>
                                     <div class="flex flex-col">
@@ -332,11 +345,12 @@ const money = (n: number) => formatMoney(n) || '$0';
                     <!-- Condiciones -->
                     <section class="rounded-2xl border bg-card p-5">
                         <h2 class="mb-4 flex items-center gap-2 font-semibold"><Receipt class="size-4 text-primary" /> Condiciones</h2>
-                        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <div class="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                            <FormField label="Moneda" :hint="form.currency === 'UF' && uf ? `UF hoy ${formatUfValue(uf.value)}` : undefined"><NativeSelect v-model="form.currency"><option value="UF">UF (recomendado)</option><option value="CLP">Pesos (CLP)</option></NativeSelect></FormField>
                             <FormField label="Válida hasta"><Input v-model="form.valid_until" type="date" /></FormField>
                             <FormField label="Duración (meses)" hint="Para servicios mensuales"><Input v-model.number="form.contract_months" type="number" min="1" max="60" placeholder="12" /></FormField>
                             <FormField label="Descuento">
-                                <div class="flex gap-2"><NativeSelect v-model="form.discount_type" class="w-24"><option value="percent">%</option><option value="amount">$</option></NativeSelect><Input v-model.number="form.discount_value" type="number" min="0" /></div>
+                                <div class="flex gap-2"><NativeSelect v-model="form.discount_type" class="w-24"><option value="percent">%</option><option value="amount">{{ form.currency === 'UF' ? 'UF' : '$' }}</option></NativeSelect><Input v-model.number="form.discount_value" type="number" min="0" /></div>
                             </FormField>
                             <FormField label="IVA %"><Input v-model.number="form.tax_rate" type="number" min="0" max="30" /></FormField>
                         </div>
@@ -347,6 +361,7 @@ const money = (n: number) => formatMoney(n) || '$0';
                             <div class="flex justify-between border-t pt-1.5"><dt>Total neto</dt><dd class="font-semibold">{{ money(totals.net) }}</dd></div>
                             <div class="flex justify-between"><dt class="text-muted-foreground">IVA {{ form.tax_rate }}%</dt><dd>{{ money(totals.tax) }}</dd></div>
                             <div class="flex justify-between text-base font-bold text-primary"><dt>Total con IVA</dt><dd>{{ money(totals.gross) }}</dd></div>
+                            <div v-if="form.currency === 'UF' && uf" class="mt-1 rounded-lg bg-background/70 p-2.5 text-xs text-muted-foreground">Equivalente ≈ <strong class="text-foreground">{{ formatMoney(grossClp) || '$0' }}</strong> · 1 UF = {{ formatUfValue(uf.value) }} ({{ uf.date }}). Al enviar la propuesta, la UF del día queda guardada como valor de referencia.</div>
                         </dl>
                     </section>
 
@@ -360,7 +375,7 @@ const money = (n: number) => formatMoney(n) || '$0';
                             </div>
                         </div>
                         <p v-if="!ai.enabled && ai.can_configure" class="mb-4 rounded-xl border border-dashed p-3 text-xs text-muted-foreground"><Sparkles class="mr-1 inline size-3.5 text-primary" />¿Quieres ayuda de IA para redactar? <Link :href="aiIndex()" class="font-medium text-primary hover:underline">Configura un proveedor</Link>.</p>
-                        <p class="mb-3 text-xs text-muted-foreground">Usa <code>**negrita**</code>, listas con «- » y los marcadores <code>[CLIENTE]</code> y <code>[CONTACTO]</code>. La sección «Alcance de los servicios» muestra la tabla de servicios e inversión justo debajo.</p>
+                        <p class="mb-3 text-xs text-muted-foreground">Escribe con el editor (negrita, listas, enlaces) y usa los marcadores <code>[CLIENTE]</code> y <code>[CONTACTO]</code> si quieres que se reemplacen solos. La sección «Alcance de los servicios» muestra la tabla de servicios e inversión justo debajo.</p>
                         <div class="grid gap-3">
                             <article v-for="(s, idx) in sections" :key="idx" class="rounded-xl border bg-background p-4">
                                 <div class="mb-2 flex items-center gap-2">
@@ -383,14 +398,14 @@ const money = (n: number) => formatMoney(n) || '$0';
                                     <Button type="button" variant="ghost" size="icon-sm" :disabled="idx === sections.length - 1" @click="moveSection(idx, 1)"><ArrowDown /></Button>
                                     <Button type="button" variant="ghost" size="icon-sm" class="text-destructive hover:text-destructive" @click="removeSection(idx)"><Trash2 /></Button>
                                 </div>
-                                <Textarea v-model="s.body" rows="5" />
+                                <RichTextEditor v-model="s.body" :min-height="140" placeholder="Escribe el contenido de esta sección…" />
                             </article>
                         </div>
                     </section>
 
                     <section class="rounded-2xl border bg-card p-5">
                         <h2 class="mb-3 flex items-center gap-2 font-semibold"><StickyNote class="size-4 text-primary" /> Notas internas</h2>
-                        <Textarea v-model="form.internal_notes" rows="3" placeholder="Solo las ve el equipo (no aparecen en la propuesta)." />
+                        <RichTextEditor v-model="form.internal_notes" compact :min-height="80" placeholder="Solo las ve el equipo (no aparecen en la propuesta)." />
                     </section>
                 </fieldset>
             </div>
@@ -413,8 +428,8 @@ const money = (n: number) => formatMoney(n) || '$0';
                     <p class="mb-1.5 text-xs font-semibold text-muted-foreground">{{ cat }}</p>
                     <div class="grid gap-2">
                         <button v-for="s in list" :key="s.id" type="button" class="flex items-start justify-between gap-3 rounded-xl border p-3 text-left transition hover:border-primary/50 hover:bg-primary/5" @click="addService(s)">
-                            <span class="min-w-0"><span class="block text-sm font-semibold">{{ s.name }}</span><span class="line-clamp-2 text-xs text-muted-foreground">{{ s.description }}</span></span>
-                            <span class="shrink-0 text-right text-sm font-bold text-primary">{{ money(s.price) }}<span class="block text-[10px] font-normal text-muted-foreground">{{ s.billing === 'monthly' ? '/ mes' : 'pago único' }}</span></span>
+                            <span class="min-w-0"><span class="block text-sm font-semibold">{{ s.name }}</span><span class="line-clamp-2 text-xs text-muted-foreground">{{ stripHtml(s.description ?? '') }}</span></span>
+                            <span class="shrink-0 text-right text-sm font-bold text-primary">{{ formatAmount(s.price, s.currency) }}<span class="block text-[10px] font-normal text-muted-foreground">{{ s.billing === 'monthly' ? '/ mes' : 'pago único' }}</span></span>
                         </button>
                     </div>
                 </div>

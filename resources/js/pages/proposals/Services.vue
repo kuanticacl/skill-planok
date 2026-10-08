@@ -6,6 +6,7 @@ import { toast } from 'vue-sonner';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import FormField from '@/components/FormField.vue';
 import PageHeader from '@/components/PageHeader.vue';
+import RichTextEditor from '@/components/RichTextEditor.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -15,13 +16,14 @@ import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { HttpError, sendJson } from '@/lib/http';
-import { formatMoney } from '@/lib/leadUi';
+import { stripHtml } from '@/lib/richText';
+import { formatAmount, formatMoney, formatUfValue } from '@/lib/leadUi';
 import { cn } from '@/lib/utils';
 import { destroy, index, store, update } from '@/routes/services';
 
-type Service = { id: number; name: string; category: string; description: string | null; deliverables: string[] | null; billing: 'one_time' | 'monthly'; unit: string; price: number; is_active: boolean };
+type Service = { id: number; name: string; category: string; description: string | null; deliverables: string[] | null; billing: 'one_time' | 'monthly'; unit: string; currency: 'UF' | 'CLP'; price: number; is_active: boolean };
 
-const props = defineProps<{ services: Service[]; categories: string[]; ai: { enabled: boolean }; can: { manage: boolean } }>();
+const props = defineProps<{ services: Service[]; categories: string[]; uf: { value: number; date: string } | null; ai: { enabled: boolean }; can: { manage: boolean } }>();
 defineOptions({ layout: { breadcrumbs: [{ title: 'Servicios', href: index() }] } });
 
 const q = ref('');
@@ -37,18 +39,18 @@ const grouped = computed(() => {
 const open = ref(false);
 const editing = ref<Service | null>(null);
 const deliverablesText = ref('');
-const form = useForm({ name: '', category: '', description: '', deliverables: [] as string[], billing: 'one_time', unit: 'servicio', price: 0, is_active: true });
+const form = useForm({ name: '', category: '', description: '', deliverables: [] as string[], billing: 'one_time', unit: 'servicio', currency: 'UF', price: 0, is_active: true });
 
 const openCreate = () => {
     editing.value = null;
-    form.defaults({ name: '', category: props.categories[0] ?? 'General', description: '', deliverables: [], billing: 'one_time', unit: 'servicio', price: 0, is_active: true }).reset();
+    form.defaults({ name: '', category: props.categories[0] ?? 'General', description: '', deliverables: [], billing: 'one_time', unit: 'servicio', currency: 'UF', price: 0, is_active: true }).reset();
     form.clearErrors();
     deliverablesText.value = '';
     open.value = true;
 };
 const openEdit = (s: Service) => {
     editing.value = s;
-    form.defaults({ name: s.name, category: s.category, description: s.description ?? '', deliverables: s.deliverables ?? [], billing: s.billing, unit: s.unit, price: s.price, is_active: s.is_active }).reset();
+    form.defaults({ name: s.name, category: s.category, description: s.description ?? '', deliverables: s.deliverables ?? [], billing: s.billing, unit: s.unit, currency: s.currency, price: s.price, is_active: s.is_active }).reset();
     form.clearErrors();
     deliverablesText.value = (s.deliverables ?? []).join('\n');
     open.value = true;
@@ -113,13 +115,13 @@ const aiWrite = async () => {
                             <Repeat v-if="s.billing === 'monthly'" class="size-3" />{{ s.billing === 'monthly' ? 'Mensual' : 'Pago único' }}
                         </Badge>
                     </div>
-                    <p v-if="s.description" class="line-clamp-3 text-sm text-muted-foreground">{{ s.description }}</p>
+                    <p v-if="s.description" class="line-clamp-3 text-sm text-muted-foreground">{{ stripHtml(s.description) }}</p>
                     <ul v-if="s.deliverables?.length" class="grid gap-0.5 text-xs text-muted-foreground">
                         <li v-for="d in s.deliverables.slice(0, 3)" :key="d" class="flex gap-1.5"><span class="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />{{ d }}</li>
                         <li v-if="s.deliverables.length > 3" class="pl-3">+{{ s.deliverables.length - 3 }} más</li>
                     </ul>
                     <div class="mt-auto flex items-end justify-between pt-2">
-                        <p><span class="text-lg font-bold text-primary">{{ formatMoney(s.price) }}</span><span class="text-xs text-muted-foreground"> + IVA / {{ s.unit }}</span></p>
+                        <p><span class="text-lg font-bold text-primary">{{ formatAmount(s.price, s.currency) }}</span><span class="text-xs text-muted-foreground"> + IVA / {{ s.unit }}</span><span v-if="s.currency === 'UF' && uf" class="block text-[11px] text-muted-foreground">≈ {{ formatMoney(Math.round(s.price * uf.value)) }}</span></p>
                         <div v-if="can.manage" class="flex gap-1">
                             <Button variant="ghost" size="icon-sm" title="Editar" @click="openEdit(s)"><Pencil /></Button>
                             <Button variant="ghost" size="icon-sm" class="text-destructive hover:text-destructive" title="Eliminar" @click="toDelete = s"><Trash2 /></Button>
@@ -146,11 +148,13 @@ const aiWrite = async () => {
                     <FormField label="Modalidad de cobro" :error="form.errors.billing">
                         <NativeSelect v-model="form.billing" @update:model-value="onBilling"><option value="one_time">Pago único</option><option value="monthly">Mensual (recurrente)</option></NativeSelect>
                     </FormField>
-                    <FormField label="Tarifa neta (CLP)" for="sv-price" :error="form.errors.price" required><Input id="sv-price" v-model.number="form.price" type="number" min="0" step="1000" /></FormField>
+                    <FormField label="Tarifa neta" for="sv-price" :error="form.errors.price" required :hint="form.currency === 'UF' && uf ? `UF de hoy: ${formatUfValue(uf.value)}` : undefined">
+                        <div class="flex gap-2"><NativeSelect v-model="form.currency" class="w-24"><option value="UF">UF</option><option value="CLP">CLP</option></NativeSelect><Input id="sv-price" v-model.number="form.price" type="number" min="0" :step="form.currency === 'UF' ? 0.5 : 1000" /></div>
+                    </FormField>
                     <FormField label="Unidad" for="sv-unit" :error="form.errors.unit"><Input id="sv-unit" v-model="form.unit" placeholder="mes, proyecto, hora…" /></FormField>
                 </div>
                 <FormField label="Descripción" for="sv-desc" :error="form.errors.description">
-                    <Textarea id="sv-desc" v-model="form.description" rows="3" placeholder="Qué incluye y qué problema resuelve" />
+                    <RichTextEditor v-model="form.description" :min-height="90" placeholder="Qué incluye y qué problema resuelve" />
                     <Button v-if="ai.enabled" type="button" variant="outline" size="sm" class="mt-2 w-fit border-primary/40 text-primary" :disabled="aiBusy" @click="aiWrite"><Spinner v-if="aiBusy" /><Sparkles v-else /> Redactar con IA</Button>
                 </FormField>
                 <FormField label="Entregables" for="sv-del" hint="Uno por línea. Aparecen como viñetas en la propuesta."><Textarea id="sv-del" v-model="deliverablesText" rows="4" placeholder="Estrategia y segmentación&#10;Informe mensual" /></FormField>
