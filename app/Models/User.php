@@ -37,6 +37,12 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
+    /** Recuperación de contraseña por Resend con la plantilla de marca (en vez de la notificación por defecto). */
+    public function sendPasswordResetNotification($token): void
+    {
+        app(\App\Services\Email\UserMailer::class)->sendReset($this, (string) $token);
+    }
+
     /**
      * Get the attributes that should be cast.
      *

@@ -50,6 +50,7 @@ class SendEmailMessage implements ShouldQueue
                 'html' => $built['html'], // copia exacta de lo enviado (auditoría)
                 'error' => null,
             ]);
+            $this->redact($message);
             $message->record('sent', ['missing_variables' => $built['missing']]);
         } catch (ProviderException $e) {
             if ($e->retryable && $this->attempts() < $this->tries) {
@@ -62,6 +63,25 @@ class SendEmailMessage implements ShouldQueue
         } catch (\Throwable $e) {
             $this->fail409($message, $e->getMessage());
         }
+    }
+
+    /** Oculta contraseñas y enlaces de un solo uso del historial (variables y copia del HTML). */
+    private function redact(EmailMessage $message): void
+    {
+        $vars = $message->variables ?? [];
+        $keys = (array) ($vars['_redact'] ?? []);
+        if (! $keys) {
+            return;
+        }
+
+        $html = (string) $message->html;
+        foreach ($keys as $key) {
+            if (filled($vars[$key] ?? null)) {
+                $html = str_replace([e((string) $vars[$key]), (string) $vars[$key]], '••••••••', $html);
+                $vars[$key] = '••••••••';
+            }
+        }
+        $message->update(['variables' => $vars, 'html' => $html]);
     }
 
     public function failed(\Throwable $e): void

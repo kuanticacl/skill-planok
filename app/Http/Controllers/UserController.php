@@ -6,6 +6,7 @@ use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Email\UserMailer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -50,7 +51,13 @@ class UserController extends Controller
         $user->email_verified_at = now(); // los usuarios los crea un administrador
         $user->save();
 
-        $this->toast("Usuario «{$user->name}» creado.");
+        try {
+            app(UserMailer::class)->sendWelcome($user->load('role:id,name'), (string) $request->validated('password'));
+            $this->toast("Usuario «{$user->name}» creado. Enviamos un correo de bienvenida a {$user->email}.");
+        } catch (\Throwable $e) {
+            report($e);
+            $this->toast("Usuario «{$user->name}» creado, pero no pudimos enviar el correo de bienvenida.", 'error');
+        }
 
         return to_route('users.index');
     }
