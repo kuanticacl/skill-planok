@@ -1,6 +1,10 @@
 <?php
 
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\Email\ApiKeyController;
+use App\Http\Controllers\Email\EmailSettingsController;
+use App\Http\Controllers\Email\EmailTemplateController;
+use App\Http\Controllers\Email\SuppressionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeadActivityController;
 use App\Http\Controllers\LeadController;
@@ -91,6 +95,35 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('fields/{field}', [LeadFieldController::class, 'update'])->name('fields.update');
             Route::delete('fields/{field}', [LeadFieldController::class, 'destroy'])->name('fields.destroy');
         });
+    });
+
+    // Email marketing
+    Route::prefix('email')->group(function () {
+        Route::middleware('can:email_settings.manage')->group(function () {
+            Route::get('settings', [EmailSettingsController::class, 'edit'])->name('email.settings');
+            Route::put('settings', [EmailSettingsController::class, 'update'])->name('email.settings.update');
+            Route::post('settings/test', [EmailSettingsController::class, 'test'])->name('email.settings.test');
+            Route::get('suppressions', [SuppressionController::class, 'index'])->name('suppressions.index');
+            Route::post('suppressions', [SuppressionController::class, 'store'])->name('suppressions.store');
+            Route::delete('suppressions/{suppression}', [SuppressionController::class, 'destroy'])->name('suppressions.destroy');
+            Route::get('api', [ApiKeyController::class, 'index'])->name('api-keys.index');
+            Route::post('api', [ApiKeyController::class, 'store'])->name('api-keys.store');
+            Route::put('api/{apiKey}', [ApiKeyController::class, 'update'])->name('api-keys.update');
+            Route::delete('api/{apiKey}', [ApiKeyController::class, 'destroy'])->name('api-keys.destroy');
+        });
+
+        Route::get('templates', [EmailTemplateController::class, 'index'])->middleware('can:templates.view')->name('templates.index');
+        Route::post('templates/preview', [EmailTemplateController::class, 'preview'])->middleware('can:templates.view')->name('templates.preview');
+        Route::middleware('can:templates.manage')->group(function () {
+            Route::get('templates/create', [EmailTemplateController::class, 'create'])->name('templates.create');
+            Route::post('templates', [EmailTemplateController::class, 'store'])->name('templates.store');
+            Route::post('templates/test', [EmailTemplateController::class, 'test'])->name('templates.test');
+            Route::post('templates/media', [EmailTemplateController::class, 'upload'])->name('templates.media');
+            Route::put('templates/{template}', [EmailTemplateController::class, 'update'])->name('templates.update');
+            Route::post('templates/{template}/duplicate', [EmailTemplateController::class, 'duplicate'])->name('templates.duplicate');
+            Route::delete('templates/{template}', [EmailTemplateController::class, 'destroy'])->name('templates.destroy');
+        });
+        Route::get('templates/{template}/edit', [EmailTemplateController::class, 'edit'])->middleware('can:templates.view')->name('templates.edit');
     });
 
     // Roles y permisos

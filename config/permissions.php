@@ -69,6 +69,21 @@ return [
                 'roles.delete' => 'Eliminar roles',
             ],
         ],
+        'email' => [
+            'label' => 'Email marketing',
+            'icon' => 'mail',
+            'permissions' => [
+                'templates.view' => 'Ver plantillas de email',
+                'templates.manage' => 'Crear y editar plantillas',
+                'campaigns.view' => 'Ver boletines y su rendimiento',
+                'campaigns.create' => 'Crear y programar boletines',
+                'campaigns.send' => 'Enviar boletines',
+                'lists.manage' => 'Gestionar audiencias (listas)',
+                'automations.manage' => 'Gestionar automatizaciones',
+                'email_logs.view' => 'Ver historial de mensajes',
+                'email_settings.manage' => 'Configurar Resend, API keys y bajas',
+            ],
+        ],
         'settings' => [
             'label' => 'Configuración del CRM',
             'icon' => 'settings-2',
@@ -110,6 +125,7 @@ return [
                 'leads.view', 'leads.view_all', 'leads.create', 'leads.update', 'leads.move', 'leads.assign', 'leads.notes',
                 'clients.view', 'clients.create', 'clients.update',
                 'users.view',
+                'templates.view', 'campaigns.view', 'email_logs.view',
             ],
         ],
         'lectura' => [

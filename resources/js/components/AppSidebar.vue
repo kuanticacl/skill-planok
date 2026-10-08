@@ -3,6 +3,10 @@ import { Link } from '@inertiajs/vue3';
 import {
     Building2,
     Columns3,
+    FileText,
+    Mail,
+    MailX,
+    Settings,
     Globe,
     LayoutDashboard,
     ListPlus,
@@ -30,7 +34,11 @@ import { dashboard } from '@/routes';
 import { index as clients } from '@/routes/clients';
 import { index as fields } from '@/routes/fields';
 import { index as leads } from '@/routes/leads';
+import { index as apiKeys } from '@/routes/api-keys';
+import { settings as emailSettings } from '@/routes/email';
 import { index as roles } from '@/routes/roles';
+import { index as suppressions } from '@/routes/suppressions';
+import { index as templates } from '@/routes/templates';
 import { index as sources } from '@/routes/sources';
 import { index as stages } from '@/routes/stages';
 import { index as users } from '@/routes/users';
@@ -52,6 +60,15 @@ const groups: NavGroup[] = [
             },
             { title: 'Leads', href: leads(), icon: Users, permission: 'leads.view' },
             { title: 'Clientes', href: clients(), icon: Building2, permission: 'clients.view' },
+        ],
+    },
+    {
+        label: 'Email marketing',
+        items: [
+            { title: 'Plantillas', href: templates(), icon: FileText, permission: 'templates.view' },
+            { title: 'Bajas y rebotes', href: suppressions(), icon: MailX, permission: 'email_settings.manage' },
+            { title: 'API e integraciones', href: apiKeys(), icon: Plug, permission: 'email_settings.manage' },
+            { title: 'Configuración de email', href: emailSettings(), icon: Settings, permission: 'email_settings.manage' },
         ],
     },
     {
