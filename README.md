@@ -269,3 +269,14 @@ php artisan test                  # requiere composer install con dependencias d
 npm run types:check               # tipos TypeScript / Vue
 npm run build                     # build de producción
 ```
+
+## Despliegue con Docker y Dokploy (crm.quiebre.cl)
+
+Todo el CRM corre en contenedores, **incluida la base de datos** (MariaDB 11.4), con el mismo patrón que `plataforma_integraleads`:
+
+- `Dockerfile` multi-stage: instala Composer, compila los assets (Wayfinder + Vite) y deja una imagen final PHP 8.4-FPM + Nginx + Supervisor sin Node. Supervisor ejecuta **web**, **cola** (`queue:work`: correos, boletines) y **scheduler** (`schedule:work`: boletines programados, recálculo de puntajes).
+- `docker-compose.yml` (servicios `crm` y `crm-db`): **sin puertos publicados** — el puerto y el enrutamiento los gestiona Traefik/Dokploy; la base solo es visible en la red interna del stack. Volúmenes: `crm-storage` (archivos, PDF) y `crm-db-data` (base de datos).
+- `docker/entrypoint.sh`: espera la base, ejecuta `migrate --force`, `crm:install` (carga roles, etapas, orígenes, servicios y el administrador **solo si el CRM está vacío**) y cachea configuración.
+- Detrás de Traefik se confía en `X-Forwarded-*` (`TRUSTED_PROXIES`), de modo que URLs, cookies seguras y assets salen en `https://crm.quiebre.cl`.
+
+En Dokploy: *Compose* → origen GitHub (`kuanticacl/skill-planok`, ruta `./docker-compose.yml`) → variables de `.env.dokploy.example` → dominio `crm.quiebre.cl` (servicio `crm`, puerto 80, HTTPS Let's Encrypt). El DNS (registro A de `crm.quiebre.cl`) debe apuntar al servidor de Dokploy. Cambia la contraseña del administrador inicial al ingresar y configura Resend, IA y *Datos de la agencia* desde el propio CRM.

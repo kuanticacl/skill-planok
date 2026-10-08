@@ -1,0 +1,71 @@
+# CRM Quiebre · stack completo (app + base de datos) para Dokploy.
+#
+# - Sin puertos publicados en el host: el puerto lo asigna/ruta Traefik (dominio configurado en Dokploy → crm.quiebre.cl).
+# - La base de datos vive en el mismo stack y solo es accesible por la red interna.
+# - Todo se configura con variables de entorno (ver .env.dokploy.example).
+
+services:
+  crm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      crm-db:
+        condition: service_healthy
+    environment:
+      APP_NAME: ${APP_NAME:-Quiebre CRM}
+      APP_ENV: ${APP_ENV:-production}
+      APP_KEY: ${APP_KEY:?Define APP_KEY}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: ${APP_URL:-https://crm.quiebre.cl}
+      ASSET_URL: ${ASSET_URL:-}
+      APP_LOCALE: ${APP_LOCALE:-es}
+      APP_FALLBACK_LOCALE: ${APP_FALLBACK_LOCALE:-es}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-*}
+      LOG_CHANNEL: ${LOG_CHANNEL:-stderr}
+      LOG_LEVEL: ${LOG_LEVEL:-warning}
+      DB_CONNECTION: mariadb
+      DB_HOST: crm-db
+      DB_PORT: "3306"
+      DB_DATABASE: ${DB_DATABASE:-quiebre_crm}
+      DB_USERNAME: ${DB_USERNAME:-quiebre}
+      DB_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD}
+      SESSION_DRIVER: database
+      SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-true}
+      SESSION_SAME_SITE: ${SESSION_SAME_SITE:-lax}
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      FILESYSTEM_DISK: local
+      MAIL_MAILER: ${MAIL_MAILER:-log}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrador Quiebre}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@quiebre.cl}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    volumes:
+      - crm-storage:/var/www/html/storage/app
+
+  crm-db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE:-quiebre_crm}
+      MARIADB_USER: ${DB_USERNAME:-quiebre}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Define DB_ROOT_PASSWORD}
+      MARIADB_AUTO_UPGRADE: "1"
+      TZ: America/Santiago
+    volumes:
+      - crm-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+volumes:
+  crm-storage:
+  crm-db-data:
