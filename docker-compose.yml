@@ -1,11 +1,12 @@
 # CRM Quiebre · stack completo (app + base de datos) para Dokploy.
 #
+# - Servicios: quiebre-crm (app) y quiebre-crm-db (MariaDB).
 # - Sin puertos publicados en el host: el puerto lo asigna/ruta Traefik (dominio configurado en Dokploy → crm.quiebre.cl).
 # - La base de datos vive en el mismo stack y solo es accesible por la red interna.
 # - Todo se configura con variables de entorno (ver .env.dokploy.example).
 
 services:
-  crm:
+  quiebre-crm:
     build:
       context: .
       dockerfile: Dockerfile
@@ -13,7 +14,7 @@ services:
     expose:
       - "80"
     depends_on:
-      crm-db:
+      quiebre-crm-db:
         condition: service_healthy
     environment:
       APP_NAME: ${APP_NAME:-Quiebre CRM}
@@ -28,7 +29,7 @@ services:
       LOG_CHANNEL: ${LOG_CHANNEL:-stderr}
       LOG_LEVEL: ${LOG_LEVEL:-warning}
       DB_CONNECTION: mariadb
-      DB_HOST: crm-db
+      DB_HOST: quiebre-crm-db
       DB_PORT: "3306"
       DB_DATABASE: ${DB_DATABASE:-quiebre_crm}
       DB_USERNAME: ${DB_USERNAME:-quiebre}
@@ -45,8 +46,10 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
     volumes:
       - crm-storage:/var/www/html/storage/app
+    networks:
+      - dokploy-network
 
-  crm-db:
+  quiebre-crm-db:
     image: mariadb:11.4
     restart: unless-stopped
     command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
@@ -65,7 +68,15 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
+    networks:
+      - dokploy-network
 
 volumes:
   crm-storage:
   crm-db-data:
+
+# Red compartida de Dokploy/Traefik (no crea redes nuevas). Los nombres de servicio son únicos (quiebre-crm-*)
+# para no chocar con otros stacks que usan la misma red.
+networks:
+  dokploy-network:
+    external: true
