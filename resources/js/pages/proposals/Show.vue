@@ -15,7 +15,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDateTime, timeAgo } from '@/lib/format';
 import { formatMoney } from '@/lib/leadUi';
-import { destroy, document, duplicate, edit, index, markSent, send, show, status } from '@/routes/proposals';
+import { destroy, document, duplicate, edit, index, markSent, pdf, send, show, status } from '@/routes/proposals';
 import { show as showLead } from '@/routes/leads';
 import type { ProposalRow, Recipient } from '@/types';
 
@@ -29,8 +29,6 @@ const props = defineProps<{ proposal: Detail; statuses: Record<string, string>; 
 defineOptions({ layout: { breadcrumbs: [{ title: 'Propuestas', href: index() }] } });
 
 const p = computed(() => props.proposal);
-const frame = ref<HTMLIFrameElement | null>(null);
-const printDoc = () => frame.value?.contentWindow?.print();
 
 const copied = ref(false);
 const copyLink = async () => {
@@ -74,11 +72,12 @@ const money = formatMoney;
             <template #actions>
                 <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold text-white" :style="{ backgroundColor: proposal.status_color }">{{ proposal.status_label }}</span>
                 <Button v-if="editable" variant="outline" as-child><Link :href="edit(proposal.id)"><Pencil /> Editar</Link></Button>
+                <Button variant="outline" as-child><a :href="pdf(proposal.id).url"><FileDown /> PDF</a></Button>
                 <Button v-if="can.send" @click="sendOpen = true"><Send /> Enviar por correo</Button>
                 <DropdownMenu>
                     <DropdownMenuTrigger as-child><Button variant="outline">Más acciones</Button></DropdownMenuTrigger>
                     <DropdownMenuContent align="end" class="w-60">
-                        <DropdownMenuItem @select="printDoc"><FileDown /> Descargar PDF / imprimir</DropdownMenuItem>
+                        <DropdownMenuItem as-child><a :href="pdf(proposal.id).url"><FileDown /> Descargar PDF</a></DropdownMenuItem>
                         <DropdownMenuItem @select="copyLink"><Link2 /> Copiar enlace público</DropdownMenuItem>
                         <DropdownMenuItem as-child><a :href="proposal.public_url" target="_blank" rel="noopener"><ExternalLink /> Abrir como lo ve el cliente</a></DropdownMenuItem>
                         <DropdownMenuItem v-if="can.create" @select="dup"><CopyPlus /> Nueva versión (duplicar)</DropdownMenuItem>
@@ -94,7 +93,7 @@ const money = formatMoney;
 
         <div class="grid gap-4 xl:grid-cols-[1fr_320px]">
             <div class="overflow-hidden rounded-2xl border bg-card shadow-sm">
-                <iframe ref="frame" :src="document(proposal.id).url" title="Vista de la propuesta" class="h-[78vh] w-full bg-[#F4F4F4]" />
+                <iframe :src="document(proposal.id).url" title="Vista de la propuesta" class="h-[78vh] w-full bg-[#F4F4F4]" />
             </div>
 
             <div class="flex flex-col gap-4">

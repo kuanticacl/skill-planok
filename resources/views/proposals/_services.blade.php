@@ -7,7 +7,7 @@
     @else
         <div class="kpis">
             @if ($subOnce > 0)<div class="kpi"><span>Inversión inicial (neto)</span><strong>{{ $money($p->total_one_time) }}</strong></div>@endif
-            @if ($subMonthly > 0)<div class="kpi"><span>Mensual (neto)</span><strong>{{ $money($p->total_monthly) }}</strong>@if ($months > 1)<small style="color:var(--mut)">por {{ $months }} meses</small>@endif</div>@endif
+            @if ($subMonthly > 0)<div class="kpi p"><span>Mensual (neto)</span><strong>{{ $money($p->total_monthly) }}</strong>@if ($months > 1)<small style="color:var(--mut)">por {{ $months }} meses</small>@endif</div>@endif
         </div>
 
         @foreach ([['Pago único', 'one_time', $once], ['Servicios mensuales', 'monthly', $monthly]] as [$label, $key, $group])

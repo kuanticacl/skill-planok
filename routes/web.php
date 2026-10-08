@@ -4,6 +4,7 @@ use App\Http\Controllers\Ai\AiEmailController;
 use App\Http\Controllers\Ai\AiProposalController;
 use App\Http\Controllers\Ai\AiSettingsController;
 use App\Http\Controllers\Ai\LeadAiController;
+use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\Email\ApiKeyController;
 use App\Http\Controllers\Email\AutomationController;
@@ -43,6 +44,7 @@ Route::get('/', function (Request $request) {
 
 // Propuesta comercial para el cliente: enlace privado (token), sin iniciar sesión.
 Route::get('p/{token}', [PublicProposalController::class, 'show'])->name('proposals.public');
+Route::get('p/{token}/pdf', [PublicProposalController::class, 'pdf'])->middleware('throttle:20,1')->name('proposals.public.pdf');
 Route::post('p/{token}/respond', [PublicProposalController::class, 'answer'])->middleware('throttle:10,1')->name('proposals.public.respond');
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -137,6 +139,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::middleware('can:proposals.view')->group(function () {
             Route::get('{proposal}', [ProposalController::class, 'show'])->name('proposals.show');
             Route::get('{proposal}/document', [ProposalController::class, 'document'])->name('proposals.document');
+            Route::get('{proposal}/pdf', [ProposalController::class, 'pdf'])->name('proposals.pdf');
         });
     });
     Route::middleware(['can:ai.use', 'throttle:20,1'])->prefix('proposals/ai')->group(function () {
@@ -146,6 +149,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('service', [AiProposalController::class, 'service'])->name('proposals.ai.service');
     });
     Route::get('leads/{lead}/proposals', [ProposalController::class, 'forLead'])->middleware('can:proposals.view')->name('leads.proposals');
+    Route::get('agency', [AgencyController::class, 'edit'])->middleware('can:agency.manage')->name('agency.edit');
+    Route::put('agency', [AgencyController::class, 'update'])->middleware('can:agency.manage')->name('agency.update');
     Route::prefix('services')->group(function () {
         Route::get('/', [ServiceController::class, 'index'])->middleware('can:services.view')->name('services.index');
         Route::middleware('can:services.manage')->group(function () {

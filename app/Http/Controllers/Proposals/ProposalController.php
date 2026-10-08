@@ -12,6 +12,8 @@ use App\Services\Ai\AiGateway;
 use App\Services\LeadService;
 use App\Services\Proposals\ProposalBuilder;
 use App\Services\Proposals\ProposalMailer;
+use App\Services\Proposals\ProposalPdf;
+use App\Services\Proposals\ProposalView;
 use App\Support\Rut;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -155,6 +157,14 @@ class ProposalController extends Controller
         return response(view('proposals.document', ['p' => $proposal->load(['items', 'owner:id,name']), 'public' => false, 'preview' => false])->render());
     }
 
+    /** Descarga el PDF de la propuesta (servidor). */
+    public function pdf(Request $request, Proposal $proposal, ProposalPdf $pdf): \Illuminate\Http\Response
+    {
+        $this->authorizeView($request, $proposal);
+
+        return $this->pdfResponse($proposal, $pdf);
+    }
+
     public function duplicate(Request $request, Proposal $proposal): RedirectResponse
     {
         $this->authorizeView($request, $proposal);
@@ -234,6 +244,17 @@ class ProposalController extends Controller
     }
 
     // ------------------------------------------------------------------------------------------
+
+    public static function pdfResponse(Proposal $proposal, ProposalPdf $pdf): \Illuminate\Http\Response
+    {
+        $name = ProposalView::data($proposal)['fileName'];
+
+        return response($pdf->render($proposal), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$name.'"',
+            'Cache-Control' => 'private, no-store',
+        ]);
+    }
 
     private function markSent(Proposal $proposal, User $user, string $log): void
     {

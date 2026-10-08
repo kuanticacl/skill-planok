@@ -12,7 +12,7 @@ defineProps<{
 </script>
 
 <template>
-    <div class="grid gap-2">
+    <div class="grid content-start gap-2">
         <Label :for="$props.for" class="gap-1">
             {{ label }}
             <span v-if="required" class="text-primary">*</span>

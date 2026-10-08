@@ -236,7 +236,7 @@ const writeItem = async (i: ProposalItemInput) => {
     }
 };
 const customPrompt = ref<{ idx: number; text: string } | null>(null);
-const money = formatMoney;
+const money = (n: number) => formatMoney(n) || '$0';
 </script>
 
 <template>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Proposal;
 use App\Services\LeadService;
+use App\Services\Proposals\ProposalPdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -27,6 +28,13 @@ class ProposalViewController extends Controller
 
         return response(view('proposals.document', ['p' => $p, 'public' => true, 'preview' => false])->render())
             ->header('Cache-Control', 'no-store')->header('X-Robots-Tag', 'noindex, nofollow');
+    }
+
+    public function pdf(string $token, ProposalPdf $pdf): Response
+    {
+        $p = Proposal::where('public_token', $token)->where('status', '!=', 'draft')->firstOrFail();
+
+        return \App\Http\Controllers\Proposals\ProposalController::pdfResponse($p, $pdf);
     }
 
     public function answer(Request $request, string $token): RedirectResponse

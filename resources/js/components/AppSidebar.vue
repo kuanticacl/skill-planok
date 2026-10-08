@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import {
+    Building,
     Building2,
     Columns3,
     FileText,
@@ -38,6 +39,7 @@ import {
 } from '@/components/ui/sidebar';
 import { usePermissions } from '@/composables/usePermissions';
 import { dashboard } from '@/routes';
+import { edit as agencyEdit } from '@/routes/agency';
 import { index as clients } from '@/routes/clients';
 import { index as fields } from '@/routes/fields';
 import { index as leads } from '@/routes/leads';
@@ -101,6 +103,7 @@ const groups: NavGroup[] = [
             { title: 'Orígenes y API', href: sources(), icon: Plug, permission: 'sources.manage' },
             { title: 'Etapas del Kanban', href: stages(), icon: Columns3, permission: 'stages.manage' },
             { title: 'Campos personalizados', href: fields(), icon: ListPlus, permission: 'fields.manage' },
+            { title: 'Datos de la agencia', href: agencyEdit(), icon: Building, permission: 'agency.manage' },
         ],
     },
     {

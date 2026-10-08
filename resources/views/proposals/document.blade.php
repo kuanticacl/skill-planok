@@ -16,6 +16,13 @@
     $discount = ($subOnce + $subMonthly * $months) - ($p->total_one_time + $p->total_monthly * $months);
     $date = fn ($d) => $d ? \Illuminate\Support\Carbon::parse($d)->locale('es')->translatedFormat('d \d\e F \d\e Y') : null;
     $company = $r['company'] ?? $r['legal_name'] ?? 'Cliente';
+    $agency = \App\Support\Agency::profile();
+    $socials = \App\Support\Agency::socials();
+    $tech = \App\Support\Agency::tech();
+    $holding = \App\Support\Agency::holding();
+    $owner = $p->owner;
+    $pdfUrl = ($public ?? false) ? route('proposals.public.pdf', $p->public_token) : (($preview ?? false) ? null : route('proposals.pdf', $p->id));
+    $asset = fn ($f) => asset($f);
 @endphp
 <!doctype html>
 <html lang="es">
@@ -38,15 +45,18 @@
         .pill.primary { background:var(--o); border-color:var(--o); color:#fff; }
         .pill:hover { filter:brightness(.97); }
         .card { background:#fff; border-radius:24px; padding:32px; margin-bottom:16px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
-        .cover { position:relative; overflow:hidden; background:var(--o); color:#fff; border-radius:28px; padding:48px 40px 40px; margin-bottom:16px; }
-        .cover::before { content:''; position:absolute; right:-70px; top:-60px; width:300px; height:300px; border-radius:90px; background:rgba(255,255,255,.12); }
-        .cover::after { content:''; position:absolute; right:30px; top:30px; width:150px; height:150px; border-radius:48px; background:rgba(255,255,255,.14); }
-        .cover .tag { display:inline-block; background:rgba(255,255,255,.2); border-radius:999px; padding:4px 14px; font-size:13px; font-weight:600; letter-spacing:.02em; }
-        .cover h1 { position:relative; margin:18px 0 8px; font-size:36px; line-height:1.15; font-weight:700; max-width:620px; }
-        .cover p { position:relative; margin:0; font-size:17px; opacity:.95; }
-        .cover .meta { position:relative; display:flex; flex-wrap:wrap; gap:28px; margin-top:32px; }
-        .cover .meta div span { display:block; font-size:12px; opacity:.8; text-transform:uppercase; letter-spacing:.06em; }
-        .cover .meta div strong { font-size:15px; }
+        .cover { position:relative; overflow:hidden; border-radius:28px; margin-bottom:16px; padding:34px 40px 36px; min-height:340px; background:#F4F4F4 url('{{ $asset('brand/proposal-cover.jpg') }}') no-repeat right center / auto 100%; box-shadow:0 1px 2px rgba(0,0,0,.05); }
+        .cover::before { content:''; position:absolute; inset:0; background:linear-gradient(90deg,#F4F4F4 0%,rgba(244,244,244,.94) 42%,rgba(244,244,244,0) 74%); }
+        .cover > * { position:relative; }
+        @media (max-width:760px) { .cover { background-size:auto 70%; background-position:right bottom; } .cover::before { background:linear-gradient(90deg,#F4F4F4 0%,rgba(244,244,244,.85) 40%,rgba(244,244,244,0) 78%); } }
+        .cover .logo { height:24px; width:auto; display:block; }
+        .cover .tag { display:inline-block; margin-top:34px; background:rgba(255,255,255,.6); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,.9); box-shadow:0 2px 10px rgba(0,0,0,.05); border-radius:999px; padding:4px 14px; font-size:13px; font-weight:600; color:var(--mut); }
+        .cover h1 { margin:14px 0 6px; font-size:38px; line-height:1.12; font-weight:600; color:var(--o); max-width:520px; }
+        .cover p { margin:0; font-size:18px; color:var(--mut); max-width:520px; } .cover p strong { color:var(--ink); }
+        .cover .meta { display:flex; flex-wrap:wrap; gap:10px; margin-top:26px; max-width:640px; }
+        .glass { padding:7px 12px; background:rgba(255,255,255,.55); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,.9); box-shadow:0 4px 18px rgba(0,0,0,.06); border-radius:14px; padding:8px 14px; }
+        .glass.purple { background:rgba(100,25,219,.82); border-color:rgba(255,255,255,.25); box-shadow:0 8px 26px rgba(100,25,219,.28); color:#fff; }
+        .glass span { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--mut); } .glass strong { font-size:15px; } .glass.purple span { color:#E4D6FB; }
         h2 { margin:0 0 12px; font-size:21px; line-height:1.25; display:flex; align-items:center; gap:12px; }
         h2 .n { flex:none; width:32px; height:32px; border-radius:11px; background:var(--soft); color:var(--o); font-size:14px; font-weight:700; display:grid; place-items:center; }
         .body p { margin:0 0 10px; } .body ul { margin:0 0 10px; padding-left:20px; } .body li { margin:3px 0; } .body li::marker { color:var(--o); }
@@ -65,14 +75,23 @@
         .totals div { display:flex; justify-content:space-between; padding:5px 0; } .totals .sep { border-top:1px solid var(--line); margin-top:6px; padding-top:10px; }
         .totals .grand { background:var(--o); color:#fff; border-radius:16px; padding:14px 18px; margin-top:10px; font-size:18px; font-weight:700; }
         .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-bottom:8px; }
-        .kpi { background:var(--soft); border-radius:18px; padding:16px 18px; } .kpi span { font-size:12px; color:var(--mut); text-transform:uppercase; letter-spacing:.05em; } .kpi strong { display:block; font-size:24px; color:var(--o); line-height:1.2; }
+        .kpi { background:var(--soft); border:1px solid rgba(255,83,0,.12); border-radius:18px; padding:16px 18px; } .kpi.p { background:rgba(100,25,219,.07); border-color:rgba(100,25,219,.16); } .kpi.p strong { color:#6419DB; } .kpi span { font-size:12px; color:var(--mut); text-transform:uppercase; letter-spacing:.05em; } .kpi strong { display:block; font-size:24px; color:var(--o); line-height:1.2; }
         .accept { border:2px solid var(--o); } .accept form { display:grid; gap:12px; margin-top:12px; }
         .accept input, .accept textarea { font:inherit; width:100%; border:1px solid var(--line); border-radius:14px; padding:11px 14px; background:#fff; color:var(--ink); }
         .accept input:focus, .accept textarea:focus { outline:2px solid var(--o2); border-color:var(--o); }
         .actions { display:flex; flex-wrap:wrap; gap:10px; }
         .badge { display:inline-block; border-radius:999px; padding:4px 14px; font-weight:600; font-size:13px; color:#fff; }
-        .foot { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:20px 8px; color:var(--mut); font-size:13px; }
-        .foot svg { height:20px; width:auto; color:var(--ink); } .foot a { color:var(--o); text-decoration:none; font-weight:600; }
+        .sign { display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-top:14px; } .sign .line { border-bottom:1px solid #B5B5B5; height:42px; } .sign .cap { font-size:12px; color:var(--mut); margin-top:6px; }
+        .ficha { background:#fff; border-radius:24px; padding:30px 34px; box-shadow:0 0 15px rgba(0,0,0,.08); display:grid; grid-template-columns:1fr 1fr; gap:36px; }
+        .ficha h3 { margin:0 0 12px; font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--mut); border-bottom:1px solid var(--o); padding-bottom:8px; }
+        .holding { display:flex; flex-wrap:nowrap; align-items:center; gap:16px 22px; } .holding a { display:block; } .holding img { height:24px; width:auto; display:block; } .holding img.wide { height:18px; }
+        .hold-note { margin:12px 0 0; font-size:12.5px; color:var(--mut); }
+        .where { display:grid; gap:7px; font-size:14px; } .where div { display:flex; gap:9px; align-items:flex-start; } .where svg { flex:none; width:16px; height:16px; margin-top:3px; color:var(--o); stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; } .where a { color:inherit; text-decoration:none; }
+        .soc { display:flex; gap:8px; margin-top:12px; } .soc a { width:34px; height:34px; border-radius:12px; display:grid; place-items:center; color:var(--o); background:rgba(255,83,0,.08); border:1px solid rgba(255,83,0,.18); } .soc svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+        .tech { text-align:center; margin:22px 0 4px; } .tech p { margin:0 0 10px; font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:#A8A8A8; }
+        .tech div { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:10px 22px; } .tech img { height:16px; width:auto; opacity:.9; }
+        .legal { text-align:center; color:#A8A8A8; font-size:12px; margin-top:14px; }
+        @media (max-width:640px) { .sign, .ficha { grid-template-columns:1fr; } }
         .flash { background:#E7F8F3; color:#0A7A66; border-radius:16px; padding:12px 18px; margin-bottom:16px; font-weight:600; }
         .err { background:#FDECEC; color:#B42318; border-radius:16px; padding:12px 18px; margin-bottom:16px; }
         .vp { position:fixed; right:12px; bottom:12px; background:#393939; color:#fff; border-radius:999px; padding:6px 14px; font-size:12px; opacity:.85; }
@@ -90,20 +109,22 @@
     @if (isset($errors) && $errors->any())<div class="err noprint">{{ $errors->first() }}</div>@endif
 
     <div class="top noprint">
-        @include('proposals._logo')
+        <span></span>
         <div class="actions">
-            @if ($public ?? false)<button type="button" class="pill" onclick="window.print()">Descargar PDF</button>@endif
+            @if ($pdfUrl)<a class="pill primary" href="{{ $pdfUrl }}">Descargar PDF</a>@endif
         </div>
     </div>
 
     <section class="cover">
+        <img class="logo" src="{{ $asset('brand/quiebre-logo-dark.png') }}" alt="Quiebre">
         <span class="tag">Propuesta comercial · N.º {{ $p->number }}</span>
         <h1>{{ $p->title }}</h1>
         <p>Preparada para <strong>{{ $company }}</strong></p>
         <div class="meta">
-            <div><span>Fecha</span><strong>{{ $date($p->issued_at ?? now()) }}</strong></div>
-            @if ($p->valid_until)<div><span>Válida hasta</span><strong>{{ $date($p->valid_until) }}</strong></div>@endif
-            @if ($p->owner)<div><span>Responsable</span><strong>{{ $p->owner->name }}</strong></div>@endif
+            <div class="glass"><span>Fecha</span><strong>{{ $date($p->issued_at ?? now()) }}</strong></div>
+            @if ($p->valid_until)<div class="glass"><span>Válida hasta</span><strong>{{ $date($p->valid_until) }}</strong></div>@endif
+            @if ($p->owner)<div class="glass"><span>Responsable</span><strong>{{ $p->owner->name }}</strong></div>@endif
+            @if ($p->total_gross > 0)<div class="glass purple"><span>Total con IVA</span><strong>{{ $money($p->total_gross) }}</strong></div>@endif
         </div>
     </section>
 
@@ -156,10 +177,64 @@
         @endif
     @endif
 
-    <div class="foot">
-        <span>@include('proposals._logo')</span>
-        <span>Inteligencia inmobiliaria · <a href="https://www.quiebre.cl">quiebre.cl</a></span>
+    {{-- Firma y aceptación --}}
+    <section class="card">
+        <h2>Firma y aceptación</h2>
+        <p style="margin:0;color:var(--mut)">Atentamente, el equipo de Quiebre. La propuesta se acepta firmándola y devolviéndola{{ ($public ?? false) ? ' o con el botón «Aceptar propuesta» de este enlace' : '' }}.</p>
+        <div class="sign">
+            <div><div class="line"></div><strong>{{ $owner->name ?? 'Equipo Quiebre' }}</strong><div class="cap">{{ $agency['legal_name'] }} · RUT {{ $agency['tax_id'] }}<br>{{ $owner->email ?? $agency['email'] }}</div></div>
+            <div>
+                @if ($status === 'accepted')
+                    <div class="line" style="display:grid;place-items:end center;color:#0D9F85;font-weight:700;padding-bottom:6px">ACEPTADA EN LÍNEA</div>
+                    <strong>{{ $p->responded_by }}</strong><div class="cap">{{ $p->responded_at?->locale('es')->translatedFormat('d \d\e F \d\e Y, H:i') }}</div>
+                @else
+                    <div class="line"></div><strong>{{ $r['contact_name'] ?? 'Nombre y firma del cliente' }}</strong><div class="cap">{{ $r['legal_name'] ?? $company }}@if (! empty($r['rut'])) · RUT {{ $r['rut'] }}@endif<br>Fecha: ______ / ______ / ____________</div>
+                @endif
+            </div>
+        </div>
+    </section>
+
+    {{-- Pie: holding (izquierda) · ubicación y redes (derecha) --}}
+    <footer class="ficha">
+        <div>
+            <h3>Parte del holding</h3>
+            <div class="holding">
+                @foreach ($holding as $h)<a href="{{ $h['url'] }}" target="_blank" rel="noopener" title="{{ $h['name'] }}"><img src="{{ $asset('brand/partners/'.$h['logo'].'.png') }}" alt="{{ $h['name'] }}" class="{{ $h['logo'] === 'integraleads' ? 'wide' : '' }}"></a>@endforeach
+            </div>
+            <p class="hold-note">Quiebre es parte de un holding de empresas de tecnología y marketing para el sector inmobiliario.</p>
+        </div>
+        <div>
+            <h3>Dónde estamos</h3>
+            <div class="where">
+                <div><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span><strong>{{ $agency['legal_name'] }}</strong> · RUT {{ $agency['tax_id'] }}<br>{{ $agency['address'] }}</span></div>
+                <div><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><a href="mailto:{{ $agency['email'] }}">{{ $agency['email'] }}</a></div>
+                @if ($agency['phone'])<div><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>{{ $agency['phone'] }}</span></div>@endif
+                <div><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><a href="{{ $agency['website'] }}" style="color:var(--o);font-weight:600">{{ preg_replace('#^https?://#', '', rtrim($agency['website'], '/')) }}</a></div>
+            </div>
+            @if ($socials)
+                <div class="soc">
+                    @foreach ($socials as $k => $sc)
+                        <a href="{{ $sc['url'] }}" target="_blank" rel="noopener" title="{{ $sc['label'] }}">
+                            @switch($k)
+                                @case('instagram')<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/></svg>@break
+                                @case('linkedin')<svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>@break
+                                @case('facebook')<svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>@break
+                                @case('youtube')<svg viewBox="0 0 24 24"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>@break
+                                @default<svg viewBox="0 0 24 24"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
+                            @endswitch
+                        </a>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+    </footer>
+
+    {{-- Tecnologías: lo último de la página, pequeño y sutil --}}
+    <div class="tech">
+        <p>Tecnologías con las que trabajamos</p>
+        <div>@foreach ($tech as $t)<img src="{{ $asset('brand/tech/'.$t.'.png') }}" alt="{{ $t }}">@endforeach</div>
     </div>
+    <p class="legal">© {{ now()->year }} {{ $agency['legal_name'] }} · Documento confidencial para {{ $company }}</p>
 </div>
 @if ($preview ?? false)<div class="vp noprint">Vista previa</div>@endif
 </body>

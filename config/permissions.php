@@ -59,6 +59,7 @@ return [
                 'proposals.delete' => 'Eliminar propuestas',
                 'services.view' => 'Ver el catálogo de servicios',
                 'services.manage' => 'Administrar el catálogo de servicios y tarifas',
+                'agency.manage' => 'Editar los datos de la agencia (firma y pie de propuestas)',
             ],
         ],
         'users' => [
@@ -143,7 +144,7 @@ return [
             'permissions' => [
                 'dashboard.view',
                 'leads.view', 'leads.view_all', 'leads.create', 'leads.update', 'leads.move', 'leads.assign', 'leads.notes',
-                'clients.view', 'clients.create', 'clients.update', 'proposals.view', 'proposals.create', 'proposals.send', 'proposals.delete', 'services.view', 'services.manage',
+                'clients.view', 'clients.create', 'clients.update', 'proposals.view', 'proposals.create', 'proposals.send', 'proposals.delete', 'services.view', 'services.manage', 'agency.manage',
                 'users.view',
                 'templates.view', 'campaigns.view', 'email_logs.view', 'ai.use',
             ],

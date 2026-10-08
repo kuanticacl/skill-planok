@@ -97,4 +97,30 @@ class ProposalFlowTest extends TestCase
 
         $this->actingAs($admin)->putJson('/proposals/'.$p->id, ['title' => 'x', 'discount_type' => 'percent', 'tax_rate' => 19])->assertStatus(422);
     }
+
+    public function test_pdf_can_be_downloaded_by_staff_and_by_public_link_only_when_sent(): void
+    {
+        $admin = $this->userWithRole('admin');
+        $p = $this->proposalFor();
+
+        $res = $this->actingAs($admin)->get('/proposals/'.$p->id.'/pdf')->assertOk();
+        $this->assertSame('application/pdf', $res->headers->get('Content-Type'));
+        $this->assertStringStartsWith('%PDF', $res->getContent());
+        $this->assertStringContainsString('Propuesta-'.$p->number, $res->headers->get('Content-Disposition'));
+
+        auth()->logout();
+        $this->get('/p/'.$p->public_token.'/pdf')->assertNotFound(); // borrador
+        $p->update(['status' => 'sent']);
+        $this->get('/p/'.$p->public_token.'/pdf')->assertOk();
+    }
+
+    public function test_document_shows_holding_brands_and_agency_data(): void
+    {
+        $p = $this->proposalFor();
+        $p->update(['status' => 'sent']);
+
+        $this->get('/p/'.$p->public_token)->assertOk()
+            ->assertSee('Parte del holding')->assertSee('bemodular.cl')->assertSee('kuantica.cl')->assertSee('integraleads.cl')
+            ->assertSee('76.302.966-2')->assertSee('Av. Apoquindo 7935')->assertSee('Tecnologías con las que trabajamos');
+    }
 }
