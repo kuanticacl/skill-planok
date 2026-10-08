@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid } from '@lucide/vue';
+import { Globe, LayoutDashboard, ShieldCheck, UserCog } from '@lucide/vue';
+import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -14,28 +15,48 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { usePermissions } from '@/composables/usePermissions';
 import { dashboard } from '@/routes';
+import { index as roles } from '@/routes/roles';
+import { index as users } from '@/routes/users';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
+type NavGroup = { label: string; items: (NavItem & { permission?: string })[] };
+
+const { can } = usePermissions();
+
+const groups: NavGroup[] = [
     {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
+        label: 'Comercial',
+        items: [
+            {
+                title: 'Dashboard',
+                href: dashboard(),
+                icon: LayoutDashboard,
+                permission: 'dashboard.view',
+            },
+        ],
+    },
+    {
+        label: 'Administración',
+        items: [
+            { title: 'Usuarios', href: users(), icon: UserCog, permission: 'users.view' },
+            { title: 'Roles y permisos', href: roles(), icon: ShieldCheck, permission: 'roles.view' },
+        ],
     },
 ];
 
+const visibleGroups = computed(() =>
+    groups
+        .map((g) => ({
+            ...g,
+            items: g.items.filter((i) => !i.permission || can(i.permission)),
+        }))
+        .filter((g) => g.items.length),
+);
+
 const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
+    { title: 'quiebre.cl', href: 'https://www.quiebre.cl', icon: Globe },
 ];
 </script>
 
@@ -54,7 +75,12 @@ const footerNavItems: NavItem[] = [
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" />
+            <NavMain
+                v-for="g in visibleGroups"
+                :key="g.label"
+                :label="g.label"
+                :items="g.items"
+            />
         </SidebarContent>
 
         <SidebarFooter>

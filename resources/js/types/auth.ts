@@ -3,6 +3,10 @@ export type User = {
     name: string;
     email: string;
     avatar?: string;
+    phone?: string | null;
+    job_title?: string | null;
+    is_active?: boolean;
+    role?: { id: number; name: string; slug: string } | null;
     email_verified_at: string | null;
     /* @chisel-2fa */
     two_factor_enabled?: boolean;
@@ -14,6 +18,8 @@ export type User = {
 
 export type Auth = {
     user: User;
+    /** Claves de permiso efectivas del usuario autenticado. */
+    permissions: string[];
 };
 
 /* @chisel-passkeys */
