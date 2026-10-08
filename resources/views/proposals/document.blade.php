@@ -84,7 +84,7 @@
         .sign { display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-top:14px; } .sign .line { border-bottom:1px solid #B5B5B5; height:42px; } .sign .cap { font-size:12px; color:var(--mut); margin-top:6px; }
         .ficha { background:#fff; border-radius:24px; padding:30px 34px; box-shadow:0 0 15px rgba(0,0,0,.08); display:grid; grid-template-columns:1fr 1fr; gap:36px; }
         .ficha h3 { margin:0 0 12px; font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--mut); border-bottom:1px solid var(--o); padding-bottom:8px; }
-        .holding { display:flex; flex-wrap:nowrap; align-items:center; gap:16px 22px; } .holding a { display:block; } .holding img { height:24px; width:auto; display:block; } .holding img.wide { height:18px; }
+        .holding { display:flex; flex-wrap:nowrap; align-items:center; gap:4px; margin-left:-8px; } .holding a { display:block; } .holding img { height:40px; width:auto; display:block; }
         .hold-note { margin:12px 0 0; font-size:12.5px; color:var(--mut); }
         .where { display:grid; gap:7px; font-size:14px; } .where div { display:flex; gap:9px; align-items:flex-start; } .where svg { flex:none; width:16px; height:16px; margin-top:3px; color:var(--o); stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; } .where a { color:inherit; text-decoration:none; }
         .soc { display:flex; gap:8px; margin-top:12px; } .soc a { width:34px; height:34px; border-radius:12px; display:grid; place-items:center; color:var(--o); background:rgba(255,83,0,.08); border:1px solid rgba(255,83,0,.18); } .soc svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
@@ -199,7 +199,7 @@
         <div>
             <h3>Parte del holding</h3>
             <div class="holding">
-                @foreach ($holding as $h)<a href="{{ $h['url'] }}" target="_blank" rel="noopener" title="{{ $h['name'] }}"><img src="{{ $asset('brand/partners/'.$h['logo'].'.png') }}" alt="{{ $h['name'] }}" class="{{ $h['logo'] === 'integraleads' ? 'wide' : '' }}"></a>@endforeach
+                @foreach ($holding as $h)<a href="{{ $h['url'] }}" target="_blank" rel="noopener" title="{{ $h['name'] }}"><img src="{{ $asset('brand/partners/'.$h['logo'].'.png') }}" alt="{{ $h['name'] }}"></a>@endforeach
             </div>
             <p class="hold-note">Quiebre es parte de un holding de empresas de tecnología y marketing para el sector inmobiliario.</p>
         </div>

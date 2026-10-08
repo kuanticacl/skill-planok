@@ -111,7 +111,7 @@
         <td style="width:50%;vertical-align:top;padding-right:16px">
             <div class="hold-t" style="text-align:left">Parte del holding</div>
             <table style="width:auto"><tr>
-                @foreach ($holding as $h)<td style="padding:2px 14px 2px 0"><img src="{{ $img('brand/partners/'.$h['logo'].'.png') }}" style="height:{{ $h['logo'] === 'integraleads' ? 14 : 18 }}px" alt="{{ $h['name'] }}"></td>@endforeach
+                @foreach ($holding as $h)<td style="padding:0;width:92px"><img src="{{ $img('brand/partners/'.$h['logo'].'.png') }}" style="height:28px" alt="{{ $h['name'] }}"></td>@endforeach
             </tr></table>
             <div class="mut" style="font-size:8.5px;margin-top:8px">Quiebre es parte de un holding de empresas de tecnología y marketing para el sector inmobiliario.<br>@foreach ($holding as $h){{ preg_replace('#^https?://(www\.)?#', '', $h['url']) }}@if (! $loop->last) · @endif @endforeach</div>
         </td>

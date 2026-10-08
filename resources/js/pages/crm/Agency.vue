@@ -47,7 +47,7 @@ const ph: Record<string, string> = { instagram: 'https://www.instagram.com/…',
                 <h2 class="mb-1 flex items-center gap-2 font-semibold"><Globe class="size-4 text-primary" /> Holding</h2>
                 <p class="mb-4 text-xs text-muted-foreground">Estas empresas aparecen siempre en el pie de las propuestas.</p>
                 <div class="flex flex-wrap items-center gap-8">
-                    <a v-for="h in holding" :key="h.name" :href="h.url" target="_blank" rel="noopener" class="opacity-90 transition hover:opacity-100"><img :src="`/brand/partners/${h.logo}.png`" :alt="h.name" class="h-9 w-auto"></a>
+                    <a v-for="h in holding" :key="h.name" :href="h.url" target="_blank" rel="noopener" class="opacity-90 transition hover:opacity-100"><img :src="`/brand/partners/${h.logo}.png`" :alt="h.name" class="h-10 w-auto"></a>
                 </div>
             </section>
 
