@@ -1,177 +1,27 @@
-# PlanOK API Skill
+# Laravel + Vue Starter Kit
 
-> Experto en la API REST de PlanOK CRM, con la especificación OpenAPI/Swagger completa embebida.
-> Expert on the PlanOK CRM REST API, with the full OpenAPI/Swagger spec embedded.
+## Introduction
 
-Una **skill** instalable para agentes de IA (Claude Code, OpenCode, Cursor, Codex, Gemini, Windsurf, ChatGPT Custom GPT) que responde dudas técnicas sobre la API de PlanOK basándose en la documentación oficial.
+Our Vue starter kit provides a robust, modern starting point for building Laravel applications with a Vue frontend using [Inertia](https://inertiajs.com).
 
-An **installable skill** for AI agents (Claude Code, OpenCode, Cursor, Codex, Gemini, Windsurf, ChatGPT Custom GPT) that answers technical questions about the PlanOK API using the official documentation as source of truth.
+Inertia allows you to build modern, single-page Vue applications using classic server-side routing and controllers. This lets you enjoy the frontend power of Vue combined with the incredible backend productivity of Laravel and lightning-fast Vite compilation.
 
----
+This Vue starter kit utilizes Vue 3 and the Composition API, TypeScript, Tailwind, and the [shadcn-vue](https://www.shadcn-vue.com) component library.
 
-## ¿Qué hace? / What does it do?
+## Official Documentation
 
-- Responde sobre **endpoints**, autenticación, parámetros, schemas y ejemplos de la API PlanOK.
-- Cubre módulos: centralizador/leads, UTM, clientes, cotizaciones, proyectos, productos, reservas, promesas, pagos, Pok Pago, guía propietario, iConstruye y gestor.
-- Incluye un **buscador CLI local** (`scripts/search_planok_api.py`) para encontrar endpoints y schemas por palabra clave.
-- **No inventa** endpoints ni campos: si la documentación no lo declara, lo dice explícitamente.
+Documentation for all Laravel starter kits can be found on the [Laravel website](https://laravel.com/docs/starter-kits).
 
----
+## Contributing
 
-## Plataformas soportadas / Supported platforms
+Thank you for considering contributing to our starter kit! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
-| Plataforma | Cómo la usa |
-|---|---|
-| Claude Code / OpenCode / Cursor / Codex / Gemini / Windsurf / VS Code Copilot | Lee `SKILL.md` + `references/` + `scripts/` |
-| ChatGPT Custom GPT | Lee `agents/openai.yaml` (interface) + knowledge uploads |
-| Cualquier agente compatible con [Agent Skills spec](https://skills.sh/) | Mismo formato `SKILL.md` |
+All contributions to the Starter Kits from now on should be made through [Maestro](https://github.com/laravel/maestro).
 
----
+## Code of Conduct
 
-## Instalación / Installation
+In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
 
-> **Importante sobre versionado:** `npx skills` usa la sintaxis `@<skill-name>` (no `@<versión>`) para seleccionar qué skill del repo instalar. Para fijar una versión concreta, instala desde un tag de Git (`git clone --branch`) o fija el commit. El CLI instala siempre el HEAD de la rama por defecto, que en este repo apunta a la última release (actualmente `v1.0.0`).
->
-> **About versioning:** `npx skills` uses the `@<skill-name>` syntax (not `@<version>`) to pick which skill to install from a repo. To pin a specific version, use `git clone --branch <tag>` or pin the commit. The CLI always installs the default branch HEAD, which in this repo points to the latest release (currently `v1.0.0`).
+## License
 
-### Vía skills.sh (recomendado / recommended)
-
-```bash
-# Instalar todas las skills del repo (default)
-# Install all skills from the repo (default)
-npx skills add kuanticacl/skill-planok -g -y
-
-# Instalar la skill específica por nombre
-# Install a specific skill by name
-npx skills add kuanticacl/skill-planok@planok-api -g -y
-```
-
-### Manual (clonar a `~/.claude/skills/`)
-
-```bash
-# Última versión (HEAD de main) / Latest (main HEAD)
-git clone https://github.com/kuanticacl/skill-planok.git \
-  ~/.claude/skills/planok-api
-
-# Versión fija (tag v1.0.0) / Pin to a specific tag
-git clone --branch v1.0.0 https://github.com/kuanticacl/skill-planok.git \
-  ~/.claude/skills/planok-api
-```
-
-### Verificar instalación / Verify
-
-```bash
-npx skills list -g
-# Debería listar / Should list: planok-api
-```
-
-La skill quedará registrada como `planok-api` y se activará automáticamente cuando el agente detecte palabras clave como *endpoints*, *swagger*, *leads*, *cotizaciones*, *UTM*, *Pok Pago*, etc.
-
-The skill is registered as `planok-api` and activates automatically when the agent detects trigger keywords like *endpoints*, *swagger*, *leads*, *cotizaciones*, *UTM*, *Pok Pago*, etc.
-
----
-
-## Uso / Usage
-
-### Ejemplo en español
-
-> **Usuario:** ¿Cómo creo un lead en el centralizador?
->
-> **Skill:** Debes llamar a `POST /leads` con seguridad `JWT` (header `Authorization: Bearer <JWT>`).
->
-> ```bash
-> curl -X POST "https://api-gci-rest.integracionplanok.io/api/leads" \
->   -H "Authorization: Bearer <JWT>" \
->   -H "Content-Type: application/json" \
->   -d '{
->     "rut_dni": "12345678-9",
->     "nombre": "Juan",
->     "apellido_paterno": "Pérez",
->     "email": "juan@example.cl",
->     "telefono_movil": "+56912345678",
->     "proyecto_id": 42,
->     "comentario": "Interesado en departamento"
->   }'
-> ```
-
-### Example in English
-
-> **User:** How do I authenticate to PlanOK CRM?
->
-> **Skill:** Call `POST /login?apikey=<API_KEY>` with credentials, then use `Authorization: Bearer <JWT>` in subsequent requests that declare `JWT` security.
-
----
-
-## Estructura / Structure
-
-```
-skill-planok/
-├── SKILL.md                          # Instrucciones + frontmatter (ES + EN)
-├── README.md                         # Este archivo / This file
-├── LICENSE                           # MIT
-├── .gitignore
-├── agents/
-│   └── openai.yaml                   # Metadata para ChatGPT Custom GPT
-├── references/                       # Fuente de verdad de la API
-│   ├── openapi.json                  # Swagger 2.0 completo (~498 KB)
-│   ├── endpoint-index.md             # Índice de operaciones
-│   ├── schemas.md                    # Resumen de definitions
-│   ├── auth.md                       # Esquemas de seguridad
-│   └── workflows.md                  # Flujos comunes
-├── scripts/
-│   └── search_planok_api.py          # Buscador CLI local
-└── evals/                            # Prompts de prueba
-    ├── 01-es-crear-lead.md
-    ├── 02-es-seguridad-proyectos.md
-    ├── 03-en-autenticacion.md
-    ├── 04-en-utm.md
-    ├── 05-es-pok-pago.md
-    └── 06-en-busqueda-cli.md
-```
-
----
-
-## Buscador CLI / CLI search tool
-
-```bash
-python scripts/search_planok_api.py "utm"
-python scripts/search_planok_api.py "cotizaciones"
-python scripts/search_planok_api.py "centralizador"
-python scripts/search_planok_api.py "promesas"
-```
-
----
-
-## Configuración para ChatGPT Custom GPT
-
-1. Abre [chat.openai.com/gpts/editor](https://chat.openai.com/gpts/editor).
-2. Copia el contenido de `agents/openai.yaml` en el bloque de **Instructions** (o úsalo como guía).
-3. En **Knowledge**, sube estos archivos (más livianos que el OpenAPI completo):
-   - `references/endpoint-index.md`
-   - `references/schemas.md`
-   - `references/auth.md`
-   - `references/workflows.md`
-4. Activa **Actions** si quieres que el GPT haga llamadas reales a la API (opcional).
-
----
-
-## Base técnica / Technical base
-
-- **Base URL:** `https://api-gci-rest.integracionplanok.io/api`
-- **Swagger version:** `1.16.14`
-- **Seguridad:** `APIKey`, `APIKeyPublic`, `JWT`, `XAPIKey`, `CognitoJWT`, `NotificacionPush`, `Planok`, `SsoJWT`
-
----
-
-## Licencia / License
-
-MIT © 2026 KUANTICA — ver [LICENSE](./LICENSE).
-
----
-
-## Links
-
-- **Repo:** https://github.com/kuanticacl/skill-planok
-- **Releases:** https://github.com/kuanticacl/skill-planok/releases
-- **Issues:** https://github.com/kuanticacl/skill-planok/issues
-- **Skills registry:** [skills.sh](https://skills.sh/) — buscar `planok-api` (la indexación automática puede tardar unos minutos tras el push)
+The Laravel + Vue starter kit is open-sourced software licensed under the MIT license.
