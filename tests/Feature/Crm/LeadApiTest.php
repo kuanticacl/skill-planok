@@ -107,4 +107,15 @@ class LeadApiTest extends TestCase
         $this->assertSame(1, \App\Models\ContactList::count());
         $this->assertSame(1, \App\Models\ContactListEntry::count());
     }
+
+    public function test_landing_kit_is_idempotent_and_template_renders()
+    {
+        $kit = new \App\Services\Email\LandingKit;
+        $this->assertNotEmpty($kit->install());
+        $this->assertEmpty($kit->install());
+
+        $this->assertSame(2, LeadSource::where('slug', 'like', 'landing-top-inmobiliario%')->count());
+        $this->assertTrue(\App\Models\EmailTemplate::where('slug', 'confirmacion-asesoria')->exists());
+        $this->assertTrue(\App\Models\ContactList::where('name', 'Boletín Top Inmobiliario')->exists());
+    }
 }

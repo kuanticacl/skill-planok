@@ -33,6 +33,7 @@ php artisan config:clear >/dev/null 2>&1 || true
 # Migraciones y datos iniciales (solo la primera vez: roles, etapas, orígenes, servicios y administrador).
 php artisan migrate --force
 php artisan crm:install
+php artisan crm:landing-kit || true
 
 # Datos de muestra (un cliente + propuestas por origen): activar con SEED_DEMO=true; solo se cargan una vez.
 if [ "${SEED_DEMO:-false}" = "true" ]; then
