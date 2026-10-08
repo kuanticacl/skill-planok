@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\Email\ApiKeyController;
+use App\Http\Controllers\Email\CampaignController;
+use App\Http\Controllers\Email\ContactListController;
+use App\Http\Controllers\Email\EmailMessageController;
 use App\Http\Controllers\Email\EmailSettingsController;
 use App\Http\Controllers\Email\EmailTemplateController;
 use App\Http\Controllers\Email\SuppressionController;
@@ -110,6 +113,44 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('api', [ApiKeyController::class, 'store'])->name('api-keys.store');
             Route::put('api/{apiKey}', [ApiKeyController::class, 'update'])->name('api-keys.update');
             Route::delete('api/{apiKey}', [ApiKeyController::class, 'destroy'])->name('api-keys.destroy');
+        });
+
+        // Audiencias (listas)
+        Route::middleware('can:lists.manage')->group(function () {
+            Route::get('lists', [ContactListController::class, 'index'])->name('lists.index');
+            Route::post('lists', [ContactListController::class, 'store'])->name('lists.store');
+            Route::get('lists/{list}', [ContactListController::class, 'show'])->name('lists.show');
+            Route::put('lists/{list}', [ContactListController::class, 'update'])->name('lists.update');
+            Route::delete('lists/{list}', [ContactListController::class, 'destroy'])->name('lists.destroy');
+            Route::post('lists/{list}/import', [ContactListController::class, 'import'])->name('lists.import');
+            Route::delete('lists/{list}/entries/{entry}', [ContactListController::class, 'destroyEntry'])->name('lists.entries.destroy');
+        });
+
+        // Boletines
+        Route::get('campaigns', [CampaignController::class, 'index'])->middleware('can:campaigns.view')->name('campaigns.index');
+        Route::middleware('can:campaigns.create')->group(function () {
+            Route::get('campaigns/create', [CampaignController::class, 'create'])->name('campaigns.create');
+            Route::post('campaigns', [CampaignController::class, 'store'])->name('campaigns.store');
+            Route::post('campaigns/audience-count', [CampaignController::class, 'audienceCount'])->name('campaigns.audience-count');
+            Route::post('campaigns/preview', [CampaignController::class, 'preview'])->name('campaigns.preview');
+            Route::post('campaigns/test', [CampaignController::class, 'test'])->name('campaigns.test');
+            Route::get('campaigns/{campaign}/edit', [CampaignController::class, 'edit'])->name('campaigns.edit');
+            Route::put('campaigns/{campaign}', [CampaignController::class, 'update'])->name('campaigns.update');
+            Route::post('campaigns/{campaign}/duplicate', [CampaignController::class, 'duplicate'])->name('campaigns.duplicate');
+            Route::delete('campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaigns.destroy');
+        });
+        Route::middleware('can:campaigns.send')->group(function () {
+            Route::post('campaigns/{campaign}/send', [CampaignController::class, 'send'])->name('campaigns.send');
+            Route::post('campaigns/{campaign}/pause', [CampaignController::class, 'pause'])->name('campaigns.pause');
+            Route::post('campaigns/{campaign}/resume', [CampaignController::class, 'resume'])->name('campaigns.resume');
+            Route::post('campaigns/{campaign}/cancel', [CampaignController::class, 'cancel'])->name('campaigns.cancel');
+        });
+        Route::get('campaigns/{campaign}', [CampaignController::class, 'show'])->middleware('can:campaigns.view')->name('campaigns.show');
+
+        // Historial de mensajes
+        Route::middleware('can:email_logs.view')->group(function () {
+            Route::get('messages', [EmailMessageController::class, 'index'])->name('messages.index');
+            Route::get('messages/{message}', [EmailMessageController::class, 'show'])->name('messages.show');
         });
 
         Route::get('templates', [EmailTemplateController::class, 'index'])->middleware('can:templates.view')->name('templates.index');
