@@ -45,3 +45,20 @@ export type PermissionGroup = {
     icon: string;
     permissions: { key: string; label: string }[];
 };
+
+export type ClientRow = {
+    id: number;
+    name: string;
+    legal_name: string | null;
+    tax_id: string | null;
+    email: string | null;
+    phone: string | null;
+    website: string | null;
+    address: string | null;
+    city: string | null;
+    notes: string | null;
+    is_active: boolean;
+    leads_count?: number;
+    created_at: string;
+    creator?: { id: number; name: string } | null;
+};
