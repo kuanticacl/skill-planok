@@ -80,3 +80,9 @@ volumes:
 networks:
   dokploy-network:
     external: true
+  # Dokploy agrega la red «default» al servicio con dominio; se fija su subred para no depender de los
+  # pools de direcciones de Docker (el servidor los tiene agotados).
+  default:
+    ipam:
+      config:
+        - subnet: 10.231.77.0/24
