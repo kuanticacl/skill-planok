@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Lead;
 use App\Models\LeadActivity;
 use App\Services\LeadService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -12,7 +13,7 @@ use Illuminate\Validation\Rule;
 class LeadActivityController extends Controller
 {
     /** Registra un seguimiento manual (llamada, correo, reunión…) en el historial. */
-    public function store(Request $request, Lead $lead, LeadService $leads): RedirectResponse
+    public function store(Request $request, Lead $lead, LeadService $leads): JsonResponse|RedirectResponse
     {
         $this->authorize('note', $lead);
 
@@ -24,8 +25,6 @@ class LeadActivityController extends Controller
 
         $leads->log($lead, $data['type'], $request->user(), $data['description'], [], $data['occurred_at'] ?? null);
 
-        $this->toast('Seguimiento registrado.');
-
-        return back();
+        return $this->respond($request, [], 'Seguimiento registrado.');
     }
 }

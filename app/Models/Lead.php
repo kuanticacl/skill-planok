@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable([
     'first_name', 'last_name', 'email', 'phone', 'job_title', 'company', 'message',
     'client_id', 'source_id', 'stage_id', 'assigned_to', 'position',
+    'priority', 'estimated_value', 'tags', 'next_follow_up_at', 'stage_changed_at', 'closed_at', 'lost_reason',
     'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
     'ip_address', 'user_agent', 'referrer', 'landing_url',
     'country', 'region', 'city', 'latitude', 'longitude', 'meta', 'custom',
@@ -20,6 +21,8 @@ class Lead extends Model
 {
     use SoftDeletes;
 
+    public const PRIORITIES = ['low' => 'Baja', 'normal' => 'Normal', 'high' => 'Alta', 'urgent' => 'Urgente'];
+
     public const UTM_FIELDS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
 
     protected function casts(): array
@@ -27,6 +30,11 @@ class Lead extends Model
         return [
             'meta' => 'array',
             'custom' => 'array',
+            'tags' => 'array',
+            'estimated_value' => 'float',
+            'next_follow_up_at' => 'datetime',
+            'stage_changed_at' => 'datetime',
+            'closed_at' => 'datetime',
             'latitude' => 'float',
             'longitude' => 'float',
         ];

@@ -28,6 +28,11 @@ class LeadRequest extends FormRequest
             'source_id' => ['required', 'integer', Rule::exists('lead_sources', 'id')],
             'stage_id' => ['nullable', 'integer', Rule::exists('pipeline_stages', 'id')],
             'assigned_to' => ['nullable', 'integer', Rule::exists('users', 'id')->where('is_active', true)],
+            'priority' => ['nullable', Rule::in(array_keys(\App\Models\Lead::PRIORITIES))],
+            'estimated_value' => ['nullable', 'numeric', 'min:0', 'max:99999999999'],
+            'tags' => ['nullable', 'array', 'max:15'],
+            'tags.*' => ['string', 'max:30'],
+            'next_follow_up_at' => ['nullable', 'date'],
             'custom' => ['nullable', 'array'],
         ];
 

@@ -1,70 +1,116 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { ChevronDown } from '@lucide/vue';
 import { ref, watch } from 'vue';
-import draggable from 'vuedraggable';
 import { toast } from 'vue-sonner';
-import KanbanCard from '@/components/kanban/KanbanCard.vue';
+import BulkBar from '@/components/kanban/BulkBar.vue';
+import CloseStageDialog from '@/components/kanban/CloseStageDialog.vue';
+import KanbanColumn from '@/components/kanban/KanbanColumn.vue';
+import LeadDrawer from '@/components/kanban/LeadDrawer.vue';
+import QuickCreateDialog from '@/components/kanban/QuickCreateDialog.vue';
+import { useKanbanPrefs } from '@/composables/useKanbanPrefs';
 import { sendJson } from '@/lib/http';
 import { column } from '@/routes/kanban';
-import { move } from '@/routes/leads';
-import type { BoardColumn, LeadCard } from '@/types';
+import { bulk, move } from '@/routes/leads';
+import type { BoardColumn, LeadCard, StageRef, UserOption } from '@/types';
+
+type DragChange = { added?: { element: LeadCard; newIndex: number }; moved?: { element: LeadCard; newIndex: number } };
 
 const props = defineProps<{
     board: BoardColumn[];
-    canMove: boolean;
-    filters: Record<string, string | null>;
+    stages: StageRef[];
+    users: UserOption[];
+    tags: string[];
+    priorities: Record<string, string>;
+    query: Record<string, string>;
+    manual: boolean;
     pageSize: number;
+    manualSourceId: number | null;
+    userId: number;
+    can: { create: boolean; move: boolean; assign: boolean; update: boolean; delete: boolean };
 }>();
+const emit = defineEmits<{ changed: [] }>();
 
-const emit = defineEmits<{ moved: [] }>();
+const prefs = useKanbanPrefs();
 
-// Copia local editable (las props son de solo lectura y reactivas).
+// Copia local editable (las props son de solo lectura).
 const clone = (v: BoardColumn[]): BoardColumn[] => JSON.parse(JSON.stringify(v));
 const columns = ref<BoardColumn[]>(clone(props.board));
-watch(() => props.board, (v) => (columns.value = clone(v)));
+watch(() => props.board, (v) => {
+    columns.value = clone(v);
+    // descarta selecciones de leads que ya no están visibles
+    const visible = new Set(columns.value.flatMap((c) => c.leads.map((l) => l.id)));
+    selected.value = new Set([...selected.value].filter((id) => visible.has(id)));
+});
 
-type DragChange = {
-    added?: { element: LeadCard; newIndex: number };
-    moved?: { element: LeadCard; newIndex: number };
+const refresh = () => emit('changed');
+
+// ---- selección múltiple ----
+const selected = ref<Set<number>>(new Set());
+const toggle = (lead: LeadCard) => {
+    const next = new Set(selected.value);
+    next.has(lead.id) ? next.delete(lead.id) : next.add(lead.id);
+    selected.value = next;
+};
+const selectColumn = (col: BoardColumn) => {
+    const ids = col.leads.map((l) => l.id);
+    const all = ids.every((id) => selected.value.has(id));
+    const next = new Set(selected.value);
+    ids.forEach((id) => (all ? next.delete(id) : next.add(id)));
+    selected.value = next;
 };
 
-const onChange = async (col: BoardColumn, change: DragChange) => {
+// ---- arrastre ----
+type Pending = { lead: LeadCard; col: BoardColumn; afterId: number | null; fromStageId: number };
+const pending = ref<Pending | null>(null);
+
+const persistMove = async (lead: LeadCard, col: BoardColumn, afterId: number | null, extra: Record<string, unknown> = {}) => {
+    try {
+        await sendJson('PUT', move(lead.id).url, { stage_id: col.id, after_id: props.manual ? afterId : null, ...extra });
+        refresh();
+    } catch {
+        toast.error('No se pudo mover el lead. Se restauró el tablero.');
+        refresh();
+    }
+};
+
+const onChange = (col: BoardColumn, change: DragChange) => {
     const evt = change.added ?? change.moved;
     if (!evt) return;
-
     const lead = evt.element;
-    const after = col.leads[evt.newIndex - 1];
+    const afterId = col.leads[evt.newIndex - 1]?.id ?? null;
 
     if (change.added) {
-        // Ajuste inmediato de contadores: origen -1, destino +1.
-        const from = columns.value.find((c) => c.id === lead.stage_id);
+        const fromId = lead.stage_id;
+        const from = columns.value.find((c) => c.id === fromId);
         if (from) from.total = Math.max(0, from.total - 1);
         col.total += 1;
         lead.stage_id = col.id;
-    }
 
-    try {
-        await sendJson('PUT', move(lead.id).url, {
-            stage_id: col.id,
-            after_id: after?.id ?? null,
-        });
-        emit('moved');
-    } catch {
-        toast.error('No se pudo mover el lead. Se restauró el tablero.');
-        router.reload({ only: ['board', 'stats', 'sources'] });
+        if (col.type !== 'open') {
+            pending.value = { lead, col, afterId, fromStageId: fromId };
+            return;
+        }
     }
+    persistMove(lead, col, afterId);
 };
 
+const confirmPending = (extra: { lost_reason: string | null; estimated_value: number | null }) => {
+    const p = pending.value;
+    pending.value = null;
+    if (p) persistMove(p.lead, p.col, p.afterId, extra);
+};
+const cancelPending = () => {
+    pending.value = null;
+    refresh(); // devuelve la tarjeta a su columna original
+};
+
+// ---- cargar más ----
 const loading = ref<number | null>(null);
 const loadMore = async (col: BoardColumn) => {
     loading.value = col.id;
     try {
-        const query = new URLSearchParams(
-            Object.entries(props.filters).filter(([, v]) => v) as [string, string][],
-        );
-        query.set('offset', String(col.leads.length));
-        const data = await sendJson<{ leads: LeadCard[] }>('GET', `${column(col.id).url}?${query}`);
+        const qs = new URLSearchParams({ ...props.query, offset: String(col.leads.length) });
+        const data = await sendJson<{ leads: LeadCard[] }>('GET', `${column(col.id).url}?${qs}`);
         const known = new Set(col.leads.map((l) => l.id));
         col.leads.push(...data.leads.filter((l) => !known.has(l.id)));
     } catch {
@@ -73,62 +119,121 @@ const loadMore = async (col: BoardColumn) => {
         loading.value = null;
     }
 };
+
+// ---- colapsar ----
+const isCollapsed = (id: number) => prefs.value.collapsed.includes(id);
+const toggleCollapse = (id: number) => {
+    prefs.value.collapsed = isCollapsed(id) ? prefs.value.collapsed.filter((x) => x !== id) : [...prefs.value.collapsed, id];
+};
+
+// ---- panel lateral ----
+const openId = ref<number | null>(null);
+
+// ---- creación rápida ----
+const quick = ref<{ stageId: number; stageName: string } | null>(null);
+const onCreated = (id: number) => {
+    toast.success('Lead creado');
+    refresh();
+    openId.value = id;
+};
+
+// ---- acciones masivas ----
+const busy = ref(false);
+const bulkClosing = ref<{ stage: StageRef & { type?: string }; payload: Record<string, unknown> } | null>(null);
+const runBulk = async (payload: Record<string, unknown>) => {
+    busy.value = true;
+    try {
+        const res = await sendJson<{ done: number; skipped: number }>('POST', bulk().url, { ids: [...selected.value], ...payload });
+        toast.success(`${res.done} lead${res.done === 1 ? '' : 's'} actualizado${res.done === 1 ? '' : 's'}${res.skipped ? ` · ${res.skipped} sin permiso` : ''}`);
+        selected.value = new Set();
+        refresh();
+    } catch {
+        toast.error('No se pudo completar la acción masiva.');
+    } finally {
+        busy.value = false;
+    }
+};
+const onBulk = (payload: { action: string; stage_id?: number }) => {
+    if (payload.action === 'move') {
+        const target = columns.value.find((c) => c.id === payload.stage_id);
+        if (target && target.type !== 'open') {
+            bulkClosing.value = { stage: { id: target.id, name: target.name, color: target.color, type: target.type }, payload };
+            return;
+        }
+    }
+    if (payload.action === 'delete' && !window.confirm(`¿Eliminar ${selected.value.size} leads? Esta acción no se puede deshacer.`)) return;
+    runBulk(payload);
+};
+const confirmBulkClose = (extra: { lost_reason: string | null }) => {
+    const c = bulkClosing.value;
+    bulkClosing.value = null;
+    if (c) runBulk({ ...c.payload, lost_reason: extra.lost_reason });
+};
 </script>
 
 <template>
     <div class="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-4 md:mx-0 md:px-0">
-        <section
+        <KanbanColumn
             v-for="col in columns"
             :key="col.id"
-            class="flex max-h-[calc(100vh-14rem)] min-h-64 w-72 shrink-0 snap-start flex-col rounded-2xl bg-muted/60 ring-1 ring-border/60"
-        >
-            <header class="flex items-center gap-2 px-3.5 pt-3 pb-2">
-                <span class="size-3 rounded-full" :style="{ backgroundColor: col.color }" />
-                <h3 class="flex-1 truncate text-sm font-semibold">{{ col.name }}</h3>
-                <span
-                    class="rounded-full px-2 py-0.5 text-xs font-semibold text-white"
-                    :style="{ backgroundColor: col.color }"
-                >
-                    {{ col.total }}
-                </span>
-            </header>
-            <div class="mx-3.5 mb-2 h-0.5 rounded-full" :style="{ backgroundColor: col.color }" />
-
-            <draggable
-                v-model="col.leads"
-                group="leads"
-                item-key="id"
-                :disabled="!canMove"
-                :animation="160"
-                ghost-class="opacity-30"
-                drag-class="rotate-1"
-                class="flex min-h-16 flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-2.5"
-                @change="(c: DragChange) => onChange(col, c)"
-            >
-                <template #item="{ element }">
-                    <KanbanCard :lead="element" />
-                </template>
-                <template #footer>
-                    <p
-                        v-if="!col.leads.length"
-                        class="rounded-xl border border-dashed py-6 text-center text-xs text-muted-foreground"
-                    >
-                        Sin leads
-                    </p>
-                </template>
-            </draggable>
-
-            <button
-                v-if="col.leads.length < col.total"
-                type="button"
-                class="mx-2.5 mb-2.5 flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-medium text-primary hover:bg-accent disabled:opacity-60"
-                :disabled="loading === col.id"
-                @click="loadMore(col)"
-            >
-                <ChevronDown class="size-3.5" />
-                Cargar {{ Math.min(pageSize, col.total - col.leads.length) }} más
-                ({{ col.total - col.leads.length }} restantes)
-            </button>
-        </section>
+            :col="col"
+            :prefs="prefs"
+            :selected="selected"
+            :can-move="can.move"
+            :can-create="can.create"
+            :collapsed="isCollapsed(col.id)"
+            :page-size="pageSize"
+            :loading="loading === col.id"
+            @change="(c) => onChange(col, c)"
+            @open="(l) => (openId = l.id)"
+            @select="toggle"
+            @select-column="selectColumn(col)"
+            @add="quick = { stageId: col.id, stageName: col.name }"
+            @toggle-collapse="toggleCollapse(col.id)"
+            @load-more="loadMore(col)"
+        />
     </div>
+
+    <BulkBar
+        v-if="selected.size"
+        :count="selected.size"
+        :stages="stages"
+        :users="users"
+        :priorities="priorities"
+        :can="can"
+        :busy="busy"
+        @clear="selected = new Set()"
+        @action="onBulk"
+    />
+
+    <LeadDrawer :lead-id="openId" :tags="tags" @close="openId = null" @changed="refresh" />
+
+    <CloseStageDialog
+        :open="!!pending"
+        :type="pending && pending.col.type !== 'open' ? pending.col.type : null"
+        :stage-name="pending?.col.name ?? ''"
+        :lead-name="pending?.lead.full_name"
+        @update:open="(v: boolean) => !v && cancelPending()"
+        @confirm="confirmPending"
+        @cancel="() => {}"
+    />
+    <CloseStageDialog
+        :open="!!bulkClosing"
+        :type="(bulkClosing?.stage.type as 'won' | 'lost' | undefined) ?? null"
+        :stage-name="bulkClosing?.stage.name ?? ''"
+        :count="selected.size"
+        @update:open="(v: boolean) => !v && (bulkClosing = null)"
+        @confirm="confirmBulkClose"
+    />
+
+    <QuickCreateDialog
+        :open="!!quick"
+        :stage-id="quick?.stageId ?? null"
+        :stage-name="quick?.stageName ?? ''"
+        :manual-source-id="manualSourceId"
+        :user-id="userId"
+        :priorities="priorities"
+        @update:open="(v: boolean) => !v && (quick = null)"
+        @created="onCreated"
+    />
 </template>

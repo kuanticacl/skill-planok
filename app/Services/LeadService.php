@@ -27,6 +27,7 @@ class LeadService
             $lead = new Lead($attributes);
             $lead->stage_id = $stageId;
             $lead->position = $this->topPosition($stageId);
+            $lead->stage_changed_at = now();
             $lead->save();
 
             $this->log($lead, 'created', $actor, 'Lead ingresado'.($lead->source ? " desde {$lead->source->name}" : ''), $activity);
@@ -56,7 +57,8 @@ class LeadService
         $labels = [
             'first_name' => 'nombre', 'last_name' => 'apellido', 'email' => 'correo', 'phone' => 'teléfono',
             'job_title' => 'cargo', 'company' => 'empresa', 'message' => 'mensaje', 'client_id' => 'cliente',
-            'source_id' => 'origen', 'custom' => 'campos personalizados',
+            'source_id' => 'origen', 'custom' => 'campos personalizados', 'priority' => 'prioridad',
+            'estimated_value' => 'valor estimado', 'tags' => 'etiquetas', 'next_follow_up_at' => 'próximo seguimiento',
         ];
 
         $edited = collect($changed)->intersect(array_keys($labels))->map(fn ($k) => $labels[$k])->values();
@@ -65,6 +67,8 @@ class LeadService
         }
 
         if ($oldStage !== $lead->stage_id) {
+            $this->applyStageEffects($lead);
+            $lead->save();
             $this->logStageChange($lead, $oldStage, $lead->stage_id, $actor);
         }
 
@@ -76,21 +80,49 @@ class LeadService
     }
 
     /** Mueve el lead a una etapa y lo ubica entre dos tarjetas (o arriba si no se indican). */
-    public function move(Lead $lead, int $stageId, ?int $afterId = null, ?User $actor = null): Lead
+    public function move(Lead $lead, int $stageId, ?int $afterId = null, ?User $actor = null, array $closing = []): Lead
     {
-        return DB::transaction(function () use ($lead, $stageId, $afterId, $actor) {
+        return DB::transaction(function () use ($lead, $stageId, $afterId, $actor, $closing) {
             $oldStage = $lead->stage_id;
 
             $lead->stage_id = $stageId;
             $lead->position = $this->positionAfter($stageId, $afterId, $lead->id);
+
+            if ($oldStage !== $stageId) {
+                $this->applyStageEffects($lead, $closing);
+            }
             $lead->save();
 
             if ($oldStage !== $stageId) {
-                $this->logStageChange($lead, $oldStage, $stageId, $actor);
+                $this->logStageChange($lead, $oldStage, $stageId, $actor, $closing);
             }
 
             return $lead;
         });
+    }
+
+    /**
+     * Al cambiar de etapa: reinicia el contador de "tiempo en etapa" y registra el cierre
+     * (concretado/descartado) con su valor o motivo.
+     *
+     * @param  array{lost_reason?: ?string, estimated_value?: ?float}  $closing
+     */
+    private function applyStageEffects(Lead $lead, array $closing = []): void
+    {
+        $lead->stage_changed_at = now();
+        $type = PipelineStage::whereKey($lead->stage_id)->value('type');
+
+        if (in_array($type, ['won', 'lost'], true)) {
+            $lead->closed_at = now();
+            $lead->next_follow_up_at = null;
+            $lead->lost_reason = $type === 'lost' ? ($closing['lost_reason'] ?? $lead->lost_reason) : null;
+            if ($type === 'won' && isset($closing['estimated_value'])) {
+                $lead->estimated_value = $closing['estimated_value'];
+            }
+        } else {
+            $lead->closed_at = null;
+            $lead->lost_reason = null;
+        }
     }
 
     public function assign(Lead $lead, ?int $userId, ?User $actor = null): Lead
@@ -117,7 +149,7 @@ class LeadService
         ]);
     }
 
-    private function logStageChange(Lead $lead, ?int $from, int $to, ?User $actor): void
+    private function logStageChange(Lead $lead, ?int $from, int $to, ?User $actor, array $closing = []): void
     {
         $names = PipelineStage::whereIn('id', array_filter([$from, $to]))->pluck('name', 'id');
 
@@ -125,7 +157,7 @@ class LeadService
             $lead,
             'stage_changed',
             $actor,
-            'Etapa: '.($names[$from] ?? '—').' → '.($names[$to] ?? '—'),
+            'Etapa: '.($names[$from] ?? '—').' → '.($names[$to] ?? '—').(! empty($closing['lost_reason']) ? " (motivo: {$closing['lost_reason']})" : ''),
             ['from' => $from, 'to' => $to],
         );
     }

@@ -39,6 +39,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('leads/{lead}/edit', [LeadController::class, 'edit'])->name('leads.edit');
         Route::put('leads/{lead}', [LeadController::class, 'update'])->name('leads.update');
         Route::delete('leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');
+        Route::get('leads/{lead}/panel', [LeadController::class, 'panel'])->name('leads.panel');
+        Route::post('leads/bulk', [LeadController::class, 'bulk'])->name('leads.bulk');
+        Route::patch('leads/{lead}/quick', [LeadController::class, 'quick'])->name('leads.quick');
         Route::put('leads/{lead}/move', [LeadController::class, 'move'])->name('leads.move');
         Route::put('leads/{lead}/assign', [LeadController::class, 'assign'])->name('leads.assign');
         Route::post('leads/{lead}/notes', [LeadNoteController::class, 'store'])->name('leads.notes.store');

@@ -58,6 +58,10 @@ class DemoSeeder extends Seeder
                 'user_agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)',
                 'country' => 'Chile', 'region' => 'Región Metropolitana', 'city' => ['Santiago', 'Providencia', 'Las Condes', 'Ñuñoa'][mt_rand(0, 3)],
                 'landing_url' => 'https://www.ejemplo.cl/contacto',
+                'priority' => ['low', 'normal', 'normal', 'normal', 'high', 'urgent'][mt_rand(0, 5)],
+                'estimated_value' => mt_rand(0, 2) ? mt_rand(8, 120) * 100000 : null,
+                'tags' => [[], ['inversionista'], ['proyecto-norte', 'caliente'], ['referido'], ['licitación']][mt_rand(0, 4)] ?: null,
+                'next_follow_up_at' => [null, now()->subDays(mt_rand(1, 5)), now()->addHours(mt_rand(1, 20)), now()->addDays(mt_rand(2, 9))][mt_rand(0, 3)],
                 'custom' => mt_rand(0, 1) ? ['proyecto_de_interes' => ['Torre Norte', 'Parque Sur', 'Edificio Centro'][mt_rand(0, 2)]] : null,
             ]);
 
@@ -65,7 +69,7 @@ class DemoSeeder extends Seeder
             if ($stage->id !== $lead->stage_id) {
                 $service->move($lead, $stage->id);
             }
-            Lead::whereKey($lead->id)->update(['created_at' => now()->subDays(mt_rand(0, 60))->subMinutes(mt_rand(0, 900))]);
+            Lead::whereKey($lead->id)->update(['stage_changed_at' => now()->subDays(mt_rand(0, 14)), 'created_at' => now()->subDays(mt_rand(0, 60))->subMinutes(mt_rand(0, 900))]);
         }
     }
 }

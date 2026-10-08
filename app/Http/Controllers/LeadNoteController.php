@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Lead;
 use App\Models\LeadNote;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class LeadNoteController extends Controller
 {
-    public function store(Request $request, Lead $lead): RedirectResponse
+    public function store(Request $request, Lead $lead): JsonResponse|RedirectResponse
     {
         $this->authorize('note', $lead);
 
@@ -20,12 +21,10 @@ class LeadNoteController extends Controller
 
         $lead->notes()->create([...$data, 'user_id' => $request->user()->id]);
 
-        $this->toast($request->boolean('is_private') ? 'Nota privada guardada (solo tú la ves).' : 'Nota guardada.');
-
-        return back();
+        return $this->respond($request, [], $request->boolean('is_private') ? 'Nota privada guardada (solo tú la ves).' : 'Nota guardada.');
     }
 
-    public function destroy(Request $request, Lead $lead, LeadNote $note): RedirectResponse
+    public function destroy(Request $request, Lead $lead, LeadNote $note): JsonResponse|RedirectResponse
     {
         abort_unless($note->lead_id === $lead->id, 404);
         $this->authorize('view', $lead);
@@ -36,8 +35,6 @@ class LeadNoteController extends Controller
 
         $note->delete();
 
-        $this->toast('Nota eliminada.');
-
-        return back();
+        return $this->respond($request, [], 'Nota eliminada.');
     }
 }

@@ -1,6 +1,20 @@
+export class HttpError extends Error {
+    constructor(
+        public status: number,
+        public body: { message?: string; errors?: Record<string, string[]> } | null,
+    ) {
+        super(`HTTP ${status}`);
+    }
+
+    /** Primer mensaje de validación por campo. */
+    get fieldErrors(): Record<string, string> {
+        return Object.fromEntries(Object.entries(this.body?.errors ?? {}).map(([k, v]) => [k, v[0]]));
+    }
+}
+
 /** Petición JSON con el token CSRF de Laravel (cookie XSRF-TOKEN), para acciones sin recargar la página. */
 export async function sendJson<T = unknown>(
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     url: string,
     body?: unknown,
 ): Promise<T> {
@@ -22,7 +36,7 @@ export async function sendJson<T = unknown>(
     });
 
     if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        throw new HttpError(response.status, await response.json().catch(() => null));
     }
 
     return (await response.json()) as T;

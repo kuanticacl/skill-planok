@@ -12,8 +12,11 @@ use App\Models\PipelineStage;
 use App\Models\User;
 use App\Services\LeadService;
 use App\Support\LeadPresenter;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -63,6 +66,7 @@ class LeadController extends Controller
             'lead' => null,
             ...$this->formData($request->user()),
             'defaults' => [
+                'priority' => 'normal',
                 'source_id' => LeadSource::where('slug', LeadSource::MANUAL_SLUG)->value('id'),
                 'stage_id' => PipelineStage::initial()?->id,
                 'assigned_to' => $request->user()->id,
@@ -71,7 +75,7 @@ class LeadController extends Controller
         ]);
     }
 
-    public function store(LeadRequest $request): RedirectResponse
+    public function store(LeadRequest $request): JsonResponse|RedirectResponse
     {
         $user = $request->user();
         $data = $this->payload($request);
@@ -82,6 +86,11 @@ class LeadController extends Controller
         }
 
         $lead = $this->leads->create($data, $user, ['channel' => 'manual']);
+        Cache::forget('lead-tags');
+
+        if ($request->expectsJson() && ! $request->header('X-Inertia')) {
+            return response()->json(['id' => $lead->id]);
+        }
 
         $this->toast("Lead «{$lead->full_name}» creado.");
 
@@ -89,6 +98,18 @@ class LeadController extends Controller
     }
 
     public function show(Request $request, Lead $lead): Response
+    {
+        return Inertia::render('leads/Show', $this->detail($request, $lead));
+    }
+
+    /** Mismo contenido de la ficha, en JSON, para el panel lateral del Kanban. */
+    public function panel(Request $request, Lead $lead): JsonResponse
+    {
+        return response()->json($this->detail($request, $lead));
+    }
+
+    /** @return array<string, mixed> */
+    private function detail(Request $request, Lead $lead): array
     {
         $this->authorize('view', $lead);
         $user = $request->user();
@@ -104,7 +125,7 @@ class LeadController extends Controller
             'active' => $f->is_active,
         ])->filter(fn ($f) => ($f['value'] !== null && $f['value'] !== '') || $f['active'])->values();
 
-        return Inertia::render('leads/Show', [
+        return [
             'lead' => [
                 ...LeadPresenter::card($lead),
                 'first_name' => $lead->first_name,
@@ -142,7 +163,8 @@ class LeadController extends Controller
                 'user' => $a->user?->name,
                 'occurred_at' => $a->occurred_at->toIso8601String(),
             ]),
-            'stages' => PipelineStage::orderBy('sort_order')->get(['id', 'name', 'color']),
+            'priorities' => Lead::PRIORITIES,
+            'stages' => PipelineStage::orderBy('sort_order')->get(['id', 'name', 'color', 'type']),
             'users' => $this->assignableUsers(),
             'followUpTypes' => LeadActivity::MANUAL,
             'can' => [
@@ -152,7 +174,7 @@ class LeadController extends Controller
                 'note' => $user->can('note', $lead),
                 'assign' => $user->hasPermission('leads.assign') && $user->can('view', $lead),
             ],
-        ]);
+        ];
     }
 
     public function edit(Request $request, Lead $lead): Response
@@ -173,6 +195,10 @@ class LeadController extends Controller
                 'source_id' => $lead->source_id,
                 'stage_id' => $lead->stage_id,
                 'assigned_to' => $lead->assigned_to,
+                'priority' => $lead->priority,
+                'estimated_value' => $lead->estimated_value,
+                'tags' => $lead->tags ?? [],
+                'next_follow_up_at' => $lead->next_follow_up_at?->format('Y-m-d\TH:i'),
                 'custom' => $lead->custom ?? (object) [],
             ],
             ...$this->formData($request->user()),
@@ -214,22 +240,23 @@ class LeadController extends Controller
     }
 
     /** Cambia de etapa y/o reordena (arrastre en el Kanban o selector en la ficha). */
-    public function move(Request $request, Lead $lead)
+    public function move(Request $request, Lead $lead): JsonResponse|RedirectResponse
     {
         $this->authorize('move', $lead);
 
         $data = $request->validate([
             'stage_id' => ['required', 'integer', 'exists:pipeline_stages,id'],
             'after_id' => ['nullable', 'integer'],
+            'lost_reason' => ['nullable', 'string', 'max:255'],
+            'estimated_value' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        $this->leads->move($lead, $data['stage_id'], $data['after_id'] ?? null, $request->user());
+        $this->leads->move($lead, $data['stage_id'], $data['after_id'] ?? null, $request->user(), [
+            'lost_reason' => $data['lost_reason'] ?? null,
+            'estimated_value' => $data['estimated_value'] ?? null,
+        ]);
 
-        if ($request->wantsJson() && ! $request->header('X-Inertia')) {
-            return response()->json(['ok' => true, 'position' => $lead->position]);
-        }
-
-        return back();
+        return $this->respond($request, ['position' => $lead->position, 'stage_id' => $lead->stage_id]);
     }
 
     public function assign(Request $request, Lead $lead): RedirectResponse
@@ -243,9 +270,74 @@ class LeadController extends Controller
 
         $this->leads->assign($lead, $data['assigned_to'] ?? null, $request->user());
 
-        $this->toast('Responsable actualizado.');
+        return $this->respond($request, [], 'Responsable actualizado.');
+    }
 
-        return back();
+    /** Edición rápida desde el tablero: prioridad, valor, etiquetas y próximo seguimiento. */
+    public function quick(Request $request, Lead $lead): JsonResponse|RedirectResponse
+    {
+        $this->authorize('update', $lead);
+
+        $data = $request->validate([
+            'priority' => ['sometimes', Rule::in(array_keys(Lead::PRIORITIES))],
+            'estimated_value' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:99999999999'],
+            'tags' => ['sometimes', 'nullable', 'array', 'max:15'],
+            'tags.*' => ['string', 'max:30'],
+            'next_follow_up_at' => ['sometimes', 'nullable', 'date'],
+        ]);
+
+        if (array_key_exists('tags', $data)) {
+            $data['tags'] = collect($data['tags'] ?? [])->map(fn ($t) => trim($t))->filter()->unique()->values()->all() ?: null;
+            Cache::forget('lead-tags');
+        }
+
+        $this->leads->update($lead, $data, $request->user());
+
+        return $this->respond($request, [], 'Lead actualizado.');
+    }
+
+    /** Acciones masivas sobre los leads seleccionados en el tablero. */
+    public function bulk(Request $request): JsonResponse|RedirectResponse
+    {
+        $user = $request->user();
+
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:200'],
+            'ids.*' => ['integer'],
+            'action' => ['required', Rule::in(['move', 'assign', 'priority', 'add_tag', 'delete'])],
+            'stage_id' => ['required_if:action,move', 'nullable', 'integer', 'exists:pipeline_stages,id'],
+            'assigned_to' => ['nullable', 'integer', 'exists:users,id'],
+            'priority' => ['required_if:action,priority', 'nullable', Rule::in(array_keys(Lead::PRIORITIES))],
+            'tag' => ['required_if:action,add_tag', 'nullable', 'string', 'max:30'],
+            'lost_reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $ability = match ($data['action']) {
+            'move' => 'move',
+            'delete' => 'delete',
+            default => 'update',
+        };
+        if ($data['action'] === 'assign') {
+            abort_unless($user->hasPermission('leads.assign'), 403);
+        }
+
+        $leads = Lead::query()->visibleTo($user)->whereIn('id', $data['ids'])->get()->filter(fn (Lead $l) => $user->can($ability, $l));
+        $done = 0;
+
+        foreach ($leads as $lead) {
+            match ($data['action']) {
+                'move' => $this->leads->move($lead, (int) $data['stage_id'], null, $user, ['lost_reason' => $data['lost_reason'] ?? null]),
+                'assign' => $this->leads->assign($lead, $data['assigned_to'] ?? null, $user),
+                'priority' => $this->leads->update($lead, ['priority' => $data['priority']], $user),
+                'add_tag' => $this->leads->update($lead, ['tags' => collect($lead->tags ?? [])->push(trim($data['tag']))->unique()->values()->all()], $user),
+                'delete' => $lead->delete(),
+            };
+            $done++;
+        }
+
+        Cache::forget('lead-tags');
+
+        return $this->respond($request, ['done' => $done, 'skipped' => count($data['ids']) - $done], "{$done} leads actualizados.");
     }
 
     /** @return array<string, mixed> */
@@ -268,6 +360,7 @@ class LeadController extends Controller
         return [
             'sources' => LeadSource::where('is_active', true)->orderBy('sort_order')->get(['id', 'name']),
             'stages' => PipelineStage::orderBy('sort_order')->get(['id', 'name']),
+            'priorities' => Lead::PRIORITIES,
             'users' => $user->hasPermission('leads.assign') ? $this->assignableUsers() : [],
             'clients' => Client::where('is_active', true)->orderBy('name')->limit(1000)->get(['id', 'name']),
             'fields' => LeadField::where('is_active', true)->orderBy('sort_order')->orderBy('id')->get(),

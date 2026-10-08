@@ -7,10 +7,12 @@ use App\Models\LeadField;
 use App\Models\LeadSource;
 use App\Models\PipelineStage;
 use App\Models\User;
+use App\Support\LeadFilters;
 use App\Support\LeadPresenter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,58 +20,58 @@ class DashboardController extends Controller
 {
     private const COLUMN_PAGE = 30;
 
-    public const PERIODS = [
-        'today' => 'Hoy',
-        '7' => 'Últimos 7 días',
-        '30' => 'Últimos 30 días',
-        'month' => 'Este mes',
-        '90' => 'Últimos 90 días',
-        'all' => 'Todo el tiempo',
-    ];
-
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $filters = $this->filters($request);
+        $filters = LeadFilters::fromRequest($request);
 
-        // Recuentos por origen: respetan período/responsable/búsqueda pero no el filtro de origen.
-        $sourceCounts = $this->base($user, $filters, withSource: false)
+        // Recuentos por origen: respetan los demás filtros pero no el de origen.
+        $sourceCounts = $filters->apply(Lead::query(), $user, ['sources'])
             ->selectRaw('source_id, count(*) as total')->groupBy('source_id')->pluck('total', 'source_id');
 
-        $stageCounts = $this->base($user, $filters)
-            ->selectRaw('stage_id, count(*) as total')->groupBy('stage_id')->pluck('total', 'stage_id');
+        $stageAgg = $filters->apply(Lead::query(), $user)
+            ->selectRaw('stage_id, count(*) as total, coalesce(sum(estimated_value), 0) as value')
+            ->groupBy('stage_id')->get()->keyBy('stage_id');
 
         $stages = PipelineStage::orderBy('sort_order')->orderBy('id')->get();
 
+        $total = (int) $stageAgg->sum('total');
+        $byType = $stages->groupBy('type')->map(fn ($group) => (int) $group->sum(fn ($s) => $stageAgg[$s->id]->total ?? 0));
+        $wonValue = (float) $stages->where('type', 'won')->sum(fn ($s) => $stageAgg[$s->id]->value ?? 0);
+        $pipelineValue = (float) $stages->where('type', 'open')->sum(fn ($s) => $stageAgg[$s->id]->value ?? 0);
         $totalBySource = (int) $sourceCounts->sum();
-        $byType = $stages->groupBy('type')->map(fn ($group) => (int) $group->sum(fn ($s) => $stageCounts[$s->id] ?? 0));
-        $total = (int) $stageCounts->sum();
-        $closed = ($byType['won'] ?? 0) + ($byType['lost'] ?? 0);
 
-        $cardFields = LeadField::where('is_active', true)->where('show_on_card', true)->orderBy('sort_order')->get();
+        $cardFields = $this->cardFields();
 
         $board = $stages->map(fn (PipelineStage $stage) => [
             'id' => $stage->id,
             'name' => $stage->name,
             'color' => $stage->color,
             'type' => $stage->type,
-            'total' => (int) ($stageCounts[$stage->id] ?? 0),
+            'total' => (int) ($stageAgg[$stage->id]->total ?? 0),
+            'value' => (float) ($stageAgg[$stage->id]->value ?? 0),
             'leads' => $this->columnQuery($user, $filters, $stage->id)
                 ->limit(self::COLUMN_PAGE)->get()
                 ->map(fn (Lead $l) => LeadPresenter::card($l, $cardFields))->values(),
         ]);
 
+        $overdueBase = $filters->apply(Lead::query(), $user)->whereNull('closed_at');
+
         return Inertia::render('Dashboard', [
-            'filters' => $filters,
-            'periods' => self::PERIODS,
+            'filters' => $filters->values,
+            'periods' => LeadFilters::PERIODS,
+            'sorts' => LeadFilters::SORTS,
+            'priorities' => Lead::PRIORITIES,
             'stats' => [
                 'total' => $total,
-                'today' => $this->base($user, [...$filters, 'period' => 'today'])->count(),
+                'today' => $filters->apply(Lead::query(), $user, ['period'])->where('created_at', '>=', now()->startOfDay())->count(),
                 'open' => (int) ($byType['open'] ?? 0),
                 'won' => (int) ($byType['won'] ?? 0),
                 'lost' => (int) ($byType['lost'] ?? 0),
                 'conversion' => $total > 0 ? round(($byType['won'] ?? 0) / $total * 100, 1) : 0,
-                'win_rate_closed' => $closed > 0 ? round(($byType['won'] ?? 0) / $closed * 100, 1) : 0,
+                'overdue' => (clone $overdueBase)->whereNotNull('next_follow_up_at')->where('next_follow_up_at', '<', now())->count(),
+                'pipeline_value' => $pipelineValue,
+                'won_value' => $wonValue,
             ],
             'sources' => LeadSource::orderBy('sort_order')->get()
                 ->map(fn (LeadSource $s) => [
@@ -84,13 +86,18 @@ class DashboardController extends Controller
                 ->filter(fn ($s) => $s['is_active'] || $s['count'] > 0)->values(),
             'board' => $board,
             'columnPage' => self::COLUMN_PAGE,
-            'users' => $user->hasPermission('leads.view_all')
-                ? User::where('is_active', true)->orderBy('name')->get(['id', 'name'])
-                : [],
+            'users' => User::where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'tags' => $this->knownTags(),
+            'manualSourceId' => LeadSource::where('slug', LeadSource::MANUAL_SLUG)->value('id'),
+            'stages' => $stages->map(fn ($s) => $s->only(['id', 'name', 'color', 'type']))->values(),
             'can' => [
                 'create' => $user->hasPermission('leads.create'),
                 'move' => $user->hasPermission('leads.move'),
+                'assign' => $user->hasPermission('leads.assign'),
+                'update' => $user->hasPermission('leads.update'),
+                'delete' => $user->hasPermission('leads.delete'),
                 'viewAll' => $user->hasPermission('leads.view_all'),
+                'email' => $user->hasPermission('campaigns.send') || $user->hasPermission('templates.send'),
             ],
         ]);
     }
@@ -98,68 +105,35 @@ class DashboardController extends Controller
     /** Carga más tarjetas de una columna del Kanban (botón "Cargar más"). */
     public function column(Request $request, PipelineStage $stage): JsonResponse
     {
-        $user = $request->user();
         $offset = max(0, $request->integer('offset'));
+        $filters = LeadFilters::fromRequest($request);
 
-        $cardFields = LeadField::where('is_active', true)->where('show_on_card', true)->orderBy('sort_order')->get();
-
-        $leads = $this->columnQuery($user, $this->filters($request), $stage->id)
+        $leads = $this->columnQuery($request->user(), $filters, $stage->id)
             ->offset($offset)->limit(self::COLUMN_PAGE)->get()
-            ->map(fn (Lead $l) => LeadPresenter::card($l, $cardFields))->values();
+            ->map(fn (Lead $l) => LeadPresenter::card($l, $this->cardFields()))->values();
 
         return response()->json(['leads' => $leads]);
     }
 
-    /** @return array{period: string, source: ?string, assignee: ?string, q: ?string} */
-    private function filters(Request $request): array
+    private function columnQuery(User $user, LeadFilters $filters, int $stageId): Builder
     {
-        $period = (string) $request->query('period', 'all');
-
-        return [
-            'period' => array_key_exists($period, self::PERIODS) ? $period : 'all',
-            'source' => $request->query('source') ?: null,
-            'assignee' => $request->query('assignee') ?: null,
-            'q' => $request->query('q') ?: null,
-        ];
-    }
-
-    /** @param array<string, mixed> $filters */
-    private function base(User $user, array $filters, bool $withSource = true): Builder
-    {
-        $since = match ($filters['period']) {
-            'today' => now()->startOfDay(),
-            '7' => now()->subDays(7)->startOfDay(),
-            '30' => now()->subDays(30)->startOfDay(),
-            '90' => now()->subDays(90)->startOfDay(),
-            'month' => now()->startOfMonth(),
-            default => null,
-        };
-
-        return Lead::query()
-            ->visibleTo($user)
-            ->when($since, fn ($q) => $q->where('created_at', '>=', $since))
-            ->when($withSource && $filters['source'], fn ($q) => $q->where('source_id', $filters['source']))
-            ->when($filters['assignee'], function ($q, $v) use ($user) {
-                // Solo quienes ven todos los leads pueden filtrar por otros responsables.
-                if (! $user->hasPermission('leads.view_all')) {
-                    return $q;
-                }
-
-                return $v === 'none' ? $q->whereNull('assigned_to') : $q->where('assigned_to', $v);
-            })
-            ->when($filters['q'], fn ($q, $term) => $q->where(fn ($q) => $q
-                ->where('first_name', 'like', "%{$term}%")
-                ->orWhere('last_name', 'like', "%{$term}%")
-                ->orWhere('email', 'like', "%{$term}%")
-                ->orWhere('company', 'like', "%{$term}%")));
-    }
-
-    /** @param array<string, mixed> $filters */
-    private function columnQuery(User $user, array $filters, int $stageId): Builder
-    {
-        return $this->base($user, $filters)
+        $query = $filters->apply(Lead::query(), $user)
             ->where('stage_id', $stageId)
             ->with(['source:id,name,color,icon', 'assignee:id,name'])
-            ->orderBy('position')->orderByDesc('id');
+            ->withMax('activities as last_activity_at', 'occurred_at');
+
+        return $filters->sort($query);
+    }
+
+    private function cardFields()
+    {
+        return LeadField::where('is_active', true)->where('show_on_card', true)->orderBy('sort_order')->get();
+    }
+
+    /** @return array<int, string> */
+    private function knownTags(): array
+    {
+        return Cache::remember('lead-tags', 300, fn () => Lead::query()->whereNotNull('tags')->limit(3000)->pluck('tags')
+            ->flatten()->filter()->unique()->sort()->values()->all());
     }
 }
