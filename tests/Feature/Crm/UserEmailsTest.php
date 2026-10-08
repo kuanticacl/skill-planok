@@ -35,6 +35,8 @@ class UserEmailsTest extends TestCase
         $this->assertSame('Qb-Clave-Segura-1', $m->variables['password']);
         $this->assertStringEndsWith('/login', $m->variables['login_url']);
         $this->assertSame('bienvenida-usuario', $m->template->slug);
+        $this->assertSame('blocks', $m->template->editor); // editable en el editor visual
+        $this->assertNotEmpty($m->template->design['blocks']);
     }
 
     public function test_password_reset_request_queues_the_branded_email()
