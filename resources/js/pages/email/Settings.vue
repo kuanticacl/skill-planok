@@ -8,6 +8,7 @@ import PageHeader from '@/components/PageHeader.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Spinner } from '@/components/ui/spinner';
 import { HttpError, sendJson } from '@/lib/http';
 import { cn } from '@/lib/utils';
@@ -83,10 +84,10 @@ const appUrlOk = !/localhost|127\.0\.0\.1/.test(props.appUrl);
                         <Input id="key" v-model="form.resend_api_key" type="password" autocomplete="off" placeholder="re_xxxxxxxxxxxx" />
                     </FormField>
                     <FormField label="Modo de envío" for="mode">
-                        <select id="mode" v-model="form.mode" class="h-9 rounded-md border border-input bg-transparent px-3 text-sm">
+                        <NativeSelect id="mode" v-model="form.mode">
                             <option value="resend">Enviar con Resend</option>
                             <option value="log">Solo registrar (pruebas, no envía)</option>
-                        </select>
+                        </NativeSelect>
                     </FormField>
                     <label v-if="settings.api_key_source === 'crm'" class="flex items-center gap-2 text-xs text-muted-foreground sm:col-span-2"><input v-model="form.clear_api_key" type="checkbox" /> Eliminar la API key guardada</label>
                 </div>
@@ -111,7 +112,7 @@ const appUrlOk = !/localhost|127\.0\.0\.1/.test(props.appUrl);
                         <code class="min-w-0 flex-1 truncate text-xs">{{ webhookUrl }}</code>
                         <Button type="button" variant="ghost" size="icon-sm" @click="copy"><Check v-if="copied" class="text-brand-green" /><Copy v-else /></Button>
                     </div>
-                    <p v-if="!appUrlOk" class="flex items-start gap-2 rounded-xl bg-[#FFA165]/10 p-3 text-xs text-[#7A3A00]"><TriangleAlert class="mt-0.5 size-4 shrink-0" />APP_URL es <code>{{ appUrl }}</code>: los enlaces de seguimiento y el webhook necesitan la URL pública del CRM. Configura <code>APP_URL</code> en el .env.</p>
+                    <p v-if="!appUrlOk" class="flex items-start gap-2 rounded-xl bg-[#FFA165]/10 p-3 text-xs text-[#7A3A00]"><TriangleAlert class="mt-0.5 size-4 shrink-0" />Hoy <code>APP_URL</code> apunta a <code>{{ appUrl }}</code>. Los enlaces de seguimiento, la baja y el webhook necesitan la URL pública del CRM: cámbiala en el archivo .env.</p>
                     <div class="flex flex-wrap gap-1.5"><span v-for="e in events" :key="e" class="rounded bg-muted px-2 py-0.5 font-mono text-[11px]">{{ e }}</span></div>
                     <FormField label="Signing secret del webhook" for="ws" :hint="settings.has_webhook_secret ? 'Hay un secret guardado. Escribe uno nuevo para reemplazarlo.' : 'Sin secret, el webhook rechaza todas las llamadas.'">
                         <Input id="ws" v-model="form.webhook_secret" type="password" autocomplete="off" placeholder="whsec_…" />

@@ -19,7 +19,7 @@ class LeadIngestController extends Controller
         'first_name', 'last_name', 'name', 'email', 'phone', 'job_title', 'company', 'message',
         'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
         'ip', 'user_agent', 'referrer', 'landing_url',
-        'country', 'region', 'city', 'latitude', 'longitude', 'custom', 'meta',
+        'country', 'region', 'city', 'latitude', 'longitude', 'custom', 'meta', 'email_template', 'email_variables',
     ];
 
     public function store(Request $request, LeadService $leads): JsonResponse
@@ -52,6 +52,8 @@ class LeadIngestController extends Controller
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'custom' => ['nullable', 'array'],
             'meta' => ['nullable', 'array'],
+            'email_template' => ['nullable', 'string', 'max:80'],
+            'email_variables' => ['nullable', 'array'],
         ]);
 
         // "name" completo → nombre y apellido
@@ -82,8 +84,15 @@ class LeadIngestController extends Controller
             'meta' => $meta ?: null,
         ], null, ['channel' => 'api', 'source' => $source->slug]);
 
+        // Opcional: enviar una plantilla al lead recién creado con los datos recibidos.
+        $emailStatus = null;
+        if (! empty($data['email_template'])) {
+            $emailStatus = $this->sendTemplate($lead, $data['email_template'], (array) ($data['email_variables'] ?? []));
+        }
+
         return response()->json([
             'data' => [
+                'email' => $emailStatus,
                 'id' => $lead->id,
                 'source' => $source->slug,
                 'stage' => $lead->stage?->name,
@@ -126,5 +135,30 @@ class LeadIngestController extends Controller
         }
 
         return $out;
+    }
+
+    /** @param array<string, mixed> $extra @return array{template: string, status: string}|array{template: string, error: string} */
+    private function sendTemplate(Lead $lead, string $slug, array $extra): array
+    {
+        $template = \App\Models\EmailTemplate::where('slug', $slug)->where('is_active', true)->first();
+
+        if (! $template) {
+            return ['template' => $slug, 'error' => 'Plantilla no encontrada o inactiva'];
+        }
+        if (! $lead->email) {
+            return ['template' => $slug, 'error' => 'El lead no tiene correo'];
+        }
+
+        $lead->loadMissing(['source:id,name', 'stage:id,name']);
+        $defaults = collect($template->variables ?? [])->filter(fn ($v) => ($v['default'] ?? '') !== '')->mapWithKeys(fn ($v) => [$v['key'] => $v['default']])->all();
+        $vars = [...$defaults, ...($lead->meta['extra'] ?? []), ...\App\Services\Email\AudienceBuilder::leadVariables($lead), ...$extra];
+
+        if (\App\Models\EmailSuppression::isSuppressed($lead->email)) {
+            return ['template' => $slug, 'status' => 'suppressed'];
+        }
+
+        app(\App\Services\Email\EmailService::class)->queueTemplate($template, $lead->email, $lead->full_name, $vars, ['lead_id' => $lead->id, 'track_opens' => $template->category === 'marketing', 'track_clicks' => $template->category === 'marketing']);
+
+        return ['template' => $slug, 'status' => 'queued'];
     }
 }

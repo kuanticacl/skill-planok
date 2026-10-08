@@ -92,4 +92,18 @@ class LeadAccessTest extends TestCase
         $this->assertNull(PipelineStage::find($stage->id));
         $this->assertSame($target->id, $lead->fresh()->stage_id);
     }
+
+    public function test_assigning_and_quick_edit_answer_json_for_the_side_panel(): void
+    {
+        $supervisor = $this->userWithRole('supervisor');
+        $other = $this->userWithRole('comercial');
+        $lead = $this->makeLead();
+
+        $this->actingAs($supervisor)->putJson(route('leads.assign', $lead), ['assigned_to' => $other->id])->assertOk()->assertJsonPath('ok', true);
+        $this->assertSame($other->id, $lead->fresh()->assigned_to);
+
+        $this->actingAs($supervisor)->patchJson(route('leads.quick', $lead), ['priority' => 'urgent', 'tags' => ['caliente', 'caliente', 'norte']])->assertOk();
+        $this->assertSame('urgent', $lead->fresh()->priority);
+        $this->assertSame(['caliente', 'norte'], $lead->fresh()->tags);
+    }
 }

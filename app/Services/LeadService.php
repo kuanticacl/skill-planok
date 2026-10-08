@@ -7,6 +7,7 @@ use App\Models\LeadActivity;
 use App\Models\LeadField;
 use App\Models\PipelineStage;
 use App\Models\User;
+use App\Services\Email\AutomationRunner;
 use Illuminate\Support\Facades\DB;
 
 class LeadService
@@ -21,7 +22,7 @@ class LeadService
      */
     public function create(array $attributes, ?User $actor = null, array $activity = []): Lead
     {
-        return DB::transaction(function () use ($attributes, $actor, $activity) {
+        $lead = DB::transaction(function () use ($attributes, $actor, $activity) {
             $stageId = $attributes['stage_id'] ?? PipelineStage::initial()?->id;
 
             $lead = new Lead($attributes);
@@ -38,6 +39,11 @@ class LeadService
 
             return $lead;
         });
+
+        // Fuera de la transacción: un fallo de email nunca debe deshacer el alta del lead.
+        app(AutomationRunner::class)->fire('lead.created', $lead->fresh(['source', 'stage']));
+
+        return $lead;
     }
 
     /**
@@ -70,6 +76,7 @@ class LeadService
             $this->applyStageEffects($lead);
             $lead->save();
             $this->logStageChange($lead, $oldStage, $lead->stage_id, $actor);
+            $this->fireStageChanged($lead, $oldStage);
         }
 
         if ($oldAssignee !== $lead->assigned_to) {
@@ -82,7 +89,9 @@ class LeadService
     /** Mueve el lead a una etapa y lo ubica entre dos tarjetas (o arriba si no se indican). */
     public function move(Lead $lead, int $stageId, ?int $afterId = null, ?User $actor = null, array $closing = []): Lead
     {
-        return DB::transaction(function () use ($lead, $stageId, $afterId, $actor, $closing) {
+        $before = $lead->stage_id;
+
+        $lead = DB::transaction(function () use ($lead, $stageId, $afterId, $actor, $closing) {
             $oldStage = $lead->stage_id;
 
             $lead->stage_id = $stageId;
@@ -99,6 +108,19 @@ class LeadService
 
             return $lead;
         });
+
+        if ($before !== $lead->stage_id) {
+            $this->fireStageChanged($lead, $before);
+        }
+
+        return $lead;
+    }
+
+    private function fireStageChanged(Lead $lead, ?int $previousStageId): void
+    {
+        app(AutomationRunner::class)->fire('lead.stage_changed', $lead->fresh(['source', 'stage']), [
+            'previous_stage' => $previousStageId ? PipelineStage::whereKey($previousStageId)->value('name') : null,
+        ]);
     }
 
     /**

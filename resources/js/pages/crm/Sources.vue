@@ -221,7 +221,9 @@ const sample = (s?: Source) => `curl -X POST ${props.endpoint} \\
                     <code>country</code>, <code>region</code>, <code>city</code>,
                     <code>latitude</code>, <code>longitude</code>, y <code>custom</code> con los
                     campos personalizados por su clave. Cualquier otro dato se guarda en los
-                    metadatos del lead.
+                    metadatos del lead y queda disponible como variable en los emails.
+                    Con <code>email_template</code> (slug de una plantilla) se le envía además
+                    un correo al lead; para reglas sin código usa Email → Automatizaciones.
                 </p>
             </div>
         </div>

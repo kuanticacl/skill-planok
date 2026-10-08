@@ -259,7 +259,7 @@ class LeadController extends Controller
         return $this->respond($request, ['position' => $lead->position, 'stage_id' => $lead->stage_id]);
     }
 
-    public function assign(Request $request, Lead $lead): RedirectResponse
+    public function assign(Request $request, Lead $lead): JsonResponse|RedirectResponse
     {
         $this->authorize('view', $lead);
         abort_unless($request->user()->hasPermission('leads.assign'), 403);

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\Email\ApiKeyController;
+use App\Http\Controllers\Email\AutomationController;
 use App\Http\Controllers\Email\CampaignController;
 use App\Http\Controllers\Email\ContactListController;
 use App\Http\Controllers\Email\EmailMessageController;
@@ -146,6 +147,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('campaigns/{campaign}/cancel', [CampaignController::class, 'cancel'])->name('campaigns.cancel');
         });
         Route::get('campaigns/{campaign}', [CampaignController::class, 'show'])->middleware('can:campaigns.view')->name('campaigns.show');
+
+        // Automatizaciones
+        Route::middleware('can:automations.manage')->group(function () {
+            Route::get('automations', [AutomationController::class, 'index'])->name('automations.index');
+            Route::post('automations', [AutomationController::class, 'store'])->name('automations.store');
+            Route::put('automations/{automation}', [AutomationController::class, 'update'])->name('automations.update');
+            Route::delete('automations/{automation}', [AutomationController::class, 'destroy'])->name('automations.destroy');
+        });
 
         // Historial de mensajes
         Route::middleware('can:email_logs.view')->group(function () {

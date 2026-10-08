@@ -10,6 +10,7 @@ import {
     MailX,
     Newspaper,
     Settings,
+    Zap,
     Globe,
     LayoutDashboard,
     ListPlus,
@@ -38,6 +39,7 @@ import { index as clients } from '@/routes/clients';
 import { index as fields } from '@/routes/fields';
 import { index as leads } from '@/routes/leads';
 import { index as apiKeys } from '@/routes/api-keys';
+import { index as automations } from '@/routes/automations';
 import { index as campaigns } from '@/routes/campaigns';
 import { index as lists } from '@/routes/lists';
 import { index as messages } from '@/routes/messages';
@@ -74,6 +76,7 @@ const groups: NavGroup[] = [
             { title: 'Boletines', href: campaigns(), icon: Newspaper, permission: 'campaigns.view' },
             { title: 'Plantillas', href: templates(), icon: FileText, permission: 'templates.view' },
             { title: 'Audiencias', href: lists(), icon: ListChecks, permission: 'lists.manage' },
+            { title: 'Automatizaciones', href: automations(), icon: Zap, permission: 'automations.manage' },
             { title: 'Historial de envíos', href: messages(), icon: History, permission: 'email_logs.view' },
             { title: 'Bajas y rebotes', href: suppressions(), icon: MailX, permission: 'email_settings.manage' },
             { title: 'API e integraciones', href: apiKeys(), icon: Plug, permission: 'email_settings.manage' },

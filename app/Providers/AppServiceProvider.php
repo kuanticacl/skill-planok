@@ -32,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->configureAuthorization();
 
+        RateLimiter::for('email-api', fn (Request $request) => Limit::perMinute(60)->by(($request->bearerToken() ?: $request->header('X-Api-Key')) ?: $request->ip()));
         RateLimiter::for('lead-ingest', fn (Request $request) => Limit::perMinute(120)->by($request->header('X-Api-Key') ?: $request->ip()));
     }
 

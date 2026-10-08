@@ -123,6 +123,7 @@ class AudienceBuilder
             'utm_source' => $lead->utm_source,
             'utm_medium' => $lead->utm_medium,
             'utm_campaign' => $lead->utm_campaign,
+            ...($lead->meta['extra'] ?? []),
             ...($lead->custom ?? []),
         ];
 
