@@ -112,6 +112,7 @@ return [
                 'sources.manage' => 'Gestionar orígenes y API',
                 'stages.manage' => 'Gestionar etapas del Kanban',
                 'fields.manage' => 'Gestionar campos personalizados',
+                'trash.manage' => 'Ver la papelera y restaurar datos eliminados',
             ],
         ],
     ],
