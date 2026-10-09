@@ -6,12 +6,15 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 #[Fillable(['name', 'slug', 'color', 'icon', 'api_key', 'is_active', 'is_system', 'sort_order', 'score_weight'])]
 #[Hidden(['api_key'])]
 class LeadSource extends Model
 {
+    use SoftDeletes;
+
     public const MANUAL_SLUG = 'manual';
 
     protected function casts(): array

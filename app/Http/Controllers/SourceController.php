@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\LeadSource;
+use App\Services\CascadeDelete;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -11,10 +12,10 @@ use Inertia\Response;
 
 class SourceController extends Controller
 {
-    public function index(): Response
+    public function index(CascadeDelete $cascade): Response
     {
         return Inertia::render('crm/Sources', [
-            'sources' => LeadSource::withCount(['leads' => fn ($q) => $q->withTrashed()]) // la FK restringe también los leads en papelera
+            'sources' => LeadSource::withCount('leads')
                 ->orderBy('sort_order')->orderBy('id')
                 ->get()
                 ->map(fn (LeadSource $s) => [
@@ -27,6 +28,7 @@ class SourceController extends Controller
                     'score_weight' => (int) $s->score_weight,
                     'is_system' => $s->is_system,
                     'leads_count' => $s->leads_count,
+                    'proposals_count' => $s->leads_count ? $cascade->sourceImpact($s)['proposals'] : 0,
                     'api_key' => $s->api_key, // visible solo para quienes gestionan orígenes
                 ]),
             'endpoint' => url('/api/v1/leads'),
@@ -79,7 +81,7 @@ class SourceController extends Controller
         return back();
     }
 
-    public function destroy(LeadSource $source): RedirectResponse
+    public function destroy(Request $request, LeadSource $source, CascadeDelete $cascade): RedirectResponse
     {
         if ($source->is_system) {
             $this->toast('Este origen es de sistema y no se puede eliminar.', 'error');
@@ -87,15 +89,19 @@ class SourceController extends Controller
             return back();
         }
 
-        if ($source->leads()->withTrashed()->exists()) {
-            $this->toast('El origen tiene leads asociados. Desactívalo en lugar de eliminarlo.', 'error');
+        $impact = $cascade->sourceImpact($source);
+
+        if ($impact['leads'] > 0 && ! $request->boolean('confirm_related')) {
+            $this->toast('El origen tiene datos relacionados: confirma la eliminación para enviarlos a la papelera.', 'error');
 
             return back();
         }
 
-        $source->delete();
+        $cascade->source($source);
 
-        $this->toast('Origen eliminado.');
+        $this->toast($impact['leads'] > 0
+            ? "Origen eliminado junto con {$impact['leads']} lead(s) y {$impact['proposals']} propuesta(s) relacionados."
+            : 'Origen eliminado.');
 
         return back();
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LeadRequest;
 use App\Models\Client;
 use App\Models\Lead;
+use App\Services\CascadeDelete;
 use App\Models\LeadActivity;
 use App\Models\LeadField;
 use App\Models\LeadSource;
@@ -280,13 +281,21 @@ class LeadController extends Controller
         return to_route('leads.show', $lead);
     }
 
-    public function destroy(Lead $lead): RedirectResponse
+    public function destroy(Request $request, Lead $lead, CascadeDelete $cascade): RedirectResponse
     {
         $this->authorize('delete', $lead);
 
-        $lead->delete();
+        $proposals = $lead->proposals()->count();
 
-        $this->toast('Lead eliminado.');
+        if ($proposals && ! $request->boolean('confirm_related')) {
+            $this->toast('El lead tiene propuestas: confirma la eliminación para enviarlas a la papelera.', 'error');
+
+            return back();
+        }
+
+        $cascade->lead($lead);
+
+        $this->toast($proposals ? "Lead eliminado junto con {$proposals} propuesta(s)." : 'Lead eliminado.');
 
         return to_route('leads.index');
     }
@@ -387,7 +396,7 @@ class LeadController extends Controller
                 'assign' => $this->leads->assign($lead, $data['assigned_to'] ?? null, $user),
                 'priority' => $this->leads->update($lead, ['priority' => $data['priority']], $user),
                 'add_tag' => $this->leads->update($lead, ['tags' => collect($lead->tags ?? [])->push(trim($data['tag']))->unique()->values()->all()], $user),
-                'delete' => $lead->delete(),
+                'delete' => app(CascadeDelete::class)->lead($lead),
             };
             $done++;
         }

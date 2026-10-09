@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ClientRequest;
 use App\Models\Client;
+use App\Services\CascadeDelete;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,7 +17,7 @@ class ClientController extends Controller
         $filters = $request->only(['q', 'status']);
 
         $clients = Client::query()
-            ->withCount('leads')
+            ->withCount(['leads', 'proposals'])
             ->when($filters['q'] ?? null, fn ($q, $term) => $q->where(fn ($q) => $q
                 ->where('name', 'like', "%{$term}%")
                 ->orWhere('legal_name', 'like', "%{$term}%")
@@ -85,11 +86,22 @@ class ClientController extends Controller
         return to_route('clients.show', $client);
     }
 
-    public function destroy(Client $client): RedirectResponse
+    public function destroy(Request $request, Client $client, CascadeDelete $cascade): RedirectResponse
     {
-        $client->delete(); // los leads quedan sin cliente asociado (se conservan)
+        $leads = $client->leads()->count();
+        $proposals = $client->proposals()->count();
 
-        $this->toast('Cliente eliminado.');
+        if (($leads || $proposals) && ! $request->boolean('confirm_related')) {
+            $this->toast('El cliente tiene datos relacionados: confirma la eliminación para enviarlos a la papelera.', 'error');
+
+            return back();
+        }
+
+        $cascade->client($client);
+
+        $this->toast($leads || $proposals
+            ? "Cliente eliminado junto con {$leads} lead(s) y {$proposals} propuesta(s) relacionados."
+            : 'Cliente eliminado.');
 
         return to_route('clients.index');
     }
