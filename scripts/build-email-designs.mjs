@@ -16,36 +16,36 @@ const block = (type, props = {}) => ({ id: `b${(++n).toString(36).padStart(7, '0
 const header = () => block('header', { logoUrl: LOGO, logoWidth: 150, padY: 28 });
 const heading = (text) => block('heading', { text, size: 26, color: '#393939', padY: 12 });
 const text = (t, o = {}) => block('text', { text: t, ...o });
-const button = (label, href) => block('button', { label, href, bg: '#FF5300', color: '#FFFFFF', radius: 999, align: 'center', padY: 20 });
+const button = (label, href) => block('button', { label, href, bg: '#2563EB', color: '#FFFFFF', radius: 999, align: 'center', padY: 20 });
 const note = (t) => block('text', { text: t, size: 13, color: '#8A8A8A', align: 'center', padY: 6 });
 const footer = (transactional) =>
     block('footer', {
         company: '{{ company_name }}',
         address: '{{ADDRESS}}',
-        legal: transactional ? 'Recibes este correo porque tienes una cuenta o solicitud en Quiebre.' : 'Recibes este correo porque te suscribiste en top-inmobiliario.quiebre.cl.',
+        legal: transactional ? 'Recibes este correo porque tienes una cuenta o solicitud en ECORTESCL.' : 'Recibes este correo porque te suscribiste al boletín de ECORTESCL.',
         showUnsubscribe: !transactional,
         showView: false,
     });
-const settings = { ...defaultSettings(), bg: '#F4F4F4', contentBg: '#FFFFFF', width: 600, font: 'Arial, Helvetica, sans-serif', textColor: '#393939', linkColor: '#FF5300', radius: 16 };
+const settings = { ...defaultSettings(), bg: '#F4F4F4', contentBg: '#FFFFFF', width: 600, font: 'Arial, Helvetica, sans-serif', textColor: '#393939', linkColor: '#2563EB', radius: 16 };
 
 const templates = {
     'bienvenida-usuario': {
         name: 'Bienvenida de usuario',
         description: 'Se envía al crear un usuario del CRM, con su correo, contraseña inicial y enlace de acceso.',
         category: 'transactional',
-        subject: 'Tu acceso al CRM de Quiebre',
+        subject: 'Tu acceso al CRM de ECORTESCL',
         preheader: 'Aquí tienes tus datos para ingresar',
         variables: [
             ['first_name', 'Nombre', '', 'María'],
-            ['email', 'Correo de acceso', '', 'maria@quiebre.cl'],
+            ['email', 'Correo de acceso', '', 'maria@ecortes.cl'],
             ['password', 'Contraseña inicial', '', 'Qb-Ejemplo-123'],
             ['role', 'Rol', '', 'Comercial'],
-            ['login_url', 'Enlace de acceso', 'https://crm.quiebre.cl/login', 'https://crm.quiebre.cl/login'],
+            ['login_url', 'Enlace de acceso', 'https://crm.ecortes.cl/login', 'https://crm.ecortes.cl/login'],
         ],
         blocks: [
             header(),
             heading('¡Bienvenido/a, {{ first_name }}!'),
-            text('Te creamos un acceso al CRM de Quiebre{{#if role}} con el rol **{{ role }}**{{/if}}. Estos son tus datos para ingresar:'),
+            text('Te creamos un acceso al CRM de ECORTESCL{{#if role}} con el rol **{{ role }}**{{/if}}. Estos son tus datos para ingresar:'),
             text('Usuario (correo)\n**{{ email }}**\n\nContraseña inicial\n**{{ password }}**', { bg: '#FAFAFA', padY: 16, size: 16 }),
             button('Ingresar al CRM', '{{ login_url }}'),
             note('Por seguridad, cambia tu contraseña después de ingresar (Configuración → Seguridad). Si no esperabas este correo, ignóralo.'),
@@ -56,65 +56,64 @@ const templates = {
         name: 'Recuperar contraseña',
         description: 'Enlace para restablecer la contraseña (flujo «¿Olvidaste tu contraseña?»).',
         category: 'transactional',
-        subject: 'Restablece tu contraseña del CRM de Quiebre',
+        subject: 'Restablece tu contraseña del CRM de ECORTESCL',
         preheader: 'Usa este enlace para crear una nueva contraseña',
         variables: [
             ['first_name', 'Nombre', '', 'María'],
-            ['reset_url', 'Enlace para restablecer', '', 'https://crm.quiebre.cl/reset-password/token'],
+            ['reset_url', 'Enlace para restablecer', '', 'https://crm.ecortes.cl/reset-password/token'],
             ['expires_minutes', 'Minutos de vigencia', '60', '60'],
         ],
         blocks: [
             header(),
             heading('Restablece tu contraseña'),
-            text('Hola {{ first_name }}, recibimos una solicitud para restablecer la contraseña de tu acceso al CRM de Quiebre.'),
+            text('Hola {{ first_name }}, recibimos una solicitud para restablecer la contraseña de tu acceso al CRM de ECORTESCL.'),
             button('Crear nueva contraseña', '{{ reset_url }}'),
             note('El enlace vence en {{ expires_minutes }} minutos y solo se puede usar una vez.'),
             note('Si no lo solicitaste, ignora este correo: tu contraseña actual sigue funcionando.'),
             footer(true),
         ],
     },
-    'bienvenida-top-inmobiliario': {
-        name: 'Bienvenida Top Inmobiliario',
-        description: 'Agradecimiento a quienes se suscriben al boletín, con una explicación de cómo funciona el ranking.',
-        category: 'marketing',
-        subject: '¡Gracias por suscribirte al ranking Top Inmobiliarias!',
-        preheader: 'Así funciona el ranking y qué recibirás cada semana',
+    'gracias-contacto': {
+        name: 'Gracias por contactarnos',
+        description: 'Respuesta automática al formulario de contacto de ecortes.cl.',
+        category: 'transactional',
+        subject: 'Recibimos tu mensaje, {{ first_name }}',
+        preheader: 'Te responderemos a la brevedad',
         variables: [
             ['first_name', 'Nombre', '', 'María'],
-            ['site_url', 'Enlace a la landing', 'https://top-inmobiliario.quiebre.cl', 'https://top-inmobiliario.quiebre.cl'],
+            ['site_url', 'Sitio web', 'https://www.ecortes.cl', 'https://www.ecortes.cl'],
         ],
         blocks: [
             header(),
-            heading('¡Gracias por suscribirte, {{ first_name }}!'),
-            text('Ya eres parte del boletín de **Top Inmobiliarias de Chile**, el ranking digital de QUIEBRE que mide el desempeño de 50 inmobiliarias del país. Cada semana te contamos qué cambió y qué está pasando en el mercado.'),
-            block('heading', { text: 'Cómo funciona el ranking', size: 18, color: '#393939', padY: 8 }),
-            text('**1. Evaluamos cinco áreas.** Web (35 pts), Tecnología (25), Redes sociales (15), Visibilidad digital (15) y Branding (15). El puntaje se normaliza a una nota de 1 a 100.\n\n**2. Cada inmobiliaria tiene su ficha.** Ahí ves la nota por criterio, la evidencia pública que la respalda y qué le falta para subir.\n\n**3. Se actualiza cada semana.** Los cambios de posición y los hallazgos llegan primero a tu correo.'),
-            note('El ranking mide desempeño digital; no evalúa calidad constructiva, satisfacción de clientes ni solvencia financiera.'),
-            button('Ver el ranking', '{{ site_url }}'),
-            note('¿Quieres saber cómo subir en el ranking? En la web puedes agendar una asesoría con nuestro equipo.'),
-            footer(false),
+            heading('¡Gracias por escribirnos, {{ first_name }}!'),
+            text('Recibimos tu mensaje y ya lo está revisando nuestro equipo. **Te responderemos a la brevedad** para conversar sobre tu proyecto.'),
+            block('heading', { text: 'Cómo trabajamos', size: 18, color: '#393939', padY: 8 }),
+            text('**1. Conversamos.** Entendemos tu problema, tus plazos y lo que necesitas lograr.\n\n**2. Proponemos.** Te enviamos una propuesta clara, con alcance, plazos e inversión en UF.\n\n**3. Construimos.** Desarrollamos por iteraciones, con demos periódicas, hasta dejar todo en producción.'),
+            button('Ver nuestros servicios', '{{ site_url }}'),
+            note('Software Factory con más de 10 años de experiencia: desarrollo web, apps móviles, automatizaciones e inteligencia artificial.'),
+            footer(true),
         ],
     },
-    'confirmacion-asesoria': {
-        name: 'Confirmación de asesoría',
-        description: 'Agradecimiento al agendar una asesoría: pronto se confirmará y contactará al solicitante.',
+    'gracias-cotizacion': {
+        name: 'Recibimos tu solicitud de cotización',
+        description: 'Confirmación al solicitar una cotización o reunión: pronto se confirmará y contactará al solicitante.',
         category: 'transactional',
-        subject: 'Recibimos tu solicitud de asesoría',
+        subject: 'Recibimos tu solicitud de cotización',
         preheader: 'Pronto te confirmaremos y contactaremos',
         variables: [
             ['first_name', 'Nombre', '', 'María'],
-            ['site_url', 'Enlace a la landing', 'https://top-inmobiliario.quiebre.cl', 'https://top-inmobiliario.quiebre.cl'],
+            ['site_url', 'Sitio web', 'https://www.ecortes.cl', 'https://www.ecortes.cl'],
+            ['tipo_servicio', 'Servicio de interés', '', 'Sitio web'],
             ['fecha_preferida', 'Fecha preferida', '', '15-10-2026'],
-            ['horario_preferido', 'Horario preferido', '', 'tarde'],
         ],
         blocks: [
             header(),
-            heading('Gracias por agendar, {{ first_name }}'),
-            text('Recibimos tu solicitud de asesoría. **Pronto te estaremos confirmando** el horario y contactándote para acelerar tu solicitud.'),
-            text('{{#if fecha_preferida}}Tu preferencia: **{{ fecha_preferida }}{{#if horario_preferido}} · {{ horario_preferido }}{{/if}}**{{/if}}', { color: '#707070', size: 15 }),
+            heading('Gracias por tu solicitud, {{ first_name }}'),
+            text('Recibimos tu solicitud de cotización. **Pronto te estaremos confirmando** y contactando para acelerar el proceso.'),
+            text('{{#if tipo_servicio}}Servicio de interés: **{{ tipo_servicio }}**{{/if}}{{#if fecha_preferida}}\nReunión preferida: **{{ fecha_preferida }}**{{/if}}', { color: '#707070', size: 15 }),
             block('heading', { text: 'Qué sigue', size: 18, color: '#393939', padY: 8 }),
-            text('**1.** Un ejecutivo de QUIEBRE revisa tu solicitud.\n\n**2.** Te escribimos o llamamos para confirmar día y hora.\n\n**3.** En la asesoría revisamos el desempeño digital de tu inmobiliaria y las oportunidades para mejorar.'),
-            button('Volver al ranking', '{{ site_url }}'),
+            text('**1.** Un ejecutivo de ECORTESCL revisa tu solicitud.\n\n**2.** Te escribimos o llamamos para confirmar la reunión.\n\n**3.** Preparamos una propuesta a la medida de tu proyecto.'),
+            button('Conoce ECORTESCL', '{{ site_url }}'),
             footer(true),
         ],
     },
@@ -123,12 +122,12 @@ const templates = {
         description: 'Correo con el enlace a la propuesta comercial (se usa al enviar desde Propuestas).',
         category: 'transactional',
         subject: 'Propuesta comercial: {{ proposal_title }}',
-        preheader: 'Revisa tu propuesta de Quiebre',
+        preheader: 'Revisa tu propuesta de ECORTESCL',
         variables: [
             ['first_name', 'Nombre', '', 'María'],
             ['proposal_title', 'Título de la propuesta', '', 'Marketing digital Proyecto Torre Norte'],
             ['proposal_number', 'Número', '', 'P-2026-0001'],
-            ['proposal_url', 'Enlace', '', 'https://www.quiebre.cl'],
+            ['proposal_url', 'Enlace', '', 'https://www.ecortes.cl'],
             ['valid_until', 'Válida hasta', '', '30 de octubre de 2026'],
             ['message', 'Mensaje', '', 'Adjunto la propuesta que conversamos.'],
         ],

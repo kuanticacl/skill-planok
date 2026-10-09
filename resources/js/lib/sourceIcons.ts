@@ -40,12 +40,12 @@ export const sourceIcons: Record<string, Component> = {
 
 export const sourceIconNames = Object.keys(sourceIcons);
 
-/** Paleta de la marca Quiebre para elegir colores rápido. */
+/** Paleta de la marca ECORTESCL para elegir colores rápido. */
 export const brandColors = [
-    '#FF5300',
+    '#2563EB',
     '#1AA0E4',
     '#0D9F85',
-    '#6419DB',
+    '#0F172A',
     '#DF1E79',
     '#4A8CFF',
     '#FFA165',

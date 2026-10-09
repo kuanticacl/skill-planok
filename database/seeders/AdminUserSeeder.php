@@ -22,8 +22,8 @@ class AdminUserSeeder extends Seeder
             return;
         }
 
-        User::firstOrCreate(['email' => env('ADMIN_EMAIL', 'admin@quiebre.cl')], [
-            'name' => env('ADMIN_NAME', 'Administrador Quiebre'),
+        User::firstOrCreate(['email' => env('ADMIN_EMAIL', 'admin@ecortes.cl')], [
+            'name' => env('ADMIN_NAME', 'Administrador ECORTESCL'),
             'password' => $password,
             'role_id' => Role::where('slug', config('permissions.admin_role'))->value('id'),
             'is_active' => true,

@@ -114,13 +114,12 @@ class ProposalFlowTest extends TestCase
         $this->get('/p/'.$p->public_token.'/pdf')->assertOk();
     }
 
-    public function test_document_shows_holding_brands_and_agency_data(): void
+    public function test_document_shows_agency_data(): void
     {
         $p = $this->proposalFor();
         $p->update(['status' => 'sent']);
 
         $this->get('/p/'.$p->public_token)->assertOk()
-            ->assertSee('Parte del holding')->assertSee('bemodular.cl')->assertSee('kuantica.cl')->assertSee('integraleads.cl')
-            ->assertSee('76.302.966-2')->assertSee('Av. Apoquindo 7935')->assertSee('Tecnologías con las que trabajamos');
+            ->assertSee('Software Factory')->assertSee('Providencia, Santiago')->assertSee('Tecnologías con las que trabajamos');
     }
 }

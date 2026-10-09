@@ -35,7 +35,7 @@ class MailSettings
 
     public static function fromName(): string
     {
-        return Setting::get('mail.from_name') ?: (config('mail.from.name') ?: 'Quiebre');
+        return Setting::get('mail.from_name') ?: (config('mail.from.name') ?: 'ECORTESCL');
     }
 
     public static function replyTo(): ?string
@@ -45,7 +45,7 @@ class MailSettings
 
     public static function companyName(): string
     {
-        return Setting::get('mail.company_name') ?: 'Quiebre';
+        return Setting::get('mail.company_name') ?: 'ECORTESCL';
     }
 
     public static function footerAddress(): ?string

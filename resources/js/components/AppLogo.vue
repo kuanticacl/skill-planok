@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
-import QuiebreLogo from '@/components/QuiebreLogo.vue';
+import BrandLogo from '@/components/BrandLogo.vue';
 </script>
 
 <template>
     <!-- Expandido: wordmark. Colapsado: isotipo Q -->
     <span class="flex items-center group-data-[collapsible=icon]:hidden">
-        <QuiebreLogo class="h-5 w-[6.25rem] shrink-0 text-foreground" />
+        <BrandLogo class="h-5 w-[6.25rem] shrink-0 text-foreground" />
     </span>
     <span
         class="hidden items-center justify-center group-data-[collapsible=icon]:flex"

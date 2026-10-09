@@ -1,10 +1,10 @@
-# Quiebre CRM
+# ECORTESCL CRM
 
-CRM interno de **Quiebre** ([quiebre.cl](https://www.quiebre.cl)) para gestionar prospectos de inmobiliarias, con
+CRM interno de **ECORTESCL** ([ecortes.cl](https://www.ecortes.cl)) para gestionar prospectos y propuestas de una software factory, con
 Kanban comercial y un módulo completo de **email marketing sobre Resend**.
 Laravel 13 · Inertia 3 · Vue 3 (TypeScript) · Tailwind 4 · shadcn-vue · SQLite (configurable).
 
-Identidad visual tomada de quiebre.cl: fuente **Asap**, naranja `#FF5300`, wordmark oficial, botones tipo píldora.
+Identidad visual de ECORTESCL (software factory): fuente **Asap**, azul `#2563EB`, wordmark provisional «eCortesCL» (reemplazar por el logo oficial en `public/brand/ecortes-logo*.png`), botones tipo píldora.
 
 ## Contenido
 
@@ -39,7 +39,7 @@ composer run dev                  # servidor + worker de cola + Vite → http://
 ```
 
 Usuario administrador inicial (configurable con `ADMIN_EMAIL`, `ADMIN_NAME` y `ADMIN_PASSWORD`):
-**admin@quiebre.cl** / `password` (solo en entornos no productivos; en producción `ADMIN_PASSWORD` es obligatorio).
+**admin@ecortes.cl** / `password` (solo en entornos no productivos; en producción `ADMIN_PASSWORD` es obligatorio).
 
 Datos de demostración opcionales (usuarios, clientes y 48 leads de ejemplo):
 
@@ -225,7 +225,7 @@ Integrada con el **SDK oficial `laravel/ai`**. Todo es opcional: sin proveedor c
 
 - **Proveedores** (*Inteligencia artificial → Proveedores*): OpenAI, Claude (Anthropic), OpenRouter, MiniMax, Gemini, DeepSeek, Groq, Mistral, xAI o cualquier API compatible con OpenAI (URL base propia). Pega la API key, **Guardar y probar**, y marca uno **por defecto**. Permisos: `ai.manage` (configurar) y `ai.use` (usar).
 - **Seguridad de las claves:** se guardan **cifradas** en la base (cast `encrypted`, depende de `APP_KEY`), nunca se envían al navegador (solo `••••1234`), no se escriben en `.env` y los errores se muestran sin la clave. Cada llamada queda en `ai_runs` (proveedor, tokens, duración) para controlar el consumo.
-- **Asistente de mailings:** en *Plantillas → Nueva* («Crear con IA»), botón **IA** del editor y ✨ junto al asunto (6 propuestas). La IA solo redacta; el **diseño lo impone el sistema** (`BrandedEmailDesign`): logo oficial (`public/brand/quiebre-logo.png`, requiere `APP_URL` público), naranja `#FF5300`, tipografía, botones en píldora y pie con baja. Descarta HTML libre, colores propios y enlaces/imágenes que no sean de quiebre.cl o entregados por ti. No recibe datos de leads.
+- **Asistente de mailings:** en *Plantillas → Nueva* («Crear con IA»), botón **IA** del editor y ✨ junto al asunto (6 propuestas). La IA solo redacta; el **diseño lo impone el sistema** (`BrandedEmailDesign`): logo oficial (`public/brand/ecortes-logo.png`, requiere `APP_URL` público), naranja `#2563EB`, tipografía, botones en píldora y pie con baja. Descarta HTML libre, colores propios y enlaces/imágenes que no sean de ecortes.cl o entregados por ti. No recibe datos de leads.
 - **Puntaje y perfilamiento de leads (0–100):** `LeadScorer` es determinista y explicable (Perfil y contacto 30 · Intención y origen 20 · Avance comercial 30 · Dinamismo 20). Se recalcula con cada dato nuevo (edición, etapa, seguimientos, notas, aperturas/clics de correo) y cada noche (`leads:rescore`, requiere el cron del scheduler). Temperatura A/B/C/D, filtro y orden en el Kanban. El **peso del origen** (0–10) se configura en *Orígenes y API*. La ficha muestra el desglose, el % de perfil completo, los datos que faltan (con su impacto) y señales inferidas.
 - **Análisis con IA por lead** (pestaña *Perfil e IA*): resumen, señales/riesgos, próximos pasos con canal y plazo, primer mensaje sugerido, preguntas de calificación y mejoras de perfil que **tú aplicas con un clic**. Puede ajustar el puntaje ±10 con su motivo. Opción *Analizar leads automáticamente* en la configuración.
 - **Privacidad:** por defecto no se envían nombre, correo, teléfono ni notas al proveedor; actívalo en *Preferencias* si lo necesitas.
@@ -235,9 +235,9 @@ Integrada con el **SDK oficial `laravel/ai`**. Todo es opcional: sin proveedor c
 - **Clientes como empresas:** nombre de fantasía, razón social, **RUT** (se valida el dígito verificador y se formatea como `76.123.456-0`), giro, dirección, comuna, ciudad y contacto principal.
 - **Servicios y tarifas** (*Servicios y tarifas*): catálogo de servicios pre armados con categoría, modalidad (**pago único** o **mensual**), tarifa neta en **UF** (o CLP), descripción y entregables. Permisos `services.view` / `services.manage`.
 - **Propuestas** (*Propuestas*): se arman con servicios del catálogo (ajustables por propuesta sin tocar el catálogo) y **servicios únicos** creados solo para ese cliente. Soportan duración en meses para servicios mensuales, descuento (% o monto), IVA, vigencia y secciones editables (resumen, objetivos, alcance, plan, condiciones). Los totales siempre los recalcula el servidor.
-- **Documento de marca:** la propuesta se ve (y se descarga como PDF desde «Descargar PDF», con estilos de impresión A4) con la identidad de Quiebre: logo, naranja `#FF5300`, Asap, tarjetas redondeadas y botones en píldora. El mismo documento se usa en la vista previa en vivo, en la ficha y en el enlace público.
-- **PDF real:** botón «Descargar PDF» en la ficha y en el enlace público; se genera en el servidor (dompdf, sin navegador) con Asap, el logo y el estilo glass de quiebre.cl (portada con la imagen del cerebro, chips translúcidos y violeta de integraleads). Incluye firma de Quiebre y del cliente, pie con **holding** (Be Modular, Kuántica, integraleads) a la izquierda, **ubicación, contacto y redes** a la derecha, y los **logos de tecnologías** pequeños al final.
-- **Datos de la agencia** (*Configuración CRM → Datos de la agencia*, permiso `agency.manage`): razón social, RUT, dirección, correo, teléfono y redes sociales que salen en la firma y el pie (vienen precargados con los datos legales de quiebre.cl; las redes se muestran solo si las completas).
+- **Documento de marca:** la propuesta se ve (y se descarga como PDF desde «Descargar PDF», con estilos de impresión A4) con la identidad de ECORTESCL: logo, naranja `#2563EB`, Asap, tarjetas redondeadas y botones en píldora. El mismo documento se usa en la vista previa en vivo, en la ficha y en el enlace público.
+- **PDF real:** botón «Descargar PDF» en la ficha y en el enlace público; se genera en el servidor (dompdf, sin navegador) con Asap, el logo y el estilo glass (portada con fondo de red de nodos, chips translúcidos y azul de marca). Incluye firma de ECORTESCL y del cliente, bloque «Software Factory» a la izquierda, **ubicación, contacto y redes** a la derecha, y los **logos de tecnologías** (Laravel, Vue, Nuxt, Node, Vercel, Google) pequeños al final.
+- **Datos de la agencia** (*Configuración CRM → Datos de la agencia*, permiso `agency.manage`): razón social, RUT, dirección, correo, teléfono y redes sociales que salen en la firma y el pie (vienen precargados con los datos legales de ecortes.cl; las redes se muestran solo si las completas).
 - **Enlace público** `/p/{token}` (sin iniciar sesión, `noindex`): registra la primera vista y las visitas, y permite **aceptar o rechazar** con nombre y comentario (queda IP y fecha). Cada hito queda en el historial del lead. Se puede enviar por correo desde el CRM (plantilla transaccional *Propuesta comercial*, editable en Plantillas; requiere el worker de colas) o compartir el enlace por WhatsApp y marcarla como enviada.
 - **Versiones:** un lead o cliente puede tener varias propuestas; «Nueva versión» duplica una existente como borrador. Una propuesta aceptada o rechazada queda bloqueada.
 - **Kanban:** en *Etapas del Kanban* marca las etapas que **requieren propuesta** (por defecto «Propuesta» y «Concretado»). Al mover un lead a una de ellas sin propuesta, el CRM ofrece crearla; la tarjeta muestra la última propuesta (monto y estado) y la ficha del lead tiene la pestaña *Propuestas*. Al enviar una propuesta, si el lead no tiene valor estimado, se usa el de la propuesta.
@@ -245,10 +245,10 @@ Integrada con el **SDK oficial `laravel/ai`**. Todo es opcional: sin proveedor c
 - **UF:** trabajamos en UF. Las propuestas se arman por defecto en UF (se puede elegir CLP) y muestran el equivalente en pesos. El valor de la UF viene de [findic.cl](https://findic.cl/api/uf) (`uf:sync` corre a las 00:10 y 08:30, y se guarda el historial en `uf_values`). Mientras la propuesta es borrador usa la UF del día; **al enviarla queda congelada** y el documento/PDF indica «UF de referencia · fecha» (p. ej. *1 UF = $41.122,74 al 08 de octubre de 2026*). Los valores UF llevan 2 decimales.
 - **Texto enriquecido:** descripciones, secciones de la propuesta, notas, observaciones del cliente y bloques de texto del editor de correos usan un editor TipTap (negrita, cursiva, listas, enlaces). Se guarda como HTML sanitizado (lista blanca) en el servidor; el texto antiguo en formato simple sigue funcionando.
 - **Datos demo:** `php artisan crm:seed-demo` crea 1 cliente + lead + propuestas por cada origen, en distintos estados (borrador, enviada, vista, aceptada, rechazada, vencida). En Docker se ejecuta al iniciar con `SEED_DEMO=true`. Es idempotente.
-- **Landing top-inmobiliario.quiebre.cl:** `php artisan crm:landing-kit` (corre solo al iniciar en Docker, es idempotente) crea los orígenes *Landing Top Inmobiliario – Boletín/Asesoría* (con su API key), la audiencia del boletín, los campos del lead y las plantillas `bienvenida-top-inmobiliario` y `confirmacion-asesoria`. Guía de integración y prompt para Nuxt 4: [`docs/INTEGRACION_LANDING_TOP_INMOBILIARIO.md`](docs/INTEGRACION_LANDING_TOP_INMOBILIARIO.md).
+- **Sitio ecortes.cl:** `php artisan crm:landing-kit` (corre solo al iniciar en Docker, una única vez) crea los orígenes *Formulario Contacto* y *Formulario Cotización* (cada uno con su API key; el formulario del sitio envía a `POST /api/v1/leads`), la audiencia *Boletín ECORTESCL*, los campos del lead (`tipo_servicio`, `presupuesto`, `plazo`, `fecha_preferida`, `interes`) y las plantillas `gracias-contacto` y `gracias-cotizacion`.
 - **Correos a usuarios (Resend):** al crear un usuario se envía la plantilla `bienvenida-usuario` con su correo, contraseña inicial y enlace de acceso; «¿Olvidaste tu contraseña?» usa `recuperar-password` (enlace con vencimiento). Ambas se crean solas la primera vez y se editan en *Email marketing → Plantillas*. Las contraseñas y enlaces de un solo uso se ocultan (`••••••••`) del historial de envíos una vez enviados. Requiere Resend configurado y el worker de colas.
-- **Plantillas por defecto en el editor visual:** `bienvenida-usuario`, `recuperar-password`, `bienvenida-top-inmobiliario`, `confirmacion-asesoria` y `propuesta-comercial` se definen con bloques (`resources/email-designs/*.json`, generados con `node scripts/build-email-designs.mjs` usando el mismo compilador del editor), así que se abren y modifican en *Plantillas → Visual*. Si cambias su diseño en el CRM, el sistema no lo pisa.
-- **Holding:** `crm:landing-kit` también crea los orígenes *Formulario Landing Kuántica*, *Formulario Landing Be Modular* y *Formulario Landing integraleads* (cada uno con su API key; usa la API de leads igual que la landing de Top Inmobiliario). Todos los correos que sale del CRM —plantillas, boletines, transaccionales y pruebas— llevan al pie «Parte del holding» con los logos de Be Modular, Kuántica e integraleads, como en la propuesta comercial.
+- **Plantillas por defecto en el editor visual:** `bienvenida-usuario`, `recuperar-password`, `gracias-contacto`, `gracias-cotizacion` y `propuesta-comercial` se definen con bloques (`resources/email-designs/*.json`, generados con `node scripts/build-email-designs.mjs` usando el mismo compilador del editor), así que se abren y modifican en *Plantillas → Visual*. Si cambias su diseño en el CRM, el sistema no lo pisa.
+- **Empresas relacionadas:** si en el futuro hay marcas hermanas, `Agency::holding()` (con logos en `public/brand/partners`) agrega el pie «Empresas relacionadas» en propuestas y correos; hoy está vacío y no se muestra.
 
 ## Estructura
 
@@ -278,13 +278,13 @@ npm run types:check               # tipos TypeScript / Vue
 npm run build                     # build de producción
 ```
 
-## Despliegue con Docker y Dokploy (crm.quiebre.cl)
+## Despliegue con Docker y Dokploy (crm.ecortes.cl)
 
-Todo el CRM corre en contenedores, **incluida la base de datos** (MariaDB 11.4), con el mismo patrón que `plataforma_integraleads`:
+Todo el CRM corre en contenedores, **incluida la base de datos** (MariaDB 11.4), con el patrón de despliegue de Dokploy:
 
 - `Dockerfile` multi-stage: instala Composer, compila los assets (Wayfinder + Vite) y deja una imagen final PHP 8.4-FPM + Nginx + Supervisor sin Node. Supervisor ejecuta **web**, **cola** (`queue:work`: correos, boletines) y **scheduler** (`schedule:work`: boletines programados, recálculo de puntajes).
-- `docker-compose.yml` (servicios `quiebre-crm` y `quiebre-crm-db`): **sin puertos publicados** — el puerto y el enrutamiento los gestiona Traefik/Dokploy; la base solo es visible en la red interna del stack. Volúmenes: `crm-storage` (archivos, PDF) y `crm-db-data` (base de datos).
+- `docker-compose.yml` (servicios `ecortes-crm` y `ecortes-crm-db`): **sin puertos publicados** — el puerto y el enrutamiento los gestiona Traefik/Dokploy; la base solo es visible en la red interna del stack. Volúmenes: `crm-storage` (archivos, PDF) y `crm-db-data` (base de datos).
 - `docker/entrypoint.sh`: espera la base, ejecuta `migrate --force`, `crm:install` (carga roles, etapas, orígenes, servicios y el administrador **solo si el CRM está vacío**) y cachea configuración.
-- Detrás de Traefik se confía en `X-Forwarded-*` (`TRUSTED_PROXIES`), de modo que URLs, cookies seguras y assets salen en `https://crm.quiebre.cl`.
+- Detrás de Traefik se confía en `X-Forwarded-*` (`TRUSTED_PROXIES`), de modo que URLs, cookies seguras y assets salen en `https://crm.ecortes.cl`.
 
-En Dokploy: *Compose* → origen GitHub (`kuanticacl/skill-planok`, ruta `./docker-compose.yml`) → variables de `.env.dokploy.example` → dominio `crm.quiebre.cl` (servicio `quiebre-crm`, puerto 80, HTTPS Let's Encrypt). El DNS (registro A de `crm.quiebre.cl`) debe apuntar al servidor de Dokploy. Cambia la contraseña del administrador inicial al ingresar y configura Resend, IA y *Datos de la agencia* desde el propio CRM.
+En Dokploy: *Compose* → origen GitHub (`kuanticacl/skill-planok`, ruta `./docker-compose.yml`) → variables de `.env.dokploy.example` → dominio `crm.ecortes.cl` (servicio `ecortes-crm`, puerto 80, HTTPS Let's Encrypt). El DNS (registro A de `crm.ecortes.cl`) debe apuntar al servidor de Dokploy. Cambia la contraseña del administrador inicial al ingresar y configura Resend, IA y *Datos de la agencia* desde el propio CRM.

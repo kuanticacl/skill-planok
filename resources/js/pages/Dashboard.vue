@@ -93,9 +93,9 @@ const toggleSource = (id: number) => {
 };
 
 const tiles = computed(() => [
-    { label: 'Leads', value: props.stats.total, icon: Layers, color: '#FF5300', hint: props.periods[props.filters.period] },
+    { label: 'Leads', value: props.stats.total, icon: Layers, color: '#2563EB', hint: props.periods[props.filters.period] },
     { label: 'Nuevos hoy', value: props.stats.today, icon: CalendarPlus, color: '#1AA0E4' },
-    { label: 'En gestión', value: props.stats.open, icon: Sparkles, color: '#6419DB' },
+    { label: 'En gestión', value: props.stats.open, icon: Sparkles, color: '#0F172A' },
     { label: 'Concretados', value: props.stats.won, icon: CircleCheckBig, color: '#0D9F85' },
     { label: 'Descartados', value: props.stats.lost, icon: CircleX, color: '#8A8A8A' },
     { label: 'Conversión', value: `${props.stats.conversion}%`, icon: Percent, color: '#DF1E79' },

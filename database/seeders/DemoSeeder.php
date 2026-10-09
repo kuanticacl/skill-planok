@@ -20,17 +20,17 @@ class DemoSeeder extends Seeder
         mt_srand(7);
 
         $comercial = Role::where('slug', 'comercial')->value('id');
-        $team = collect([['Camila Rojas', 'camila@quiebre.cl'], ['Diego Fuentes', 'diego@quiebre.cl'], ['Valentina Mora', 'valentina@quiebre.cl']])
+        $team = collect([['Camila Rojas', 'camila@ecortes.cl'], ['Diego Fuentes', 'diego@ecortes.cl'], ['Valentina Mora', 'valentina@ecortes.cl']])
             ->map(fn ($u) => User::firstOrCreate(['email' => $u[1]], [
                 'name' => $u[0], 'password' => 'password', 'role_id' => $comercial, 'email_verified_at' => now(), 'job_title' => 'Ejecutivo comercial',
             ]));
 
-        LeadField::firstOrCreate(['key' => 'proyecto_de_interes'], [
-            'label' => 'Proyecto de interés', 'type' => 'select', 'options' => ['Torre Norte', 'Parque Sur', 'Edificio Centro'],
+        LeadField::firstOrCreate(['key' => 'servicio_de_interes'], [
+            'label' => 'Servicio de interés', 'type' => 'select', 'options' => ['Sitio web', 'App móvil', 'Automatización'],
             'show_on_card' => true, 'sort_order' => 0,
         ]);
 
-        $clients = collect(['Inmobiliaria Cities', 'Bricsa', 'Ecomac', 'Evoluciona', 'Besalco Inmobiliaria'])
+        $clients = collect(['Logística Andes', 'Tienda Verde', 'Clínica Vista Norte', 'Nodo Educa', 'Constructora Pacífico'])
             ->map(fn ($n) => Client::firstOrCreate(['name' => $n], ['email' => 'contacto@'.strtolower(str_replace(' ', '', $n)).'.cl', 'phone' => '+5622'.mt_rand(1000000, 9999999), 'city' => 'Santiago']));
 
         $sources = LeadSource::where('slug', '!=', LeadSource::MANUAL_SLUG)->get();
@@ -48,8 +48,8 @@ class DemoSeeder extends Seeder
                 'email' => strtolower(\Str::ascii($first.'.'.$last)).$i.'@correo.cl',
                 'phone' => '+569'.mt_rand(10000000, 99999999),
                 'company' => mt_rand(0, 1) ? $clients->random()->name : null,
-                'job_title' => ['Gerente comercial', 'Jefe de ventas', 'Corredor', 'Inversionista'][mt_rand(0, 3)],
-                'message' => 'Quiero información sobre sus servicios de marketing inmobiliario.',
+                'job_title' => ['Gerente comercial', 'Gerente de operaciones', 'Jefe de TI', 'Fundador'][mt_rand(0, 3)],
+                'message' => 'Quiero cotizar el desarrollo de una plataforma web.',
                 'client_id' => mt_rand(0, 3) === 0 ? $clients->random()->id : null,
                 'source_id' => $source->id,
                 'assigned_to' => mt_rand(0, 4) === 0 ? null : $team->random()->id,
@@ -62,7 +62,7 @@ class DemoSeeder extends Seeder
                 'estimated_value' => mt_rand(0, 2) ? mt_rand(8, 120) * 100000 : null,
                 'tags' => [[], ['inversionista'], ['proyecto-norte', 'caliente'], ['referido'], ['licitación']][mt_rand(0, 4)] ?: null,
                 'next_follow_up_at' => [null, now()->subDays(mt_rand(1, 5)), now()->addHours(mt_rand(1, 20)), now()->addDays(mt_rand(2, 9))][mt_rand(0, 3)],
-                'custom' => mt_rand(0, 1) ? ['proyecto_de_interes' => ['Torre Norte', 'Parque Sur', 'Edificio Centro'][mt_rand(0, 2)]] : null,
+                'custom' => mt_rand(0, 1) ? ['servicio_de_interes' => ['Sitio web', 'App móvil', 'Automatización'][mt_rand(0, 2)]] : null,
             ]);
 
             $stage = $stages->random();

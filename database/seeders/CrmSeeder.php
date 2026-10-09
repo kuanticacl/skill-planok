@@ -14,9 +14,9 @@ class CrmSeeder extends Seeder
         if (PipelineStage::count() === 0) {
             $stages = [
                 ['Ingreso', '#1AA0E4', 'open', false],
-                ['Contactado', '#6419DB', 'open', false],
+                ['Contactado', '#0F172A', 'open', false],
                 ['Agendado', '#DF1E79', 'open', false],
-                ['Propuesta', '#FF5300', 'open', true],
+                ['Propuesta', '#2563EB', 'open', true],
                 ['Concretado', '#0D9F85', 'won', true],
                 ['Descartado', '#8A8A8A', 'lost', false],
             ];
@@ -31,7 +31,7 @@ class CrmSeeder extends Seeder
         if (LeadSource::count() === 0) {
             $sources = [
                 ['Sitio web', '#1AA0E4', 'globe', false],
-                ['Landing page', '#6419DB', 'layout-template', false],
+                ['Landing page', '#0F172A', 'layout-template', false],
                 ['Meta Ads', '#4A8CFF', 'megaphone', false],
                 ['Google Ads', '#0D9F85', 'search', false],
                 ['WhatsApp', '#25D366', 'message-circle', false],

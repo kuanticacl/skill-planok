@@ -12,10 +12,10 @@
         Asap, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
         'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
-    --color-brand: #ff5300;
+    --color-brand: #2563eb;
     --color-brand-blue: #1aa0e4;
     --color-brand-green: #0d9f85;
-    --color-brand-purple: #6419db;
+    --color-brand-purple: #0f172a;
     --color-brand-pink: #df1e79;
 
     --radius-lg: var(--radius);
@@ -94,40 +94,40 @@
 }
 
 :root {
-    /* Identidad Quiebre: naranja #FF5300, grises cálidos, fuente Asap */
+    /* Identidad ECORTESCL: naranja #2563EB, grises cálidos, fuente Asap */
     --background: #f4f4f4;
     --foreground: #393939;
     --card: #ffffff;
     --card-foreground: #393939;
     --popover: #ffffff;
     --popover-foreground: #393939;
-    --primary: #ff5300;
+    --primary: #2563eb;
     --primary-foreground: #ffffff;
     --secondary: #ececec;
     --secondary-foreground: #393939;
     --muted: #efefef;
     --muted-foreground: #707070;
-    --accent: #fff0e8;
-    --accent-foreground: #c23f00;
+    --accent: #eaf1ff;
+    --accent-foreground: #1d4ed8;
     --destructive: #dc2626;
     --destructive-foreground: #ffffff;
     --border: #e4e4e4;
     --input: #dcdcdc;
-    --ring: #ff5300;
-    --chart-1: #ff5300;
+    --ring: #2563eb;
+    --chart-1: #2563eb;
     --chart-2: #1aa0e4;
     --chart-3: #0d9f85;
-    --chart-4: #6419db;
+    --chart-4: #0f172a;
     --chart-5: #df1e79;
     --radius: 0.75rem;
     --sidebar-background: #ffffff;
     --sidebar-foreground: #505050;
-    --sidebar-primary: #ff5300;
+    --sidebar-primary: #2563eb;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #fff0e8;
-    --sidebar-accent-foreground: #c23f00;
+    --sidebar-accent: #eaf1ff;
+    --sidebar-accent-foreground: #1d4ed8;
     --sidebar-border: #e8e8e8;
-    --sidebar-ring: #ff5300;
+    --sidebar-ring: #2563eb;
     --sidebar: #ffffff;
 }
 
@@ -138,32 +138,32 @@
     --card-foreground: #f2f2f2;
     --popover: #1c1c1c;
     --popover-foreground: #f2f2f2;
-    --primary: #ff5300;
+    --primary: #2563eb;
     --primary-foreground: #ffffff;
     --secondary: #262626;
     --secondary-foreground: #f2f2f2;
     --muted: #262626;
     --muted-foreground: #a3a3a3;
-    --accent: #3a1d0f;
-    --accent-foreground: #ffa165;
+    --accent: #14233f;
+    --accent-foreground: #93c5fd;
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;
     --border: #2c2c2c;
     --input: #333333;
-    --ring: #ff5300;
-    --chart-1: #ff7a33;
+    --ring: #2563eb;
+    --chart-1: #60a5fa;
     --chart-2: #4cb8ee;
     --chart-3: #2fc4a8;
     --chart-4: #a56bff;
     --chart-5: #ff71b4;
     --sidebar-background: #181818;
     --sidebar-foreground: #e5e5e5;
-    --sidebar-primary: #ff5300;
+    --sidebar-primary: #2563eb;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #3a1d0f;
-    --sidebar-accent-foreground: #ffa165;
+    --sidebar-accent: #14233f;
+    --sidebar-accent-foreground: #93c5fd;
     --sidebar-border: #2c2c2c;
-    --sidebar-ring: #ff5300;
+    --sidebar-ring: #2563eb;
     --sidebar: #181818;
 }
 
@@ -181,7 +181,7 @@
 .rich > * + * { margin-top: 0.5rem; }
 .rich ul { list-style: disc; padding-left: 1.25rem; }
 .rich ol { list-style: decimal; padding-left: 1.25rem; }
-.rich li::marker { color: #ff5300; }
-.rich a { color: #ff5300; text-decoration: underline; }
+.rich li::marker { color: #2563eb; }
+.rich a { color: #2563eb; text-decoration: underline; }
 .rich h3 { font-size: 1rem; font-weight: 700; }
-.rich blockquote { border-left: 3px solid #ff5300; padding-left: 0.75rem; color: #707070; }
+.rich blockquote { border-left: 3px solid #2563eb; padding-left: 0.75rem; color: #707070; }

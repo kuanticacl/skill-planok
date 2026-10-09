@@ -29,7 +29,7 @@ class Proposal extends Model
     ];
 
     public const STATUS_COLORS = [
-        'draft' => '#8A8A8A', 'sent' => '#1AA0E4', 'viewed' => '#6419DB', 'accepted' => '#0D9F85', 'rejected' => '#DC2626', 'expired' => '#C23F00',
+        'draft' => '#8A8A8A', 'sent' => '#1AA0E4', 'viewed' => '#0F172A', 'accepted' => '#0D9F85', 'rejected' => '#DC2626', 'expired' => '#C23F00',
     ];
 
     protected function casts(): array

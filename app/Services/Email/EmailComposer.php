@@ -111,17 +111,17 @@ class EmailComposer
             : $block.$html;
     }
 
-    /** Pie común a todos los correos: «Parte del holding» con los logos de las marcas (igual que en la propuesta comercial). */
+    /** Pie común a todos los correos: «Empresas relacionadas» con los logos de las marcas relacionadas (si la marca no tiene, no se agrega). */
     public function withHoldingFooter(string $html): string
     {
-        if (str_contains($html, 'data-holding')) {
+        if (! Agency::holding() || str_contains($html, 'data-holding')) {
             return $html;
         }
 
         $logos = collect(Agency::holding())->map(fn ($h) => '<td style="padding:0 10px"><a href="'.e($h['url']).'" target="_blank" style="text-decoration:none"><img src="'
             .e(url('/brand/partners/'.$h['logo'].'.png')).'" alt="'.e($h['name']).'" height="26" style="display:block;height:26px;width:auto;border:0"></a></td>')->implode('');
 
-        $block = '<table data-holding role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:8px auto 24px"><tr><td align="center" style="font:11px Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#9A9A9A;padding-bottom:8px">Parte del holding</td></tr>'
+        $block = '<table data-holding role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:8px auto 24px"><tr><td align="center" style="font:11px Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#9A9A9A;padding-bottom:8px">Empresas relacionadas</td></tr>'
             .'<tr><td align="center"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>'.$logos.'</tr></table></td></tr></table>';
 
         return stripos($html, '</body>') !== false

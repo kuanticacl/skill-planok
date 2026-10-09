@@ -27,7 +27,7 @@ defineOptions({ layout: { breadcrumbs: [{ title: 'Propuestas', href: index() }] 
 const filters = ref({ q: props.filters.q ?? '', status: props.filters.status ?? '' });
 useDebouncedFilters(index().url, filters, ['proposals', 'filters']);
 
-const colors: Record<string, string> = { draft: '#8A8A8A', sent: '#1AA0E4', viewed: '#6419DB', accepted: '#0D9F85', rejected: '#DC2626', expired: '#C23F00' };
+const colors: Record<string, string> = { draft: '#8A8A8A', sent: '#1AA0E4', viewed: '#0F172A', accepted: '#0D9F85', rejected: '#DC2626', expired: '#C23F00' };
 const toggle = (k: string) => (filters.value.status = filters.value.status === k ? '' : k);
 const fmt = (d: string | null) => (d ? new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium' }).format(new Date(d + 'T12:00:00')) : '—');
 </script>
@@ -36,7 +36,7 @@ const fmt = (d: string | null) => (d ? new Intl.DateTimeFormat('es-CL', { dateSt
     <Head title="Propuestas" />
 
     <div class="flex flex-col gap-6 p-4 md:p-6">
-        <PageHeader title="Propuestas comerciales" description="Arma propuestas con la identidad de Quiebre, envíalas por correo o enlace y sigue si el cliente las vio y aceptó.">
+        <PageHeader title="Propuestas comerciales" description="Arma propuestas con la identidad de ECORTESCL, envíalas por correo o enlace y sigue si el cliente las vio y aceptó.">
             <template #actions>
                 <Button v-if="can.services" variant="outline" as-child><Link :href="services()"><Package /> Servicios y tarifas</Link></Button>
                 <Button v-if="can.create" as-child><Link :href="create()"><Plus /> Nueva propuesta</Link></Button>

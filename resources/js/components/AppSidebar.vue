@@ -125,7 +125,7 @@ const visibleGroups = computed(() =>
 );
 
 const footerNavItems: NavItem[] = [
-    { title: 'quiebre.cl', href: 'https://www.quiebre.cl', icon: Globe },
+    { title: 'ecortes.cl', href: 'https://www.ecortes.cl', icon: Globe },
 ];
 </script>
 

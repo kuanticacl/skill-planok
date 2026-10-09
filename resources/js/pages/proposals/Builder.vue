@@ -302,7 +302,7 @@ const money = (n: number) => formatAmount(n, form.currency);
                                 <NativeSelect v-model="form.client_id" @update:model-value="onClient"><option :value="null">— Sin cliente registrado —</option><option v-for="c in clients" :key="c.id" :value="c.id">{{ c.name }}</option></NativeSelect>
                             </FormField>
                             <FormField label="Nombre de fantasía"><Input v-model="recipient.company" placeholder="Los Robles" /></FormField>
-                            <FormField label="Razón social"><Input v-model="recipient.legal_name" placeholder="Inmobiliaria Los Robles SpA" /></FormField>
+                            <FormField label="Razón social"><Input v-model="recipient.legal_name" placeholder="Comercial Los Robles SpA" /></FormField>
                             <FormField label="RUT"><Input v-model="recipient.rut" placeholder="76.123.456-7" @blur="recipient.rut = formatRut(recipient.rut)" /></FormField>
                             <FormField label="Giro"><Input v-model="recipient.activity" /></FormField>
                             <FormField label="Dirección" class="sm:col-span-2"><Input v-model="recipient.address" placeholder="Av. Apoquindo 4500, of. 801, Las Condes" /></FormField>
@@ -348,7 +348,7 @@ const money = (n: number) => formatAmount(n, form.currency);
                                         <div class="flex flex-wrap items-center justify-between gap-2">
                                             <Button v-if="ai.enabled" type="button" size="sm" variant="ghost" class="text-primary" :disabled="aiBusy === `it-${it.key}`" @click="writeItem(it)"><Spinner v-if="aiBusy === `it-${it.key}`" /><Wand2 v-else /> Redactar con IA</Button>
                                             <span v-else />
-                                            <span class="text-sm"><Repeat v-if="it.billing === 'monthly'" class="mr-1 inline size-3.5 text-[#6419DB]" />Total línea{{ it.billing === 'monthly' ? ' / mes' : '' }}: <strong>{{ money(Number((it.quantity * it.unit_price * (1 - (it.discount_pct || 0) / 100)).toFixed(decimals))) }}</strong></span>
+                                            <span class="text-sm"><Repeat v-if="it.billing === 'monthly'" class="mr-1 inline size-3.5 text-[#0F172A]" />Total línea{{ it.billing === 'monthly' ? ' / mes' : '' }}: <strong>{{ money(Number((it.quantity * it.unit_price * (1 - (it.discount_pct || 0) / 100)).toFixed(decimals))) }}</strong></span>
                                         </div>
                                     </div>
                                     <div class="flex flex-col">

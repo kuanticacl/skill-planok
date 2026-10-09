@@ -34,12 +34,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $p->title }} · Quiebre</title>
+    <title>{{ $p->title }} · ECORTESCL</title>
     @if ($public ?? false)<meta name="robots" content="noindex,nofollow">@endif
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Asap:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --o:#FF5300; --o2:#FFA165; --ink:#393939; --mut:#707070; --line:#E8E8E8; --bg:#F4F4F4; --soft:#FFF3EC; }
+        :root { --o:#2563EB; --o2:#93C5FD; --ink:#393939; --mut:#707070; --line:#E8E8E8; --bg:#F4F4F4; --soft:#EAF1FF; }
         * { box-sizing: border-box; }
         html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         body { margin:0; background:var(--bg); color:var(--ink); font-family:'Asap',Arial,Helvetica,sans-serif; font-size:15px; line-height:1.6; }
@@ -60,7 +60,7 @@
         .cover p { margin:0; font-size:18px; color:var(--mut); max-width:520px; } .cover p strong { color:var(--ink); }
         .cover .meta { display:flex; flex-wrap:wrap; gap:10px; margin-top:26px; max-width:640px; }
         .glass { padding:7px 12px; background:rgba(255,255,255,.55); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,.9); box-shadow:0 4px 18px rgba(0,0,0,.06); border-radius:14px; padding:8px 14px; }
-        .glass.purple { background:rgba(100,25,219,.82); border-color:rgba(255,255,255,.25); box-shadow:0 8px 26px rgba(100,25,219,.28); color:#fff; }
+        .glass.purple { background:rgba(15,23,42,.82); border-color:rgba(255,255,255,.25); box-shadow:0 8px 26px rgba(15,23,42,.28); color:#fff; }
         .glass span { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--mut); } .glass strong { font-size:15px; } .glass.purple span { color:#E4D6FB; }
         h2 { margin:0 0 12px; font-size:21px; line-height:1.25; display:flex; align-items:center; gap:12px; }
         h2 .n { flex:none; width:32px; height:32px; border-radius:11px; background:var(--soft); color:var(--o); font-size:14px; font-weight:700; display:grid; place-items:center; }
@@ -80,7 +80,7 @@
         .totals div { display:flex; justify-content:space-between; padding:5px 0; } .totals .sep { border-top:1px solid var(--line); margin-top:6px; padding-top:10px; }
         .totals .grand { background:var(--o); color:#fff; border-radius:16px; padding:14px 18px; margin-top:10px; font-size:18px; font-weight:700; }
         .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-bottom:8px; }
-        .kpi { background:var(--soft); border:1px solid rgba(255,83,0,.12); border-radius:18px; padding:16px 18px; } .kpi.p { background:rgba(100,25,219,.07); border-color:rgba(100,25,219,.16); } .kpi.p strong { color:#6419DB; } .kpi span { font-size:12px; color:var(--mut); text-transform:uppercase; letter-spacing:.05em; } .kpi strong { display:block; font-size:24px; color:var(--o); line-height:1.2; }
+        .kpi { background:var(--soft); border:1px solid rgba(37,99,235,.12); border-radius:18px; padding:16px 18px; } .kpi.p { background:rgba(15,23,42,.07); border-color:rgba(15,23,42,.16); } .kpi.p strong { color:#0F172A; } .kpi span { font-size:12px; color:var(--mut); text-transform:uppercase; letter-spacing:.05em; } .kpi strong { display:block; font-size:24px; color:var(--o); line-height:1.2; }
         .accept { border:2px solid var(--o); } .accept form { display:grid; gap:12px; margin-top:12px; }
         .accept input, .accept textarea { font:inherit; width:100%; border:1px solid var(--line); border-radius:14px; padding:11px 14px; background:#fff; color:var(--ink); }
         .accept input:focus, .accept textarea:focus { outline:2px solid var(--o2); border-color:var(--o); }
@@ -92,7 +92,7 @@
         .holding { display:flex; flex-wrap:nowrap; align-items:center; gap:4px; margin-left:-8px; } .holding a { display:block; } .holding img { height:40px; width:auto; display:block; }
         .hold-note { margin:12px 0 0; font-size:12.5px; color:var(--mut); }
         .where { display:grid; gap:7px; font-size:14px; } .where div { display:flex; gap:9px; align-items:flex-start; } .where svg { flex:none; width:16px; height:16px; margin-top:3px; color:var(--o); stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; } .where a { color:inherit; text-decoration:none; }
-        .soc { display:flex; gap:8px; margin-top:12px; } .soc a { width:34px; height:34px; border-radius:12px; display:grid; place-items:center; color:var(--o); background:rgba(255,83,0,.08); border:1px solid rgba(255,83,0,.18); } .soc svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+        .soc { display:flex; gap:8px; margin-top:12px; } .soc a { width:34px; height:34px; border-radius:12px; display:grid; place-items:center; color:var(--o); background:rgba(37,99,235,.08); border:1px solid rgba(37,99,235,.18); } .soc svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
         .tech { text-align:center; margin:22px 0 4px; } .tech p { margin:0 0 10px; font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:#A8A8A8; }
         .tech div { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:10px 22px; } .tech img { height:16px; width:auto; opacity:.9; }
         .legal { text-align:center; color:#A8A8A8; font-size:12px; margin-top:14px; }
@@ -121,7 +121,7 @@
     </div>
 
     <section class="cover">
-        <img class="logo" src="{{ $asset('brand/quiebre-logo-dark.png') }}" alt="Quiebre">
+        <img class="logo" src="{{ $asset('brand/ecortes-logo-dark.png') }}" alt="ECORTESCL">
         <span class="tag">Propuesta comercial · N.º {{ $p->number }}</span>
         <h1>{{ $p->title }}</h1>
         <p>Preparada para <strong>{{ $company }}</strong></p>
@@ -186,9 +186,9 @@
     {{-- Firma y aceptación --}}
     <section class="card">
         <h2>Firma y aceptación</h2>
-        <p style="margin:0;color:var(--mut)">Atentamente, el equipo de Quiebre. La propuesta se acepta firmándola y devolviéndola{{ ($public ?? false) ? ' o con el botón «Aceptar propuesta» de este enlace' : '' }}.</p>
+        <p style="margin:0;color:var(--mut)">Atentamente, el equipo de ECORTESCL. La propuesta se acepta firmándola y devolviéndola{{ ($public ?? false) ? ' o con el botón «Aceptar propuesta» de este enlace' : '' }}.</p>
         <div class="sign">
-            <div><div class="line"></div><strong>{{ $owner->name ?? 'Equipo Quiebre' }}</strong><div class="cap">{{ $agency['legal_name'] }} · RUT {{ $agency['tax_id'] }}<br>{{ $owner->email ?? $agency['email'] }}</div></div>
+            <div><div class="line"></div><strong>{{ $owner->name ?? 'Equipo ECORTESCL' }}</strong><div class="cap">{{ $agency['legal_name'] }} @if (! empty($agency['tax_id']))· RUT {{ $agency['tax_id'] }}@endif<br>{{ $owner->email ?? $agency['email'] }}</div></div>
             <div>
                 @if ($status === 'accepted')
                     <div class="line" style="display:grid;place-items:end center;color:#0D9F85;font-weight:700;padding-bottom:6px">ACEPTADA EN LÍNEA</div>
@@ -203,16 +203,20 @@
     {{-- Pie: holding (izquierda) · ubicación y redes (derecha) --}}
     <footer class="ficha">
         <div>
-            <h3>Parte del holding</h3>
-            <div class="holding">
-                @foreach ($holding as $h)<a href="{{ $h['url'] }}" target="_blank" rel="noopener" title="{{ $h['name'] }}"><img src="{{ $asset('brand/partners/'.$h['logo'].'.png') }}" alt="{{ $h['name'] }}"></a>@endforeach
-            </div>
-            <p class="hold-note">Quiebre es parte de un holding de empresas de tecnología y marketing para el sector inmobiliario.</p>
+            @if (count($holding))
+                <h3>Empresas relacionadas</h3>
+                <div class="holding">
+                    @foreach ($holding as $h)<a href="{{ $h['url'] }}" target="_blank" rel="noopener" title="{{ $h['name'] }}"><img src="{{ $asset('brand/partners/'.$h['logo'].'.png') }}" alt="{{ $h['name'] }}"></a>@endforeach
+                </div>
+            @else
+                <h3>Software Factory</h3>
+                <p class="hold-note" style="margin-top:0">Más de 10 años transformando empresas con desarrollo web, aplicaciones móviles, automatizaciones e inteligencia artificial.</p>
+            @endif
         </div>
         <div>
             <h3>Dónde estamos</h3>
             <div class="where">
-                <div><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span><strong>{{ $agency['legal_name'] }}</strong> · RUT {{ $agency['tax_id'] }}<br>{{ $agency['address'] }}</span></div>
+                <div><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg><span><strong>{{ $agency['legal_name'] }}</strong> @if (! empty($agency['tax_id']))· RUT {{ $agency['tax_id'] }}@endif<br>{{ $agency['address'] }}</span></div>
                 <div><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><a href="mailto:{{ $agency['email'] }}">{{ $agency['email'] }}</a></div>
                 @if ($agency['phone'])<div><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>{{ $agency['phone'] }}</span></div>@endif
                 <div><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><a href="{{ $agency['website'] }}" style="color:var(--o);font-weight:600">{{ preg_replace('#^https?://#', '', rtrim($agency['website'], '/')) }}</a></div>

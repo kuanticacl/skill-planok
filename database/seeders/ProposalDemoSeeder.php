@@ -16,7 +16,7 @@ use App\Support\Rut;
 use Illuminate\Database\Seeder;
 
 /**
- * Datos de muestra para ver el CRM «con vida»: un cliente (inmobiliaria ficticia) por cada origen, con su lead
+ * Datos de muestra para ver el CRM «con vida»: un cliente (empresa ficticia) por cada origen, con su lead
  * y propuestas en distintos estados (borrador, enviada, vista, aceptada, rechazada, vencida y varias versiones).
  * Ejecutar: php artisan crm:seed-demo  (es idempotente: no duplica si ya se cargó).
  */
@@ -26,13 +26,13 @@ class ProposalDemoSeeder extends Seeder
     private function scenarios(): array
     {
         return [
-            'Sitio web' => ['company' => 'Altos del Valle', 'legal' => 'Inmobiliaria Altos del Valle SpA', 'body' => 76511230, 'activity' => 'Desarrollo y venta de proyectos habitacionales', 'address' => 'Av. Apoquindo 4501, of. 902', 'commune' => 'Las Condes', 'contact' => ['Camila', 'Rojas', 'Gerente de Marketing'], 'brief' => 'Lanzamiento de torre de 180 departamentos en preventa.', 'plan' => [['Gestión de campañas Meta Ads', 1, 0], ['Landing page de proyecto', 1, 0], ['Reporting y dashboard comercial', 1, 0]], 'states' => ['draft']],
-            'Landing page' => ['company' => 'Costa Norte', 'legal' => 'Constructora Costa Norte Ltda.', 'body' => 77124560, 'activity' => 'Construcción y venta de viviendas', 'address' => 'Av. Libertad 1350, of. 401', 'commune' => 'Viña del Mar', 'contact' => ['Matías', 'Soto', 'Gerente Comercial'], 'brief' => 'Campaña de captación para casas en Concón.', 'plan' => [['Gestión de campañas Google Ads', 1, 0], ['Gestión de campañas Meta Ads', 1, 10], ['Landing page de proyecto', 1, 0]], 'states' => ['sent']],
-            'Meta Ads' => ['company' => 'Plaza Verde', 'legal' => 'Inmobiliaria Plaza Verde S.A.', 'body' => 76890340, 'activity' => 'Inversión y desarrollo inmobiliario', 'address' => 'Av. Providencia 2653, piso 11', 'commune' => 'Providencia', 'contact' => ['Francisca', 'Mora', 'Subgerente de Ventas'], 'brief' => 'Mejorar la conversión de leads a visitas en sala.', 'plan' => [['Aceleración de ventas', 1, 0], ['Implementación de integraleads', 1, 0], ['Reporting y dashboard comercial', 1, 0]], 'states' => ['viewed']],
-            'Google Ads' => ['company' => 'Pacífico Desarrollos', 'legal' => 'Desarrollos Pacífico SpA', 'body' => 77350120, 'activity' => 'Desarrollo de proyectos inmobiliarios', 'address' => 'Av. Andrés Bello 2425, of. 1503', 'commune' => 'Providencia', 'contact' => ['Rodrigo', 'Vega', 'Director de Proyectos'], 'brief' => 'Estrategia digital integral para dos proyectos en Ñuñoa.', 'plan' => [['Gestión de campañas Google Ads', 2, 0], ['Gestión de campañas Meta Ads', 1, 0], ['Community management', 1, 0], ['Producción de contenido audiovisual', 1, 15]], 'states' => ['accepted']],
-            'WhatsApp' => ['company' => 'Nodo Urbano', 'legal' => 'Nodo Urbano Inmobiliaria SpA', 'body' => 76673450, 'activity' => 'Venta de departamentos y oficinas', 'address' => 'Av. Nueva Costanera 3880, of. 62', 'commune' => 'Vitacura', 'contact' => ['Daniela', 'Fuentes', 'Jefa de Marketing'], 'brief' => 'Rebranding del proyecto y estudio de mercado.', 'plan' => [['Identidad de marca de proyecto', 1, 0], ['Big data inmobiliario', 1, 0]], 'states' => ['rejected']],
-            'Referido' => ['company' => 'Alameda Capital', 'legal' => 'Alameda Capital Inmobiliaria SpA', 'body' => 76244780, 'activity' => 'Gestión inmobiliaria y renta', 'address' => 'Av. Libertador Bernardo O\'Higgins 1302, of. 703', 'commune' => 'Santiago', 'contact' => ['Tomás', 'Herrera', 'Socio y Gerente General'], 'brief' => 'Ordenar la gestión comercial y el seguimiento de leads.', 'plan' => [['Aceleración de ventas', 1, 0], ['Implementación de integraleads', 1, 0]], 'states' => ['rejected', 'sent']],
-            'Manual' => ['company' => 'Cumbres del Sur', 'legal' => 'Inmobiliaria Cumbres del Sur Ltda.', 'body' => 77019340, 'activity' => 'Desarrollo de condominios', 'address' => 'Av. Alemania 0671, of. 210', 'commune' => 'Temuco', 'contact' => ['Javier', 'Contreras', 'Gerente de Operaciones'], 'brief' => 'Campañas para condominio en Temuco.', 'plan' => [['Gestión de campañas Meta Ads', 1, 0], ['Landing page de proyecto', 1, 0]], 'states' => ['expired']],
+            'Sitio web' => ['company' => 'Logística Andes', 'legal' => 'Logística Andes SpA', 'body' => 76511230, 'activity' => 'Transporte y distribución de carga', 'address' => 'Av. Apoquindo 4501, of. 902', 'commune' => 'Las Condes', 'contact' => ['Camila', 'Rojas', 'Gerente de Operaciones'], 'brief' => 'Plataforma web para que sus clientes coticen y sigan sus despachos en línea.', 'plan' => [['Plataforma web a medida', 1, 0], ['Integración de sistemas y APIs', 1, 0], ['Mantención web mensual', 1, 0]], 'states' => ['draft']],
+            'Landing page' => ['company' => 'Clínica Vista Norte', 'legal' => 'Centro Médico Vista Norte Ltda.', 'body' => 77124560, 'activity' => 'Servicios de salud ambulatoria', 'address' => 'Av. Libertad 1350, of. 401', 'commune' => 'Viña del Mar', 'contact' => ['Matías', 'Soto', 'Gerente Comercial'], 'brief' => 'Agendamiento de horas en línea y recordatorios automáticos por WhatsApp.', 'plan' => [['Sitio web corporativo', 1, 0], ['Agente de IA y chatbot WhatsApp', 1, 10], ['Automatización de procesos', 1, 0]], 'states' => ['sent']],
+            'Meta Ads' => ['company' => 'Tienda Verde', 'legal' => 'Comercial Tienda Verde S.A.', 'body' => 76890340, 'activity' => 'Comercio minorista de productos sustentables', 'address' => 'Av. Providencia 2653, piso 11', 'commune' => 'Providencia', 'contact' => ['Francisca', 'Mora', 'Subgerente de Ventas'], 'brief' => 'Lanzar su tienda online con pagos en línea y gestión de inventario.', 'plan' => [['Tienda online (e-commerce)', 1, 0], ['Mantención web mensual', 1, 0], ['Dashboard y reportería', 1, 0]], 'states' => ['viewed']],
+            'Google Ads' => ['company' => 'Constructora Pacífico', 'legal' => 'Constructora Pacífico SpA', 'body' => 77350120, 'activity' => 'Construcción y obras civiles', 'address' => 'Av. Andrés Bello 2425, of. 1503', 'commune' => 'Providencia', 'contact' => ['Rodrigo', 'Vega', 'Director de Proyectos'], 'brief' => 'App móvil para inspecciones en terreno con modo sin conexión.', 'plan' => [['App móvil iOS y Android', 1, 0], ['Soporte y evolución de plataforma', 1, 0]], 'states' => ['accepted']],
+            'WhatsApp' => ['company' => 'Nodo Educa', 'legal' => 'Nodo Educa SpA', 'body' => 76673450, 'activity' => 'Capacitación y educación en línea', 'address' => 'Av. Nueva Costanera 3880, of. 62', 'commune' => 'Vitacura', 'contact' => ['Daniela', 'Fuentes', 'Jefa de Producto'], 'brief' => 'Automatizar matrículas y la comunicación con alumnos.', 'plan' => [['Automatización de procesos', 1, 0], ['Asistente interno con IA', 1, 0]], 'states' => ['rejected']],
+            'Referido' => ['company' => 'Alameda Capital', 'legal' => 'Alameda Capital Servicios SpA', 'body' => 76244780, 'activity' => 'Servicios financieros y asesoría de inversiones', 'address' => 'Av. Libertador Bernardo O\'Higgins 1302, of. 703', 'commune' => 'Santiago', 'contact' => ['Tomás', 'Herrera', 'Socio y Gerente General'], 'brief' => 'Dashboard de cartera para clientes y reportes automáticos mensuales.', 'plan' => [['Dashboard y reportería', 1, 0], ['Plataforma web a medida', 1, 0]], 'states' => ['rejected', 'sent']],
+            'Manual' => ['company' => 'Cumbres del Sur', 'legal' => 'Cumbres del Sur Ltda.', 'body' => 77019340, 'activity' => 'Turismo y hospedaje', 'address' => 'Av. Alemania 0671, of. 210', 'commune' => 'Temuco', 'contact' => ['Javier', 'Contreras', 'Gerente de Operaciones'], 'brief' => 'Sistema de reservas propio e integración con sus canales de venta.', 'plan' => [['Sitio web corporativo', 1, 0], ['Integración de sistemas y APIs', 1, 0]], 'states' => ['expired']],
         ];
     }
 
@@ -81,7 +81,7 @@ class ProposalDemoSeeder extends Seeder
                 })->filter()->values()->all();
 
                 $p = $builder->save([
-                    'title' => 'Marketing inmobiliario · '.$c['company'].($v > 0 ? ' (v'.($v + 1).')' : ''),
+                    'title' => 'Desarrollo de software · '.$c['company'].($v > 0 ? ' (v'.($v + 1).')' : ''),
                     'currency' => 'UF', 'lead_id' => $lead->id, 'client_id' => $client->id,
                     'recipient' => ProposalBuilder::recipientFor($client, $lead),
                     'sections' => $this->sections($c),
@@ -128,7 +128,7 @@ class ProposalDemoSeeder extends Seeder
     private function sections(array $c): array
     {
         $s = ProposalBuilder::defaultSections();
-        $s[0]['body'] = '<p>Gracias por la oportunidad de presentar esta propuesta a <strong>[CLIENTE]</strong>. '.$c['brief'].'</p><p>En Quiebre ayudamos a inmobiliarias a atraer y cerrar más ventas con datos y gestión comercial: dejar de adivinar y empezar a convertir.</p>';
+        $s[0]['body'] = '<p>Gracias por la oportunidad de presentar esta propuesta a <strong>[CLIENTE]</strong>. '.$c['brief'].'</p><p>En ECORTESCL somos una software factory con más de 10 años de experiencia: diseñamos y construimos soluciones web, móviles, de automatización e inteligencia artificial a la medida de cada negocio.</p>';
 
         return $s;
     }

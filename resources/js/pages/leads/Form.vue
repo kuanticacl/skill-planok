@@ -129,7 +129,7 @@ const customError = (key: string) => (form.errors as Record<string, string>)[`cu
                             <option v-for="u in users" :key="u.id" :value="u.id">{{ u.name }}</option>
                         </NativeSelect>
                     </FormField>
-                    <FormField label="Cliente (inmobiliaria)" for="client_id" :error="form.errors.client_id" hint="Opcional: vincula el lead a un cliente de tu base.">
+                    <FormField label="Cliente (empresa)" for="client_id" :error="form.errors.client_id" hint="Opcional: vincula el lead a un cliente de tu base.">
                         <NativeSelect id="client_id" v-model="form.client_id">
                             <option value="">Sin cliente</option>
                             <option v-for="c in clients" :key="c.id" :value="c.id">{{ c.name }}</option>

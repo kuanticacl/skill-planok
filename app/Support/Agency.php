@@ -8,15 +8,15 @@ use App\Models\Setting;
 class Agency
 {
     public const FIELDS = [
-        'legal_name' => 'Asesorías e Inversiones RH SpA',
-        'tax_id' => '76.302.966-2',
-        'address' => 'Av. Apoquindo 7935, Santiago, Chile',
-        'email' => 'contacto@quiebre.cl',
+        'legal_name' => 'ECORTESCL',
+        'tax_id' => '',
+        'address' => 'Providencia, Santiago, Chile',
+        'email' => 'contacto@ecortes.cl',
         'phone' => '',
-        'website' => 'https://www.quiebre.cl',
-        'instagram' => '',
-        'linkedin' => '',
-        'facebook' => '',
+        'website' => 'https://www.ecortes.cl',
+        'instagram' => 'https://www.instagram.com/ecortescl/',
+        'linkedin' => 'https://linkedin.com/in/ecortescl',
+        'facebook' => 'https://www.facebook.com/ecortes.cl/',
         'youtube' => '',
         'tiktok' => '',
     ];
@@ -40,16 +40,12 @@ class Agency
     /** Logos de tecnologías que usa la agencia (archivo en public/brand/tech). @return array<int, string> */
     public static function tech(): array
     {
-        return ['google', 'laravel', 'vuejs', 'nuxtjs', 'node', 'vercel', 'notion', 'trello', 'metricool', 'semrush', 'mailchimp', 'brevo'];
+        return ['laravel', 'vuejs', 'nuxtjs', 'node', 'vercel', 'google'];
     }
 
-    /** Empresas del holding (logo en public/brand/partners). @return array<int, array{name: string, url: string, logo: string}> */
+    /** Empresas relacionadas con logo en public/brand/partners (vacío = no se muestra el pie «holding»). @return array<int, array{name: string, url: string, logo: string}> */
     public static function holding(): array
     {
-        return [
-            ['name' => 'Be Modular', 'url' => 'https://www.bemodular.cl', 'logo' => 'bemodular'],
-            ['name' => 'Kuántica', 'url' => 'https://www.kuantica.cl', 'logo' => 'kuantica'],
-            ['name' => 'integraleads', 'url' => 'https://www.integraleads.cl', 'logo' => 'integraleads'],
-        ];
+        return [];
     }
 }

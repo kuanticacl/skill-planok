@@ -27,11 +27,11 @@ class UserEmailsTest extends TestCase
         $admin = $this->userWithRole('admin');
 
         $this->actingAs($admin)->post(route('users.store'), [
-            'name' => 'Ana Pérez', 'email' => 'ana@quiebre.cl', 'role_id' => Role::first()->id, 'is_active' => true,
+            'name' => 'Ana Pérez', 'email' => 'ana@ecortes.cl', 'role_id' => Role::first()->id, 'is_active' => true,
             'password' => 'Qb-Clave-Segura-1', 'password_confirmation' => 'Qb-Clave-Segura-1',
         ])->assertRedirect();
 
-        $m = EmailMessage::where('to_email', 'ana@quiebre.cl')->firstOrFail();
+        $m = EmailMessage::where('to_email', 'ana@ecortes.cl')->firstOrFail();
         $this->assertSame('Qb-Clave-Segura-1', $m->variables['password']);
         $this->assertStringEndsWith('/login', $m->variables['login_url']);
         $this->assertSame('bienvenida-usuario', $m->template->slug);
@@ -41,45 +41,47 @@ class UserEmailsTest extends TestCase
 
     public function test_password_reset_request_queues_the_branded_email()
     {
-        $user = User::factory()->create(['email' => 'beto@quiebre.cl']);
+        $user = User::factory()->create(['email' => 'beto@ecortes.cl']);
 
-        $this->post('/forgot-password', ['email' => 'beto@quiebre.cl']);
+        $this->post('/forgot-password', ['email' => 'beto@ecortes.cl']);
 
-        $m = EmailMessage::where('to_email', 'beto@quiebre.cl')->firstOrFail();
+        $m = EmailMessage::where('to_email', 'beto@ecortes.cl')->firstOrFail();
         $this->assertSame('recuperar-password', $m->template->slug);
         $this->assertStringContainsString('/reset-password/', $m->variables['reset_url']);
-        $this->assertStringContainsString('email=beto%40quiebre.cl', $m->variables['reset_url']);
+        $this->assertStringContainsString('email=beto%40ecortes.cl', $m->variables['reset_url']);
     }
 
-    public function test_every_email_gets_the_holding_footer_once()
+    public function test_holding_footer_is_only_added_when_the_brand_has_related_companies()
     {
         $composer = app(\App\Services\Email\EmailComposer::class);
         $html = $composer->renderContent('Hola', '<html><body><p>Hola</p></body></html>', [])['html'];
 
-        $this->assertSame(1, substr_count($html, 'Parte del holding'));
-        foreach (['bemodular', 'kuantica', 'integraleads'] as $logo) {
-            $this->assertStringContainsString("/brand/partners/{$logo}.png", $html);
-        }
-        $this->assertSame($html, $composer->withHoldingFooter($html)); // idempotente
+        // ECORTESCL no tiene empresas relacionadas: no se agrega el pie «holding».
+        $this->assertSame([], \App\Support\Agency::holding());
+        $this->assertStringNotContainsString('Empresas relacionadas', $html);
+        $this->assertSame($html, $composer->withHoldingFooter($html));
     }
 
-    public function test_landing_kit_creates_one_origin_per_holding_brand()
+    public function test_landing_kit_creates_the_website_origins_and_templates()
     {
         (new \App\Services\Email\LandingKit)->install();
 
-        foreach (['formulario-landing-kuantica', 'formulario-landing-be-modular', 'formulario-landing-integraleads'] as $slug) {
+        foreach (['formulario-contacto', 'formulario-cotizacion'] as $slug) {
             $this->assertTrue(\App\Models\LeadSource::where('slug', $slug)->exists(), $slug);
+        }
+        foreach (['gracias-contacto', 'gracias-cotizacion', 'bienvenida-usuario'] as $slug) {
+            $this->assertTrue(\App\Models\EmailTemplate::where('slug', $slug)->exists(), $slug);
         }
     }
 
     public function test_credentials_are_redacted_even_when_the_recipient_is_suppressed()
     {
         Bus::fake()->except([]);
-        $user = User::factory()->create(['email' => 'baja@quiebre.cl']);
-        \App\Models\EmailSuppression::create(['email' => 'baja@quiebre.cl', 'reason' => 'bounce']);
+        $user = User::factory()->create(['email' => 'baja@ecortes.cl']);
+        \App\Models\EmailSuppression::create(['email' => 'baja@ecortes.cl', 'reason' => 'bounce']);
 
         app(\App\Services\Email\UserMailer::class)->sendWelcome($user, 'Qb-Clave-Segura-1');
-        $m = EmailMessage::where('to_email', 'baja@quiebre.cl')->firstOrFail();
+        $m = EmailMessage::where('to_email', 'baja@ecortes.cl')->firstOrFail();
         (new \App\Jobs\SendEmailMessage($m->id))->handle(app(\App\Services\Email\EmailComposer::class));
 
         $this->assertSame('suppressed', $m->fresh()->status);

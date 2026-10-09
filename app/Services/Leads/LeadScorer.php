@@ -30,9 +30,9 @@ class LeadScorer
 
     private const DECISION = ['gerente', 'director', 'dueño', 'dueno', 'propietario', 'socio', 'fundador', 'ceo', 'presidente', 'gerencia', 'jefe', 'subgerente', 'head', 'cmo', 'coo', 'country manager', 'representante legal'];
 
-    private const AREA = ['marketing', 'comercial', 'ventas', 'sales', 'growth', 'digital', 'proyectos', 'desarrollo', 'inmobiliario', 'negocios'];
+    private const AREA = ['marketing', 'comercial', 'ventas', 'sales', 'growth', 'digital', 'proyectos', 'desarrollo', 'tecnología', 'ti', 'sistemas', 'operaciones', 'negocios'];
 
-    private const INTENT = ['cotiz', 'precio', 'valor', 'demo', 'agendar', 'reunión', 'reunion', 'llamar', 'contactar', 'propuesta', 'presupuesto', 'contratar', 'servicio', 'urgente', 'lo antes', 'interesad', 'necesit', 'quiero', 'quisiera', 'proyecto', 'campaña', 'campana', 'leads', 'ventas'];
+    private const INTENT = ['cotiz', 'precio', 'valor', 'demo', 'agendar', 'reunión', 'reunion', 'llamar', 'contactar', 'propuesta', 'presupuesto', 'contratar', 'servicio', 'urgente', 'lo antes', 'interesad', 'necesit', 'quiero', 'quisiera', 'proyecto', 'sitio web', 'app', 'aplicación', 'plataforma', 'automatiz', 'integración', 'chatbot', 'sistema', 'desarrollo'];
 
     /** Recalcula sin romper nunca el flujo que lo invoca (alta, nota, correo abierto…). */
     public static function refresh(Lead|int|null $lead): void

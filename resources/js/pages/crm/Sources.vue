@@ -120,7 +120,7 @@ const sample = (s?: Source) => `curl -X POST ${props.endpoint} \\
     "last_name": "González",
     "email": "maria@ejemplo.cl",
     "phone": "+56912345678",
-    "company": "Inmobiliaria Ejemplo",
+    "company": "Empresa Ejemplo",
     "job_title": "Gerente comercial",
     "message": "Quiero cotizar una campaña",
     "utm_source": "google",
