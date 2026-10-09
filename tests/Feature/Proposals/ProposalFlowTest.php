@@ -46,12 +46,16 @@ class ProposalFlowTest extends TestCase
         $this->assertMatchesRegularExpression('/^P-\d{4}-0001$/', $p->number);
     }
 
-    public function test_public_link_hides_drafts_and_records_view_and_acceptance(): void
+    public function test_public_link_previews_drafts_without_tracking_and_records_view_and_acceptance(): void
     {
         $lead = app(LeadService::class)->create(['first_name' => 'Ana', 'email' => 'ana@empresa.cl']);
         $p = $this->proposalFor($lead);
 
-        $this->get('/p/'.$p->public_token)->assertNotFound(); // borrador: no es público
+        // Borrador: el enlace funciona como vista previa, sin contar visitas ni permitir responder.
+        $this->get('/p/'.$p->public_token)->assertOk()->assertSee('Borrador · vista previa');
+        $this->assertSame('draft', $p->fresh()->status);
+        $this->assertSame(0, (int) $p->fresh()->view_count);
+        $this->post('/p/'.$p->public_token.'/respond', ['action' => 'accept', 'name' => 'X'])->assertNotFound();
 
         $p->update(['status' => 'sent', 'sent_at' => now()]);
         $this->get('/p/'.$p->public_token)->assertOk()->assertSee('Servicios e inversión');

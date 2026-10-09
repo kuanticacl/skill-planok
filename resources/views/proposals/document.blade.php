@@ -110,6 +110,9 @@
 </head>
 <body>
 <div class="wrap">
+    @if (($public ?? false) && $p->status === 'draft')
+        <div style="margin:0 0 14px;padding:10px 16px;border-radius:14px;background:#FEF3C7;color:#92400E;font-size:13px;text-align:center">Borrador · vista previa. Esta propuesta aún no se ha enviado: el contenido puede cambiar.</div>
+    @endif
     @if (session('proposal_ok'))<div class="flash noprint">{{ session('proposal_ok') }}</div>@endif
     @if (isset($errors) && $errors->any())<div class="err noprint">{{ $errors->first() }}</div>@endif
 

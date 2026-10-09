@@ -24,7 +24,9 @@
     p { margin:0 0 6px; } ul { margin:0 0 6px; padding-left:16px; } li { margin:2px 0; }
     .mut { color:#707070; } .or { color:#FF5300; } .b { font-weight:700; }
     .card { border:1px solid #E8E8E8; border-radius:14px; padding:16px 18px; margin-bottom:12px; page-break-inside:avoid; }
-    .num { display:inline-block; width:20px; height:20px; border-radius:7px; background:#FFF0E8; color:#FF5300; font-size:10px; font-weight:700; text-align:center; line-height:20px; margin-right:8px; }
+    .h2t { width:auto; border-collapse:collapse; margin:0 0 8px; } .h2t td { padding:0; vertical-align:middle; }
+    .h2t .num { width:22px; height:22px; border-radius:7px; background:#FFF0E8; color:#FF5300; font-size:10px; font-weight:700; text-align:center; vertical-align:middle; line-height:1; padding:0; }
+    .h2t .tt { padding-left:8px; font-size:15px; font-weight:700; color:#393939; line-height:1.2; }
     table { width:100%; border-collapse:collapse; }
     .cover { width:100%; border-radius:18px; background-color:#F4F4F4; background-image:url('{{ $img('brand/proposal-cover.jpg') }}'); background-repeat:no-repeat; background-position:right center; background-size:auto 100%; margin-bottom:12px; }
     .chip { background:rgba(255,255,255,.75); border:1px solid #E6E6E6; border-radius:10px; padding:6px 10px; }
@@ -77,7 +79,7 @@
 @foreach ($sections as $i => $s)
     @php $n++; @endphp
     <div class="card">
-        <h2><span class="num">{{ $n }}</span>{{ $s['title'] }}</h2>
+        <table class="h2t"><tr><td class="num">{{ $n }}</td><td class="tt">{{ $s['title'] }}</td></tr></table>
         <div>{!! $s['body'] !!}</div>
     </div>
     @if ($servicesAt === $i) @include('proposals._pdf_services') @php $n++; @endphp @endif

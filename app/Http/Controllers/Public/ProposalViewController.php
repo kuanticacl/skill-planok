@@ -15,7 +15,7 @@ class ProposalViewController extends Controller
 {
     public function show(Request $request, string $token): Response
     {
-        $p = Proposal::with(['items', 'owner:id,name', 'lead'])->where('public_token', $token)->where('status', '!=', 'draft')->firstOrFail();
+        $p = Proposal::with(['items', 'owner:id,name', 'lead'])->where('public_token', $token)->firstOrFail(); // los borradores se pueden ver (sin contar visitas ni responder)
 
         // Las visitas del equipo (con sesión) no cuentan como «vista del cliente».
         if (! $request->user() && in_array($p->status, ['sent', 'viewed'], true)) {
@@ -32,7 +32,7 @@ class ProposalViewController extends Controller
 
     public function pdf(string $token, ProposalPdf $pdf): Response
     {
-        $p = Proposal::where('public_token', $token)->where('status', '!=', 'draft')->firstOrFail();
+        $p = Proposal::where('public_token', $token)->firstOrFail();
 
         return \App\Http\Controllers\Proposals\ProposalController::pdfResponse($p, $pdf);
     }
