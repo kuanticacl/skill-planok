@@ -50,4 +50,25 @@ class UserEmailsTest extends TestCase
         $this->assertStringContainsString('/reset-password/', $m->variables['reset_url']);
         $this->assertStringContainsString('email=beto%40quiebre.cl', $m->variables['reset_url']);
     }
+
+    public function test_every_email_gets_the_holding_footer_once()
+    {
+        $composer = app(\App\Services\Email\EmailComposer::class);
+        $html = $composer->renderContent('Hola', '<html><body><p>Hola</p></body></html>', [])['html'];
+
+        $this->assertSame(1, substr_count($html, 'Parte del holding'));
+        foreach (['bemodular', 'kuantica', 'integraleads'] as $logo) {
+            $this->assertStringContainsString("/brand/partners/{$logo}.png", $html);
+        }
+        $this->assertSame($html, $composer->withHoldingFooter($html)); // idempotente
+    }
+
+    public function test_landing_kit_creates_one_origin_per_holding_brand()
+    {
+        (new \App\Services\Email\LandingKit)->install();
+
+        foreach (['formulario-landing-kuantica', 'formulario-landing-be-modular', 'formulario-landing-integraleads'] as $slug) {
+            $this->assertTrue(\App\Models\LeadSource::where('slug', $slug)->exists(), $slug);
+        }
+    }
 }

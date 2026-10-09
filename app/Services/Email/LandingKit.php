@@ -27,7 +27,7 @@ class LandingKit
     {
         $created = [];
 
-        foreach ([['Landing Top Inmobiliario – Boletín', '#FF5300', 'newspaper', 20], ['Landing Top Inmobiliario – Asesoría', '#6419DB', 'calendar-check', 21]] as [$name, $color, $icon, $order]) {
+        foreach ([['Landing Top Inmobiliario – Boletín', '#FF5300', 'newspaper', 20], ['Landing Top Inmobiliario – Asesoría', '#6419DB', 'calendar-check', 21], ['Formulario Landing Kuántica', '#6419DB', 'layout-template', 22], ['Formulario Landing Be Modular', '#0D9F85', 'layout-template', 23], ['Formulario Landing integraleads', '#4A8CFF', 'layout-template', 24]] as [$name, $color, $icon, $order]) {
             $slug = \Illuminate\Support\Str::slug($name);
             if (! LeadSource::where('slug', $slug)->exists()) {
                 LeadSource::create(['name' => $name, 'slug' => $slug, 'color' => $color, 'icon' => $icon, 'api_key' => LeadSource::generateKey(), 'sort_order' => $order]);

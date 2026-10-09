@@ -3,6 +3,7 @@
 namespace App\Services\Email;
 
 use App\Models\EmailMessage;
+use App\Support\Agency;
 
 /** Arma el email final de un mensaje: variables, preheader, baja, tracking y cabeceras. */
 class EmailComposer
@@ -61,7 +62,7 @@ class EmailComposer
         $html = $this->renderer->render($htmlTpl, $vars);
         $missing = array_values(array_diff($this->renderer->missing(), TemplateRenderer::SYSTEM_VARIABLES));
 
-        return ['subject' => $subject, 'html' => $this->withPreheader($html, $preheader), 'missing' => $missing];
+        return ['subject' => $subject, 'html' => $this->withHoldingFooter($this->withPreheader($html, $preheader)), 'missing' => $missing];
     }
 
     public function build(EmailMessage $m): array
@@ -108,6 +109,24 @@ class EmailComposer
         return preg_match('/<body[^>]*>/i', $html)
             ? preg_replace('/(<body[^>]*>)/i', '$1'.$block, $html, 1)
             : $block.$html;
+    }
+
+    /** Pie común a todos los correos: «Parte del holding» con los logos de las marcas (igual que en la propuesta comercial). */
+    public function withHoldingFooter(string $html): string
+    {
+        if (str_contains($html, 'data-holding')) {
+            return $html;
+        }
+
+        $logos = collect(Agency::holding())->map(fn ($h) => '<td style="padding:0 10px"><a href="'.e($h['url']).'" target="_blank" style="text-decoration:none"><img src="'
+            .e(url('/brand/partners/'.$h['logo'].'.png')).'" alt="'.e($h['name']).'" height="26" style="display:block;height:26px;width:auto;border:0"></a></td>')->implode('');
+
+        $block = '<table data-holding role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:8px auto 24px"><tr><td align="center" style="font:11px Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#9A9A9A;padding-bottom:8px">Parte del holding</td></tr>'
+            .'<tr><td align="center"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>'.$logos.'</tr></table></td></tr></table>';
+
+        return stripos($html, '</body>') !== false
+            ? preg_replace('/<\/body>/i', $block.'</body>', $html, 1)
+            : $html.$block;
     }
 
     private function withUnsubscribeFooter(string $html, string $url): string
