@@ -97,7 +97,19 @@ class SourceController extends Controller
             return back();
         }
 
-        $cascade->source($source);
+        $target = $request->filled('transfer_to') && $impact['leads'] > 0
+            ? LeadSource::findOrFail($request->validate([
+                'transfer_to' => ['integer', Rule::exists('lead_sources', 'id')->whereNull('deleted_at'), Rule::notIn([$source->id])],
+            ])['transfer_to'])
+            : null;
+
+        $cascade->source($source, $target);
+
+        if ($target) {
+            $this->toast("Origen eliminado. {$impact['leads']} lead(s) pasaron a «{$target->name}».");
+
+            return back();
+        }
 
         $this->toast($impact['leads'] > 0
             ? "Origen eliminado junto con {$impact['leads']} lead(s) y {$impact['proposals']} propuesta(s) relacionados."

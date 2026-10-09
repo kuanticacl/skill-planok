@@ -63,4 +63,27 @@ class CascadeDeleteTest extends TestCase
         $this->assertSoftDeleted($lead);
         $this->assertSoftDeleted($proposal);
     }
+
+    public function test_leads_can_be_transferred_to_another_source_instead_of_deleted(): void
+    {
+        $admin = $this->userWithRole('admin');
+        [$source, $lead, $proposal] = $this->sourceWithLeadAndProposal();
+        $target = LeadSource::where('id', '!=', $source->id)->first();
+
+        $this->actingAs($admin)->delete('/crm/sources/'.$source->id, ['confirm_related' => 1, 'transfer_to' => $target->id])->assertRedirect();
+
+        $this->assertSoftDeleted($source);
+        $this->assertNull($lead->fresh()->deleted_at);
+        $this->assertSame($target->id, $lead->fresh()->source_id);
+        $this->assertNull($proposal->fresh()->deleted_at);
+    }
+
+    public function test_cannot_transfer_to_the_same_or_a_deleted_source(): void
+    {
+        $admin = $this->userWithRole('admin');
+        [$source] = $this->sourceWithLeadAndProposal();
+
+        $this->actingAs($admin)->delete('/crm/sources/'.$source->id, ['confirm_related' => 1, 'transfer_to' => $source->id])->assertSessionHasErrors('transfer_to');
+        $this->assertNull($source->fresh()->deleted_at);
+    }
 }
