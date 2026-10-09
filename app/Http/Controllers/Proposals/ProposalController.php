@@ -137,6 +137,8 @@ class ProposalController extends Controller
                 'view_count' => $proposal->view_count,
                 'responded_at' => $proposal->responded_at?->toIso8601String(),
                 'responded_by' => $proposal->responded_by,
+                'signer_rut' => $proposal->signer_rut,
+                'signature_data' => $proposal->signature_data,
                 'response_note' => $proposal->response_note,
                 'internal_notes' => $proposal->internal_notes,
                 'internal_notes_html' => ProposalText::html($proposal->internal_notes),
@@ -189,8 +191,11 @@ class ProposalController extends Controller
         if ($data['status'] === 'sent') {
             $proposal->sent_at ??= now();
         }
+        if (in_array($data['status'], ['draft', 'sent'], true)) {
+            $this->clearResponse($proposal); // reabrir: se descarta la respuesta (y firma) anterior
+        }
         if (in_array($data['status'], ['accepted', 'rejected'], true)) {
-            $proposal->forceFill(['responded_at' => now(), 'responded_by' => $request->user()->name.' (registrado internamente)', 'response_note' => $data['note'] ?? null]);
+            $proposal->forceFill(['responded_at' => now(), 'responded_by' => $request->user()->name.' (registrado internamente)', 'response_note' => $data['note'] ?? null, 'signature_data' => null, 'signer_rut' => null]);
         }
         $proposal->save();
 
@@ -266,9 +271,17 @@ class ProposalController extends Controller
         ]);
     }
 
+    private function clearResponse(Proposal $proposal): void
+    {
+        $proposal->forceFill(['responded_at' => null, 'responded_by' => null, 'signer_rut' => null, 'response_note' => null, 'signature_data' => null, 'response_ip' => null, 'response_user_agent' => null]);
+    }
+
     private function markSent(Proposal $proposal, User $user, string $log): void
     {
         $wasDraft = $proposal->status === 'draft';
+        if ($proposal->status === 'changes_requested') {
+            $this->clearResponse($proposal); // nueva versión enviada tras los ajustes pedidos
+        }
         $proposal->forceFill(['status' => in_array($proposal->status, ['viewed'], true) ? 'viewed' : 'sent', 'sent_at' => now(), 'issued_at' => $proposal->issued_at ?? now()])->save();
 
         // Al emitir, la UF del día queda guardada en la propuesta (valor y fecha de referencia).

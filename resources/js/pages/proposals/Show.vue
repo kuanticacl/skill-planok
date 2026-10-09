@@ -21,7 +21,7 @@ import type { ProposalRow, Recipient } from '@/types';
 
 type Detail = ProposalRow & {
     recipient: Recipient | null; public_url: string; sent_at: string | null; viewed_at: string | null; view_count: number;
-    responded_at: string | null; responded_by: string | null; response_note: string | null; internal_notes: string | null; internal_notes_html: string;
+    responded_at: string | null; responded_by: string | null; signer_rut: string | null; signature_data: string | null; response_note: string | null; internal_notes: string | null; internal_notes_html: string;
     total_one_time: number; total_monthly: number; total_tax: number; contract_months: number | null;
 };
 
@@ -59,7 +59,7 @@ const timeline = computed(() => [
     { label: 'Creada', at: p.value.created_at, done: true },
     { label: 'Enviada', at: p.value.sent_at, done: !!p.value.sent_at },
     { label: p.value.view_count ? `Vista por el cliente (${p.value.view_count} ${p.value.view_count === 1 ? 'vez' : 'veces'})` : 'Vista por el cliente', at: p.value.viewed_at, done: !!p.value.viewed_at },
-    { label: p.value.status === 'rejected' ? 'Rechazada' : 'Aceptada', at: p.value.responded_at, done: !!p.value.responded_at },
+    { label: p.value.status === 'rejected' ? 'Rechazada' : p.value.status === 'changes_requested' ? 'Ajustes solicitados' : p.value.signature_data ? 'Firmada y aceptada' : 'Aceptada', at: p.value.responded_at, done: !!p.value.responded_at },
 ]);
 const money = (n: number) => formatAmount(n, props.proposal.currency);
 const clp = (n: number) => formatMoney(n) || '$0';
@@ -119,7 +119,7 @@ const ufDay = computed(() => (props.proposal.uf_date ? new Intl.DateTimeFormat('
                             <span :class="t.done ? '' : 'text-muted-foreground'">{{ t.label }}<span v-if="t.at" class="block text-xs text-muted-foreground">{{ formatDateTime(t.at) }} · {{ timeAgo(t.at) }}</span></span>
                         </li>
                     </ol>
-                    <p v-if="proposal.responded_by" class="mt-3 rounded-xl bg-muted/50 p-3 text-xs"><User class="mr-1 inline size-3.5" /><strong>{{ proposal.responded_by }}</strong><span v-if="proposal.response_note" class="block pt-1 text-muted-foreground">{{ proposal.response_note }}</span></p>
+                    <div v-if="proposal.responded_by" class="mt-3 rounded-xl bg-muted/50 p-3 text-xs"><User class="mr-1 inline size-3.5" /><strong>{{ proposal.responded_by }}</strong><span v-if="proposal.signer_rut" class="text-muted-foreground"> · RUT {{ proposal.signer_rut }}</span><span v-if="proposal.response_note" class="block pt-1 text-muted-foreground">{{ proposal.response_note }}</span><img v-if="proposal.signature_data" :src="proposal.signature_data" alt="Firma del cliente" class="mt-2 max-h-16 rounded-lg border bg-white p-1"></div>
                 </DataCard>
 
                 <DataCard v-if="proposal.lead || proposal.client" class="p-4">

@@ -2,7 +2,7 @@ export type ProposalRow = {
     id: number;
     number: string;
     title: string;
-    status: 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired';
+    status: 'draft' | 'sent' | 'viewed' | 'changes_requested' | 'accepted' | 'rejected' | 'expired';
     status_label: string;
     status_color: string;
     currency: 'UF' | 'CLP';

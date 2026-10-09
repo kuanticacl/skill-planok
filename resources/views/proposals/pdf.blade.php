@@ -98,9 +98,13 @@
         </td>
         <td style="width:50%">
             @if ($p->status === 'accepted')
-                <div class="line" style="text-align:center;padding-top:14px;color:#0D9F85;font-weight:700">ACEPTADA EN LÍNEA</div>
+                @if ($p->signature_data)
+                    <div class="line" style="text-align:center;padding-top:4px;height:46px"><img src="{{ $p->signature_data }}" style="height:42px" alt="Firma"></div>
+                @else
+                    <div class="line" style="text-align:center;padding-top:14px;color:#0D9F85;font-weight:700">ACEPTADA EN LÍNEA</div>
+                @endif
                 <div class="b" style="margin-top:4px">{{ $p->responded_by }}</div>
-                <div class="cap">{{ $p->responded_at?->locale('es')->translatedFormat('d \d\e F \d\e Y, H:i') }}</div>
+                <div class="cap">@if ($p->signer_rut)RUT {{ $p->signer_rut }} · @endif{{ $p->responded_at?->locale('es')->translatedFormat('d \d\e F \d\e Y, H:i') }}@if ($p->signature_data) · firmada en línea @endif</div>
             @else
                 <div class="line"></div>
                 <div class="b" style="margin-top:4px">{{ $r['contact_name'] ?? 'Nombre y firma del cliente' }}</div>

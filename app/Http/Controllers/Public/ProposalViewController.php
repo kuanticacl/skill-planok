@@ -37,30 +37,76 @@ class ProposalViewController extends Controller
         return \App\Http\Controllers\Proposals\ProposalController::pdfResponse($p, $pdf);
     }
 
+    /** El cliente responde desde el enlace: firma y acepta, solicita ajustes o rechaza. */
     public function answer(Request $request, string $token): RedirectResponse
     {
-        $p = Proposal::where('public_token', $token)->whereIn('status', ['sent', 'viewed'])->firstOrFail();
+        $p = Proposal::where('public_token', $token)->whereIn('status', ['sent', 'viewed', 'changes_requested'])->firstOrFail();
         abort_if($p->effectiveStatus() === 'expired', 410, 'La propuesta venció.');
 
         $data = $request->validate([
-            'action' => ['required', 'in:accept,reject'],
+            'action' => ['required', 'in:accept,reject,changes'],
             'name' => ['required', 'string', 'max:160'],
-            'note' => ['nullable', 'string', 'max:1000'],
-        ], ['name.required' => 'Indica tu nombre para registrar la respuesta.']);
+            'rut' => ['nullable', 'string', 'max:20', function ($a, $v, $fail) {
+                if ($v && ! \App\Support\Rut::isValid($v)) {
+                    $fail('El RUT no es válido (revisa el dígito verificador).');
+                }
+            }],
+            'note' => ['nullable', 'string', 'max:2000', 'required_if:action,changes'],
+            'signature' => ['nullable', 'string', 'max:400000', 'required_if:action,accept'],
+        ], [
+            'name.required' => 'Indica tu nombre para registrar la respuesta.',
+            'note.required_if' => 'Cuéntanos qué ajustes necesitas.',
+            'signature.required_if' => 'Dibuja tu firma para aceptar la propuesta.',
+        ]);
 
-        $accepted = $data['action'] === 'accept';
-        $p->forceFill([
-            'status' => $accepted ? 'accepted' : 'rejected',
-            'responded_at' => now(),
-            'responded_by' => $data['name'],
-            'response_note' => $data['note'] ?? null,
-            'response_ip' => $request->ip(),
-        ])->save();
-
-        if ($p->lead) {
-            app(LeadService::class)->log($p->lead, 'proposal', null, ($accepted ? '✅ Propuesta aceptada' : 'Propuesta rechazada')." por {$data['name']} ({$p->number})", ['proposal_id' => $p->id]);
+        $signature = null;
+        if ($data['action'] === 'accept') {
+            $signature = $this->cleanSignature((string) $data['signature']);
+            abort_if($signature === null, 422, 'La firma no es válida. Vuelve a dibujarla.');
         }
 
-        return back()->with('proposal_ok', $accepted ? '¡Gracias! Registramos tu aceptación y te contactaremos a la brevedad.' : 'Registramos tu respuesta. Gracias por revisar la propuesta.');
+        $status = ['accept' => 'accepted', 'reject' => 'rejected', 'changes' => 'changes_requested'][$data['action']];
+
+        $p->forceFill([
+            'status' => $status,
+            'responded_at' => now(),
+            'responded_by' => $data['name'],
+            'signer_rut' => filled($data['rut'] ?? null) ? \App\Support\Rut::format($data['rut']) : null,
+            'response_note' => $data['note'] ?? null,
+            'signature_data' => $signature,
+            'response_ip' => $request->ip(),
+            'response_user_agent' => mb_substr((string) $request->userAgent(), 0, 400),
+        ])->save();
+
+        $label = ['accepted' => '✅ Propuesta firmada y aceptada', 'rejected' => 'Propuesta rechazada', 'changes_requested' => '✏️ Ajustes solicitados en la propuesta'][$status];
+        if ($p->lead) {
+            app(LeadService::class)->log($p->lead, 'proposal', null, "{$label} por {$data['name']} ({$p->number})", ['proposal_id' => $p->id]);
+        }
+
+        try {
+            app(\App\Services\Proposals\ProposalMailer::class)->notifyResponse($p->fresh(['owner:id,name,email']), $label);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return back()->with('proposal_ok', match ($status) {
+            'accepted' => '¡Gracias! Registramos tu firma y aceptación; te contactaremos a la brevedad.',
+            'changes_requested' => 'Recibimos tus comentarios. Prepararemos una nueva versión y te la enviaremos.',
+            default => 'Registramos tu respuesta. Gracias por revisar la propuesta.',
+        });
+    }
+
+    /** Acepta solo un PNG razonable (data URL); evita guardar cualquier cosa en la firma. */
+    private function cleanSignature(string $dataUrl): ?string
+    {
+        if (! preg_match('#^data:image/png;base64,([A-Za-z0-9+/=]+)$#', $dataUrl, $m)) {
+            return null;
+        }
+        $bin = base64_decode($m[1], true);
+        if ($bin === false || strlen($bin) < 300 || strlen($bin) > 250000 || ! str_starts_with($bin, "\x89PNG\r\n\x1a\n")) {
+            return null;
+        }
+
+        return $dataUrl;
     }
 }
