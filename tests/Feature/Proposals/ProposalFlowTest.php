@@ -61,7 +61,7 @@ class ProposalFlowTest extends TestCase
         $this->get('/p/'.$p->public_token)->assertOk()->assertSee('Servicios e inversión');
         $this->assertSame('viewed', $p->fresh()->status);
 
-        $this->post('/p/'.$p->public_token.'/respond', ['action' => 'accept', 'name' => 'María Soto'])->assertRedirect();
+        $this->post('/p/'.$p->public_token.'/respond', ['action' => 'accept', 'name' => 'María Soto', 'signature' => self::PNG])->assertRedirect();
         $this->assertSame('accepted', $p->fresh()->status);
         $this->assertSame('María Soto', $p->fresh()->responded_by);
         $this->assertDatabaseHas('lead_activities', ['lead_id' => $lead->id, 'type' => 'proposal']);
@@ -125,5 +125,41 @@ class ProposalFlowTest extends TestCase
 
         $this->get('/p/'.$p->public_token)->assertOk()
             ->assertSee('Software Factory')->assertSee('Providencia, Santiago')->assertSee('Tecnologías con las que trabajamos');
+    }
+
+    private const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+
+    public function test_client_must_sign_to_accept_and_signature_is_stored(): void
+    {
+        $p = $this->proposalFor();
+        $p->update(['status' => 'sent']);
+        $url = '/p/'.$p->public_token.'/respond';
+
+        $this->post($url, ['action' => 'accept', 'name' => 'Ana Soto'])->assertSessionHasErrors('signature');
+        $this->post($url, ['action' => 'accept', 'name' => 'Ana Soto', 'signature' => 'data:image/png;base64,AAAA'])->assertSessionHasErrors();
+        $this->assertSame('sent', $p->fresh()->status);
+
+        $this->post($url, ['action' => 'accept', 'name' => 'Ana Soto', 'rut' => '12.345.678-5', 'signature' => self::PNG])->assertRedirect();
+        $p = $p->fresh();
+        $this->assertSame('accepted', $p->status);
+        $this->assertSame('12.345.678-5', $p->signer_rut);
+        $this->assertSame(self::PNG, $p->signature_data);
+    }
+
+    public function test_client_can_request_changes_with_a_note_and_staff_resend_clears_it(): void
+    {
+        $p = $this->proposalFor();
+        $p->update(['status' => 'sent']);
+        $url = '/p/'.$p->public_token.'/respond';
+
+        $this->post($url, ['action' => 'changes', 'name' => 'Ana'])->assertSessionHasErrors('note');
+
+        $this->post($url, ['action' => 'changes', 'name' => 'Ana', 'note' => 'Mover cuota 1'])->assertRedirect();
+        $this->assertSame('changes_requested', $p->fresh()->status);
+        $this->assertSame('Mover cuota 1', $p->fresh()->response_note);
+
+        // Aún puede responder después de pedir ajustes.
+        $this->post($url, ['action' => 'reject', 'name' => 'Ana'])->assertRedirect();
+        $this->assertSame('rejected', $p->fresh()->status);
     }
 }

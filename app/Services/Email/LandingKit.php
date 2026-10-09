@@ -57,7 +57,7 @@ class LandingKit
         }
 
         $templates = app(DefaultTemplates::class);
-        foreach ([self::NEWSLETTER_TEMPLATE => 'Gracias por contactarnos', self::ADVISORY_TEMPLATE => 'Solicitud de cotización', UserMailer::WELCOME => 'Bienvenida de usuario', UserMailer::RESET => 'Recuperar contraseña', \App\Services\Proposals\ProposalMailer::SLUG => 'Propuesta comercial'] as $slug => $label) {
+        foreach ([self::NEWSLETTER_TEMPLATE => 'Gracias por contactarnos', self::ADVISORY_TEMPLATE => 'Solicitud de cotización', UserMailer::WELCOME => 'Bienvenida de usuario', UserMailer::RESET => 'Recuperar contraseña', \App\Services\Proposals\ProposalMailer::SLUG => 'Propuesta comercial', \App\Services\Proposals\ProposalMailer::RESPONDED => 'Propuesta respondida'] as $slug => $label) {
             $before = EmailTemplate::where('slug', $slug)->first();
             $templates->ensure($slug, upgrade: true);
             if (! $before || $before->editor !== 'blocks') {

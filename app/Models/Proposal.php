@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
     'number', 'title', 'currency', 'uf_value', 'uf_date', 'client_id', 'lead_id', 'user_id', 'status', 'recipient', 'sections',
     'issued_at', 'valid_until', 'contract_months', 'discount_type', 'discount_value', 'tax_rate',
     'total_one_time', 'total_monthly', 'total_net', 'total_tax', 'total_gross',
-    'internal_notes', 'public_token', 'sent_at', 'viewed_at', 'view_count', 'responded_at', 'responded_by', 'response_note', 'response_ip',
+    'internal_notes', 'public_token', 'sent_at', 'viewed_at', 'view_count', 'responded_at', 'responded_by', 'signer_rut', 'response_note', 'response_ip', 'response_user_agent', 'signature_data',
 ])]
 class Proposal extends Model
 {
@@ -23,13 +23,14 @@ class Proposal extends Model
         'draft' => 'Borrador',
         'sent' => 'Enviada',
         'viewed' => 'Vista',
+        'changes_requested' => 'Ajustes solicitados',
         'accepted' => 'Aceptada',
         'rejected' => 'Rechazada',
         'expired' => 'Vencida',
     ];
 
     public const STATUS_COLORS = [
-        'draft' => '#8A8A8A', 'sent' => '#1AA0E4', 'viewed' => '#121826', 'accepted' => '#0D9F85', 'rejected' => '#DC2626', 'expired' => '#C23F00',
+        'draft' => '#8A8A8A', 'sent' => '#1AA0E4', 'viewed' => '#121826', 'changes_requested' => '#D97706', 'accepted' => '#0D9F85', 'rejected' => '#DC2626', 'expired' => '#C23F00',
     ];
 
     protected function casts(): array

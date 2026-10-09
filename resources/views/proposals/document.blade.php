@@ -106,6 +106,10 @@
             .card, .cover { box-shadow:none; break-inside:avoid; margin-bottom:12px; } .card { border:1px solid var(--line); } tr { break-inside:avoid; }
             @page { size:A4; margin:14mm; }
         }
+            .accept .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; } @media (max-width:600px) { .accept .row2 { grid-template-columns:1fr; } }
+        .sigbox { position:relative; border:1.5px dashed #C9D1DD; border-radius:16px; background:#fff; } .sigbox canvas { display:block; width:100%; height:200px; touch-action:none; cursor:crosshair; border-radius:16px; }
+        .sighint { position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; color:#9AA6BA; font-size:14px; } .sigbox .small { position:absolute; right:10px; bottom:10px; font-size:12px; padding:6px 12px; }
+        .pill.danger { color:#DC2626; border-color:rgba(220,38,38,.35); }
     </style>
 </head>
 <body>
@@ -164,38 +168,85 @@
         @if (in_array($status, ['accepted', 'rejected']))
             <section class="card" style="border:2px solid {{ Proposal::STATUS_COLORS[$status] }}">
                 <span class="badge" style="background:{{ Proposal::STATUS_COLORS[$status] }}">{{ Proposal::STATUSES[$status] }}</span>
-                <p style="margin:10px 0 0"><strong>{{ $p->responded_by }}</strong> · {{ $p->responded_at?->locale('es')->translatedFormat('d \d\e F \d\e Y, H:i') }}</p>
+                <p style="margin:10px 0 0"><strong>{{ $p->responded_by }}</strong>@if ($p->signer_rut) · RUT {{ $p->signer_rut }}@endif · {{ $p->responded_at?->locale('es')->translatedFormat('d \d\e F \d\e Y, H:i') }}</p>
                 @if ($p->response_note)<p style="margin:6px 0 0;color:var(--mut)">{{ $p->response_note }}</p>@endif
             </section>
         @elseif ($status === 'expired')
             <section class="card"><span class="badge" style="background:{{ Proposal::STATUS_COLORS['expired'] }}">Vencida</span><p style="margin:10px 0 0">Esta propuesta venció el {{ $date($p->valid_until) }}. Escríbenos para actualizarla.</p></section>
         @elseif (($public ?? false) && $status !== 'draft')
-            <section class="card accept noprint">
-                <h2>¿Aceptas esta propuesta?</h2>
-                <p style="margin:0;color:var(--mut)">Al aceptar quedará registrada tu conformidad con los servicios y valores indicados, y nuestro equipo se pondrá en contacto para comenzar.</p>
-                <form method="post" action="{{ route('proposals.public.respond', $p->public_token) }}">
+            @if ($status === 'changes_requested')
+                <section class="card" style="border:2px solid {{ Proposal::STATUS_COLORS['changes_requested'] }}">
+                    <span class="badge" style="background:{{ Proposal::STATUS_COLORS['changes_requested'] }}">Ajustes solicitados</span>
+                    <p style="margin:10px 0 0"><strong>{{ $p->responded_by }}</strong> · {{ $p->responded_at?->locale('es')->translatedFormat('d \d\e F \d\e Y, H:i') }}</p>
+                    @if ($p->response_note)<p style="margin:6px 0 0;color:var(--mut)">«{{ $p->response_note }}»</p>@endif
+                    <p style="margin:8px 0 0;color:var(--mut)">Estamos preparando una nueva versión. Si ya estás conforme con esta, también puedes firmarla abajo.</p>
+                </section>
+            @endif
+            <section class="card accept noprint" id="responder">
+                <h2>Tu respuesta</h2>
+                <p style="margin:0;color:var(--mut)">Puedes <strong>firmar y aceptar</strong> la propuesta, <strong>solicitar ajustes</strong> o <strong>rechazarla</strong>. Tu respuesta queda registrada con fecha y hora, y nuestro equipo se pondrá en contacto.</p>
+                <form method="post" action="{{ route('proposals.public.respond', $p->public_token) }}" id="resp-form">
                     @csrf
-                    <input name="name" required maxlength="160" placeholder="Tu nombre completo" value="{{ old('name', $r['contact_name'] ?? '') }}">
-                    <textarea name="note" rows="2" maxlength="1000" placeholder="Comentarios (opcional)">{{ old('note') }}</textarea>
+                    <input type="hidden" name="signature" id="resp-signature">
+                    <div class="row2">
+                        <input name="name" required maxlength="160" placeholder="Tu nombre completo" value="{{ old('name', $r['contact_name'] ?? '') }}">
+                        <input name="rut" maxlength="20" placeholder="Tu RUT (opcional)" value="{{ old('rut') }}">
+                    </div>
+                    <div class="sigbox">
+                        <canvas id="resp-pad" width="640" height="200" aria-label="Espacio para dibujar tu firma"></canvas>
+                        <span class="sighint" id="resp-hint">Dibuja tu firma aquí (con el dedo o el mouse)</span>
+                        <button type="button" class="pill small" id="resp-clear">Borrar firma</button>
+                    </div>
+                    <textarea name="note" rows="3" maxlength="2000" placeholder="Comentarios o ajustes que necesitas (obligatorio si solicitas ajustes)">{{ old('note') }}</textarea>
+                    @if ($errors->any())<p style="margin:0;color:#DC2626;font-size:13px">{{ $errors->first() }}</p>@endif
+                    <p id="resp-error" style="margin:0;color:#DC2626;font-size:13px" hidden></p>
                     <div class="actions">
-                        <button class="pill primary" name="action" value="accept" type="submit">Aceptar propuesta</button>
-                        <button class="pill" name="action" value="reject" type="submit" onclick="return confirm('¿Seguro que quieres rechazar la propuesta?')">Rechazar</button>
+                        <button class="pill primary" name="action" value="accept" type="submit" data-need="signature">Firmar y aceptar</button>
+                        <button class="pill" name="action" value="changes" type="submit" data-need="note">Solicitar ajustes</button>
+                        <button class="pill danger" name="action" value="reject" type="submit" data-confirm="¿Seguro que quieres rechazar la propuesta?">Rechazar</button>
                     </div>
                 </form>
             </section>
+            <script>
+            (function () {
+                var c = document.getElementById('resp-pad'); if (!c) return;
+                var ctx = c.getContext('2d'), drawing = false, dirty = false, last = null;
+                var form = document.getElementById('resp-form'), sig = document.getElementById('resp-signature'), hint = document.getElementById('resp-hint'), err = document.getElementById('resp-error');
+                var ratio = Math.max(window.devicePixelRatio || 1, 1);
+                function size() { var w = c.clientWidth || 640; c.width = w * ratio; c.height = 200 * ratio; ctx.scale(ratio, ratio); ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#121826'; dirty = false; sig.value = ''; hint.hidden = false; }
+                size();
+                function pos(e) { var r = c.getBoundingClientRect(); var t = e.touches ? e.touches[0] : e; return { x: t.clientX - r.left, y: t.clientY - r.top }; }
+                function start(e) { e.preventDefault(); drawing = true; last = pos(e); ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(last.x + 0.1, last.y + 0.1); ctx.stroke(); }
+                function move(e) { if (!drawing) return; e.preventDefault(); var p = pos(e); ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); last = p; dirty = true; hint.hidden = true; }
+                function end() { if (!drawing) return; drawing = false; if (dirty) sig.value = c.toDataURL('image/png'); }
+                ['mousedown', 'touchstart'].forEach(function (n) { c.addEventListener(n, start, { passive: false }); });
+                ['mousemove', 'touchmove'].forEach(function (n) { c.addEventListener(n, move, { passive: false }); });
+                ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(function (n) { c.addEventListener(n, end); });
+                document.getElementById('resp-clear').addEventListener('click', function () { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, c.width, c.height); size(); });
+                form.addEventListener('submit', function (e) {
+                    var b = e.submitter; err.hidden = true; if (!b) return;
+                    if (b.dataset.need === 'signature' && !sig.value) { e.preventDefault(); err.textContent = 'Dibuja tu firma para aceptar la propuesta.'; err.hidden = false; return; }
+                    if (b.dataset.need === 'note' && !form.note.value.trim()) { e.preventDefault(); err.textContent = 'Cuéntanos qué ajustes necesitas.'; err.hidden = false; form.note.focus(); return; }
+                    if (b.dataset.confirm && !confirm(b.dataset.confirm)) { e.preventDefault(); return; }
+                    if (b.value !== 'accept') sig.value = '';
+                });
+            })();
+            </script>
         @endif
     @endif
 
     {{-- Firma y aceptación --}}
     <section class="card">
         <h2>Firma y aceptación</h2>
-        <p style="margin:0;color:var(--mut)">Atentamente, el equipo de ECORTESCL. La propuesta se acepta firmándola y devolviéndola{{ ($public ?? false) ? ' o con el botón «Aceptar propuesta» de este enlace' : '' }}.</p>
+        <p style="margin:0;color:var(--mut)">Atentamente, el equipo de ECORTESCL. La propuesta se acepta firmándola y devolviéndola{{ ($public ?? false) ? ' o con la firma en línea de este enlace' : '' }}.</p>
         <div class="sign">
             <div><div class="line"></div><strong>{{ $owner->name ?? 'Equipo ECORTESCL' }}</strong><div class="cap">{{ $agency['legal_name'] }} @if (! empty($agency['tax_id']))· RUT {{ $agency['tax_id'] }}@endif<br>{{ $owner->email ?? $agency['email'] }}</div></div>
             <div>
                 @if ($status === 'accepted')
-                    <div class="line" style="display:grid;place-items:end center;color:#0D9F85;font-weight:700;padding-bottom:6px">ACEPTADA EN LÍNEA</div>
-                    <strong>{{ $p->responded_by }}</strong><div class="cap">{{ $p->responded_at?->locale('es')->translatedFormat('d \d\e F \d\e Y, H:i') }}</div>
+                    <div class="line" style="display:grid;place-items:end center;padding-bottom:4px;min-height:64px">
+                        @if ($p->signature_data)<img src="{{ $p->signature_data }}" alt="Firma de {{ $p->responded_by }}" style="max-height:60px;max-width:100%">@else<span style="color:#0D9F85;font-weight:700">ACEPTADA EN LÍNEA</span>@endif
+                    </div>
+                    <strong>{{ $p->responded_by }}</strong><div class="cap">@if ($p->signer_rut)RUT {{ $p->signer_rut }} · @endif{{ $p->responded_at?->locale('es')->translatedFormat('d \d\e F \d\e Y, H:i') }}@if ($p->signature_data) · firmada en línea @endif</div>
                 @else
                     <div class="line"></div><strong>{{ $r['contact_name'] ?? 'Nombre y firma del cliente' }}</strong><div class="cap">{{ $r['legal_name'] ?? $company }}@if (! empty($r['rut'])) · RUT {{ $r['rut'] }}@endif<br>Fecha: ______ / ______ / ____________</div>
                 @endif
