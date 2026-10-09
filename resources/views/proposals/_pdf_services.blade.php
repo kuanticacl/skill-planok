@@ -1,5 +1,5 @@
 <div class="card" style="page-break-inside:auto;page-break-before:always">
-    <h2><span class="num">{{ $n + 1 }}</span>Servicios e inversión</h2>
+    <table class="h2t"><tr><td class="num">{{ $n + 1 }}</td><td class="tt">Servicios e inversión</td></tr></table>
     @if ($items = $p->items) @endif
     @if ($p->items->isEmpty())
         <p class="mut">Aún no se han agregado servicios.</p>
