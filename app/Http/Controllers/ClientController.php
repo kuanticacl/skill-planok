@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Services\CascadeDelete;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -31,6 +32,7 @@ class ClientController extends Controller
         return Inertia::render('clients/Index', [
             'clients' => $clients,
             'filters' => $filters,
+            'transferTargets' => Client::orderBy('name')->limit(500)->get(['id', 'name']),
         ]);
     }
 
@@ -97,7 +99,19 @@ class ClientController extends Controller
             return back();
         }
 
-        $cascade->client($client);
+        $target = $request->filled('transfer_to') && ($leads || $proposals)
+            ? Client::findOrFail($request->validate([
+                'transfer_to' => ['integer', Rule::exists('clients', 'id')->whereNull('deleted_at'), Rule::notIn([$client->id])],
+            ])['transfer_to'])
+            : null;
+
+        $cascade->client($client, $target);
+
+        if ($target) {
+            $this->toast("Cliente eliminado. {$leads} lead(s) y {$proposals} propuesta(s) pasaron a «{$target->name}».");
+
+            return to_route('clients.index');
+        }
 
         $this->toast($leads || $proposals
             ? "Cliente eliminado junto con {$leads} lead(s) y {$proposals} propuesta(s) relacionados."

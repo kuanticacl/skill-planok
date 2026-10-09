@@ -23,10 +23,15 @@ class CascadeDelete
         return ['leads' => (clone $leads)->count(), 'proposals' => Proposal::whereIn('lead_id', (clone $leads)->select('id'))->count()];
     }
 
-    public function source(LeadSource $source): void
+    /** Con $target, los leads (también los de la papelera) pasan a otro origen en vez de eliminarse. */
+    public function source(LeadSource $source, ?LeadSource $target = null): void
     {
-        DB::transaction(function () use ($source) {
-            $this->leads($source->leads()->get());
+        DB::transaction(function () use ($source, $target) {
+            if ($target) {
+                Lead::withTrashed()->where('source_id', $source->id)->update(['source_id' => $target->id]);
+            } else {
+                $this->leads($source->leads()->get());
+            }
 
             // Libera el slug y revoca la API key: el origen en papelera ya no recibe leads.
             $source->forceFill([
@@ -38,11 +43,17 @@ class CascadeDelete
         });
     }
 
-    public function client(Client $client): void
+    /** Con $target, los leads y propuestas del cliente pasan a otro cliente en vez de eliminarse. */
+    public function client(Client $client, ?Client $target = null): void
     {
-        DB::transaction(function () use ($client) {
-            $this->leads($client->leads()->get());
-            $client->proposals()->get()->each->delete();
+        DB::transaction(function () use ($client, $target) {
+            if ($target) {
+                Lead::withTrashed()->where('client_id', $client->id)->update(['client_id' => $target->id]);
+                Proposal::withTrashed()->where('client_id', $client->id)->update(['client_id' => $target->id]);
+            } else {
+                $this->leads($client->leads()->get());
+                $client->proposals()->get()->each->delete();
+            }
             $client->delete();
         });
     }

@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { Building2, Eye, Pencil, Plus, Search, Trash2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
+import DeleteWithRelatedDialog from '@/components/DeleteWithRelatedDialog.vue';
 import DataCard from '@/components/DataCard.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import Pagination from '@/components/Pagination.vue';
@@ -21,6 +22,7 @@ defineOptions({ layout: { breadcrumbs: [{ title: 'Clientes', href: index() }] } 
 const props = defineProps<{
     clients: Paginated<ClientRow>;
     filters: { q?: string; status?: string };
+    transferTargets: { id: number; name: string }[];
 }>();
 
 const { can } = usePermissions();
@@ -29,17 +31,18 @@ const filters = ref({ q: props.filters.q ?? '', status: props.filters.status ?? 
 useDebouncedFilters(index().url, filters, ['clients', 'filters']);
 
 const toDelete = ref<ClientRow | null>(null);
-const deleteText = computed(() => {
+const deleteSummary = computed(() => {
     const c = toDelete.value;
     if (!c) return '';
     const n = (k: number | undefined, one: string, many: string) => (k ? `${k} ${k === 1 ? one : many}` : '');
-    const rel = [n(c.leads_count, 'lead', 'leads'), n(c.proposals_count, 'propuesta', 'propuestas')].filter(Boolean).join(' y ');
-    return rel ? `Se eliminará «${c.name}» y se enviarán a la papelera ${rel} relacionados (con sus notas y actividad). ¿Confirmas?` : `Se eliminará «${c.name}».`;
+    return [n(c.leads_count, 'lead', 'leads'), n(c.proposals_count, 'propuesta', 'propuestas')].filter(Boolean).join(' y ');
 });
-const confirmDelete = () => {
+const hasRelated = computed(() => !!toDelete.value && ((toDelete.value.leads_count ?? 0) > 0 || (toDelete.value.proposals_count ?? 0) > 0));
+const deleteTargets = computed(() => props.transferTargets.filter((c) => c.id !== toDelete.value?.id));
+const confirmDelete = (extra: { transfer_to?: number | null } = {}) => {
     if (!toDelete.value) return;
     router.delete(destroy(toDelete.value.id).url, {
-        data: { confirm_related: 1 },
+        data: { confirm_related: 1, ...(extra.transfer_to ? { transfer_to: extra.transfer_to } : {}) },
         preserveScroll: true,
         onFinish: () => (toDelete.value = null),
     });
@@ -122,11 +125,20 @@ const confirmDelete = () => {
     </div>
 
     <ConfirmDialog
-        :open="!!toDelete"
+        :open="!!toDelete && !hasRelated"
         title="Eliminar cliente"
-        :description="deleteText"
+        :description="`Se eliminará «${toDelete?.name}».`"
         confirm-label="Eliminar"
         @update:open="(v: boolean) => !v && (toDelete = null)"
-        @confirm="confirmDelete"
+        @confirm="confirmDelete()"
+    />
+    <DeleteWithRelatedDialog
+        :open="!!toDelete && hasRelated"
+        :title="`Eliminar cliente «${toDelete?.name}»`"
+        :summary="deleteSummary"
+        :targets="deleteTargets"
+        transfer-label="Transferirlos a otro cliente"
+        @update:open="(v: boolean) => !v && (toDelete = null)"
+        @confirm="(o) => confirmDelete(o)"
     />
 </template>
