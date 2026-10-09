@@ -14,7 +14,7 @@ class SourceController extends Controller
     public function index(): Response
     {
         return Inertia::render('crm/Sources', [
-            'sources' => LeadSource::withCount('leads')
+            'sources' => LeadSource::withCount(['leads' => fn ($q) => $q->withTrashed()]) // la FK restringe también los leads en papelera
                 ->orderBy('sort_order')->orderBy('id')
                 ->get()
                 ->map(fn (LeadSource $s) => [
