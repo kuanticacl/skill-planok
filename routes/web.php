@@ -5,6 +5,7 @@ use App\Http\Controllers\Ai\AiProposalController;
 use App\Http\Controllers\Ai\AiSettingsController;
 use App\Http\Controllers\Ai\LeadAiController;
 use App\Http\Controllers\AgencyController;
+use App\Http\Controllers\TrashController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\Email\ApiKeyController;
 use App\Http\Controllers\Email\AutomationController;
@@ -149,6 +150,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('service', [AiProposalController::class, 'service'])->name('proposals.ai.service');
     });
     Route::get('leads/{lead}/proposals', [ProposalController::class, 'forLead'])->middleware('can:proposals.view')->name('leads.proposals');
+    Route::middleware('can:trash.manage')->group(function () {
+        Route::get('trash', [TrashController::class, 'index'])->name('trash.index');
+        Route::post('trash/{type}/{id}/restore', [TrashController::class, 'restore'])->name('trash.restore');
+    });
+
     Route::get('agency', [AgencyController::class, 'edit'])->middleware('can:agency.manage')->name('agency.edit');
     Route::put('agency', [AgencyController::class, 'update'])->middleware('can:agency.manage')->name('agency.update');
     Route::prefix('services')->group(function () {
