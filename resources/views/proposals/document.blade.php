@@ -37,12 +37,12 @@
     <title>{{ $p->title }} · ECORTESCL</title>
     @if ($public ?? false)<meta name="robots" content="noindex,nofollow">@endif
     <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Asap:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --o:#2563EB; --o2:#93C5FD; --ink:#393939; --mut:#707070; --line:#E8E8E8; --bg:#F4F4F4; --soft:#EAF1FF; }
+        :root { --o:#1F9D57; --o2:#86EFAC; --ink:#393939; --mut:#707070; --line:#E8E8E8; --bg:#F4F4F4; --soft:#E8F7EE; }
         * { box-sizing: border-box; }
         html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        body { margin:0; background:var(--bg); color:var(--ink); font-family:'Asap',Arial,Helvetica,sans-serif; font-size:15px; line-height:1.6; }
+        body { margin:0; background:var(--bg); color:var(--ink); font-family:'Open Sans',Arial,Helvetica,sans-serif; font-size:15px; line-height:1.6; }
         .wrap { max-width:880px; margin:0 auto; padding:24px 16px 64px; }
         .top { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 4px 20px; }
         .top svg { height:26px; width:auto; color:var(--ink); }
@@ -60,7 +60,7 @@
         .cover p { margin:0; font-size:18px; color:var(--mut); max-width:520px; } .cover p strong { color:var(--ink); }
         .cover .meta { display:flex; flex-wrap:wrap; gap:10px; margin-top:26px; max-width:640px; }
         .glass { padding:7px 12px; background:rgba(255,255,255,.55); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,.9); box-shadow:0 4px 18px rgba(0,0,0,.06); border-radius:14px; padding:8px 14px; }
-        .glass.purple { background:rgba(15,23,42,.82); border-color:rgba(255,255,255,.25); box-shadow:0 8px 26px rgba(15,23,42,.28); color:#fff; }
+        .glass.purple { background:rgba(18,24,38,.82); border-color:rgba(255,255,255,.25); box-shadow:0 8px 26px rgba(18,24,38,.28); color:#fff; }
         .glass span { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--mut); } .glass strong { font-size:15px; } .glass.purple span { color:#E4D6FB; }
         h2 { margin:0 0 12px; font-size:21px; line-height:1.25; display:flex; align-items:center; gap:12px; }
         h2 .n { flex:none; width:32px; height:32px; border-radius:11px; background:var(--soft); color:var(--o); font-size:14px; font-weight:700; display:grid; place-items:center; }
@@ -80,7 +80,7 @@
         .totals div { display:flex; justify-content:space-between; padding:5px 0; } .totals .sep { border-top:1px solid var(--line); margin-top:6px; padding-top:10px; }
         .totals .grand { background:var(--o); color:#fff; border-radius:16px; padding:14px 18px; margin-top:10px; font-size:18px; font-weight:700; }
         .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-bottom:8px; }
-        .kpi { background:var(--soft); border:1px solid rgba(37,99,235,.12); border-radius:18px; padding:16px 18px; } .kpi.p { background:rgba(15,23,42,.07); border-color:rgba(15,23,42,.16); } .kpi.p strong { color:#0F172A; } .kpi span { font-size:12px; color:var(--mut); text-transform:uppercase; letter-spacing:.05em; } .kpi strong { display:block; font-size:24px; color:var(--o); line-height:1.2; }
+        .kpi { background:var(--soft); border:1px solid rgba(31,157,87,.12); border-radius:18px; padding:16px 18px; } .kpi.p { background:rgba(18,24,38,.07); border-color:rgba(18,24,38,.16); } .kpi.p strong { color:#121826; } .kpi span { font-size:12px; color:var(--mut); text-transform:uppercase; letter-spacing:.05em; } .kpi strong { display:block; font-size:24px; color:var(--o); line-height:1.2; }
         .accept { border:2px solid var(--o); } .accept form { display:grid; gap:12px; margin-top:12px; }
         .accept input, .accept textarea { font:inherit; width:100%; border:1px solid var(--line); border-radius:14px; padding:11px 14px; background:#fff; color:var(--ink); }
         .accept input:focus, .accept textarea:focus { outline:2px solid var(--o2); border-color:var(--o); }
@@ -92,7 +92,7 @@
         .holding { display:flex; flex-wrap:nowrap; align-items:center; gap:4px; margin-left:-8px; } .holding a { display:block; } .holding img { height:40px; width:auto; display:block; }
         .hold-note { margin:12px 0 0; font-size:12.5px; color:var(--mut); }
         .where { display:grid; gap:7px; font-size:14px; } .where div { display:flex; gap:9px; align-items:flex-start; } .where svg { flex:none; width:16px; height:16px; margin-top:3px; color:var(--o); stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; } .where a { color:inherit; text-decoration:none; }
-        .soc { display:flex; gap:8px; margin-top:12px; } .soc a { width:34px; height:34px; border-radius:12px; display:grid; place-items:center; color:var(--o); background:rgba(37,99,235,.08); border:1px solid rgba(37,99,235,.18); } .soc svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+        .soc { display:flex; gap:8px; margin-top:12px; } .soc a { width:34px; height:34px; border-radius:12px; display:grid; place-items:center; color:var(--o); background:rgba(31,157,87,.08); border:1px solid rgba(31,157,87,.18); } .soc svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
         .tech { text-align:center; margin:22px 0 4px; } .tech p { margin:0 0 10px; font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:#A8A8A8; }
         .tech div { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:10px 22px; } .tech img { height:16px; width:auto; opacity:.9; }
         .legal { text-align:center; color:#A8A8A8; font-size:12px; margin-top:14px; }

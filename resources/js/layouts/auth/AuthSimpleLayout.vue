@@ -26,7 +26,7 @@ defineProps<{
             <div class="flex flex-col gap-8">
                 <div class="flex flex-col items-center gap-6">
                     <Link :href="home()" class="flex items-center">
-                        <BrandLogo class="h-8 w-auto text-foreground" />
+                        <BrandLogo class="h-9 w-auto text-foreground" />
                         <span class="sr-only">ECORTESCL</span>
                     </Link>
                     <div class="space-y-2 text-center">

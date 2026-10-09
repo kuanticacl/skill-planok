@@ -16,7 +16,7 @@ const block = (type, props = {}) => ({ id: `b${(++n).toString(36).padStart(7, '0
 const header = () => block('header', { logoUrl: LOGO, logoWidth: 150, padY: 28 });
 const heading = (text) => block('heading', { text, size: 26, color: '#393939', padY: 12 });
 const text = (t, o = {}) => block('text', { text: t, ...o });
-const button = (label, href) => block('button', { label, href, bg: '#2563EB', color: '#FFFFFF', radius: 999, align: 'center', padY: 20 });
+const button = (label, href) => block('button', { label, href, bg: '#64D989', color: '#0B1220', radius: 999, align: 'center', padY: 20 });
 const note = (t) => block('text', { text: t, size: 13, color: '#8A8A8A', align: 'center', padY: 6 });
 const footer = (transactional) =>
     block('footer', {
@@ -26,7 +26,7 @@ const footer = (transactional) =>
         showUnsubscribe: !transactional,
         showView: false,
     });
-const settings = { ...defaultSettings(), bg: '#F4F4F4', contentBg: '#FFFFFF', width: 600, font: 'Arial, Helvetica, sans-serif', textColor: '#393939', linkColor: '#2563EB', radius: 16 };
+const settings = { ...defaultSettings(), bg: '#F4F4F4', contentBg: '#FFFFFF', width: 600, font: 'Arial, Helvetica, sans-serif', textColor: '#393939', linkColor: '#15803D', radius: 16 };
 
 const templates = {
     'bienvenida-usuario': {

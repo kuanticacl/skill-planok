@@ -23,7 +23,7 @@ class BrandedEmailDesignTest extends TestCase
         $this->assertNotContains('html', array_column($blocks, 'type'));
 
         $button = collect($blocks)->firstWhere('type', 'button');
-        $this->assertSame('#2563EB', $button['props']['bg']);
+        $this->assertSame('#3DBB6C', $button['props']['bg']);
         $this->assertSame(999, $button['props']['radius']);
         $this->assertSame('https://www.ecortes.cl', $button['props']['href']);
 

@@ -27,7 +27,7 @@ defineOptions({ layout: { breadcrumbs: [{ title: 'Propuestas', href: index() }] 
 const filters = ref({ q: props.filters.q ?? '', status: props.filters.status ?? '' });
 useDebouncedFilters(index().url, filters, ['proposals', 'filters']);
 
-const colors: Record<string, string> = { draft: '#8A8A8A', sent: '#1AA0E4', viewed: '#0F172A', accepted: '#0D9F85', rejected: '#DC2626', expired: '#C23F00' };
+const colors: Record<string, string> = { draft: '#8A8A8A', sent: '#1AA0E4', viewed: '#121826', accepted: '#0D9F85', rejected: '#DC2626', expired: '#C23F00' };
 const toggle = (k: string) => (filters.value.status = filters.value.status === k ? '' : k);
 const fmt = (d: string | null) => (d ? new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium' }).format(new Date(d + 'T12:00:00')) : '—');
 </script>

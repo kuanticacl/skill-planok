@@ -12,7 +12,7 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
             refresh: true,
             fonts: [
-                bunny('Asap', {
+                bunny('Open Sans', {
                     weights: [400, 500, 600, 700],
                 }),
             ],

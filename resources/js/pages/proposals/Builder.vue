@@ -348,7 +348,7 @@ const money = (n: number) => formatAmount(n, form.currency);
                                         <div class="flex flex-wrap items-center justify-between gap-2">
                                             <Button v-if="ai.enabled" type="button" size="sm" variant="ghost" class="text-primary" :disabled="aiBusy === `it-${it.key}`" @click="writeItem(it)"><Spinner v-if="aiBusy === `it-${it.key}`" /><Wand2 v-else /> Redactar con IA</Button>
                                             <span v-else />
-                                            <span class="text-sm"><Repeat v-if="it.billing === 'monthly'" class="mr-1 inline size-3.5 text-[#0F172A]" />Total línea{{ it.billing === 'monthly' ? ' / mes' : '' }}: <strong>{{ money(Number((it.quantity * it.unit_price * (1 - (it.discount_pct || 0) / 100)).toFixed(decimals))) }}</strong></span>
+                                            <span class="text-sm"><Repeat v-if="it.billing === 'monthly'" class="mr-1 inline size-3.5 text-[#121826]" />Total línea{{ it.billing === 'monthly' ? ' / mes' : '' }}: <strong>{{ money(Number((it.quantity * it.unit_price * (1 - (it.discount_pct || 0) / 100)).toFixed(decimals))) }}</strong></span>
                                         </div>
                                     </div>
                                     <div class="flex flex-col">

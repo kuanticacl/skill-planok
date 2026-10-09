@@ -13,13 +13,15 @@ defineProps<Props>();
 </script>
 
 <template>
-    <!-- Isotipo provisional «eC» de ECORTESCL -->
+    <!-- Isotipo de ECORTESCL: dos pares de chevrones (toma el color actual) -->
     <svg
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
+        viewBox="0 0 32 32"
         :class="className"
         v-bind="$attrs"
     >
-        <text x="12" y="17.5" text-anchor="middle" font-family="Asap, ui-sans-serif, system-ui, sans-serif" font-weight="700" font-size="17" letter-spacing="-0.8" fill="currentColor">eC</text>
+        <g fill="none" stroke="currentColor" stroke-width="2.4">
+            <path d="M12.8 8.3 8 13.8l5.1 5.4M16.6 8.3l-4.8 5.5 5.1 5.4M16 13.4l5.1 5.4-5.1 5.4M19.5 13.4l5.1 5.4-5.1 5.4" />
+        </g>
     </svg>
 </template>

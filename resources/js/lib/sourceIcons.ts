@@ -42,10 +42,10 @@ export const sourceIconNames = Object.keys(sourceIcons);
 
 /** Paleta de la marca ECORTESCL para elegir colores rápido. */
 export const brandColors = [
-    '#2563EB',
+    '#3DBB6C',
     '#1AA0E4',
     '#0D9F85',
-    '#0F172A',
+    '#121826',
     '#DF1E79',
     '#4A8CFF',
     '#FFA165',

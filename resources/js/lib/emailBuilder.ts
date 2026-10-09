@@ -59,7 +59,7 @@ export const defaultSettings = (): DesignSettings => ({
     width: 600,
     font: FONTS[0].value,
     textColor: '#393939',
-    linkColor: '#2563EB',
+    linkColor: '#3DBB6C',
     radius: 16,
 });
 
@@ -80,7 +80,7 @@ export const BLOCKS: Record<BlockType, Meta> = {
         label: 'Encabezado',
         description: 'Logo o nombre de marca',
         icon: 'panel-top',
-        props: () => ({ logoUrl: '', logoWidth: 140, brandText: 'ECORTESCL', brandColor: '#2563EB', align: 'center', padY: 24, padX: 32, bg: '' }),
+        props: () => ({ logoUrl: '', logoWidth: 140, brandText: 'ECORTESCL', brandColor: '#3DBB6C', align: 'center', padY: 24, padX: 32, bg: '' }),
         fields: [
             { key: 'logoUrl', label: 'Logo (imagen PNG/JPG)', type: 'image', hint: 'Si lo dejas vacío se muestra el nombre de marca en texto.' },
             { key: 'logoWidth', label: 'Ancho del logo (px)', type: 'number', min: 40, max: 400 },
@@ -137,7 +137,7 @@ export const BLOCKS: Record<BlockType, Meta> = {
         label: 'Botón',
         description: 'Llamado a la acción',
         icon: 'mouse-pointer-click',
-        props: () => ({ label: 'Agenda tu demo', href: 'https://www.ecortes.cl', bg: '#2563EB', color: '#FFFFFF', radius: 999, size: 16, align: 'center', fullWidth: false, padY: 16, padX: 32, rowBg: '' }),
+        props: () => ({ label: 'Agenda tu demo', href: 'https://www.ecortes.cl', bg: '#64D989', color: '#0B1220', radius: 999, size: 16, align: 'center', fullWidth: false, padY: 16, padX: 32, rowBg: '' }),
         fields: [
             { key: 'label', label: 'Texto del botón', type: 'text', variables: true },
             { key: 'href', label: 'Enlace', type: 'url', variables: true },
@@ -156,7 +156,7 @@ export const BLOCKS: Record<BlockType, Meta> = {
         label: 'Imagen + texto',
         description: 'Dos columnas que se apilan en móvil',
         icon: 'columns-2',
-        props: () => ({ imageUrl: '', imageSide: 'left', title: 'Destacado', text: 'Cuenta algo breve y atractivo aquí.', buttonLabel: 'Ver más', buttonUrl: 'https://www.ecortes.cl', buttonBg: '#2563EB', padY: 16, padX: 32, bg: '' }),
+        props: () => ({ imageUrl: '', imageSide: 'left', title: 'Destacado', text: 'Cuenta algo breve y atractivo aquí.', buttonLabel: 'Ver más', buttonUrl: 'https://www.ecortes.cl', buttonBg: '#3DBB6C', padY: 16, padX: 32, bg: '' }),
         fields: [
             { key: 'imageUrl', label: 'Imagen', type: 'image', variables: true },
             { key: 'imageSide', label: 'Posición de la imagen', type: 'select', options: [{ value: 'left', label: 'Izquierda' }, { value: 'right', label: 'Derecha' }] },
@@ -172,7 +172,7 @@ export const BLOCKS: Record<BlockType, Meta> = {
         label: 'Lista dinámica',
         description: 'Repite una tarjeta por cada elemento recibido (proyectos, propiedades…)',
         icon: 'list-ordered',
-        props: () => ({ collection: 'proyectos', imageKey: 'imagen', titleKey: 'nombre', textKey: 'descripcion', priceKey: 'precio', urlKey: 'url', buttonLabel: 'Ver detalle', buttonBg: '#2563EB', emptyText: '', padY: 12, padX: 32, bg: '' }),
+        props: () => ({ collection: 'proyectos', imageKey: 'imagen', titleKey: 'nombre', textKey: 'descripcion', priceKey: 'precio', urlKey: 'url', buttonLabel: 'Ver detalle', buttonBg: '#3DBB6C', emptyText: '', padY: 12, padX: 32, bg: '' }),
         fields: [
             { key: 'collection', label: 'Variable con la lista', type: 'text', hint: 'En la API envía un arreglo: "proyectos": [{ "nombre": "…", "imagen": "…" }]' },
             { key: 'imageKey', label: 'Campo de imagen', type: 'text' },

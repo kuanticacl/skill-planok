@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
-            $table->string('color', 9)->default('#2563EB');
+            $table->string('color', 9)->default('#3DBB6C');
             $table->string('icon', 40)->default('globe');
             $table->string('api_key', 80)->unique();
             $table->boolean('is_active')->default(true);

@@ -14,36 +14,36 @@
 <meta charset="utf-8">
 <title>{{ $p->title }} · ECORTESCL</title>
 <style>
-    @font-face { font-family:'Asap'; font-weight:400; font-style:normal; src:url('file://{{ $fonts }}/Asap-400.ttf') format('truetype'); }
-    @font-face { font-family:'Asap'; font-weight:600; font-style:normal; src:url('file://{{ $fonts }}/Asap-600.ttf') format('truetype'); }
-    @font-face { font-family:'Asap'; font-weight:700; font-style:normal; src:url('file://{{ $fonts }}/Asap-700.ttf') format('truetype'); }
+    @font-face { font-family:'Open Sans'; font-weight:400; font-style:normal; src:url('file://{{ $fonts }}/OpenSans-400.ttf') format('truetype'); }
+    @font-face { font-family:'Open Sans'; font-weight:600; font-style:normal; src:url('file://{{ $fonts }}/OpenSans-600.ttf') format('truetype'); }
+    @font-face { font-family:'Open Sans'; font-weight:700; font-style:normal; src:url('file://{{ $fonts }}/OpenSans-700.ttf') format('truetype'); }
     @page { margin: 30px 34px 52px 34px; }
     * { box-sizing: border-box; }
-    body { font-family:'Asap', Arial, sans-serif; font-size:10.5px; line-height:1.55; color:#393939; margin:0; }
+    body { font-family:'Open Sans', Arial, sans-serif; font-size:10.5px; line-height:1.55; color:#393939; margin:0; }
     h2 { font-size:15px; margin:0 0 8px; color:#393939; }
     p { margin:0 0 6px; } ul { margin:0 0 6px; padding-left:16px; } li { margin:2px 0; }
-    .mut { color:#707070; } .or { color:#2563EB; } .b { font-weight:700; }
+    .mut { color:#707070; } .or { color:#1F9D57; } .b { font-weight:700; }
     .card { border:1px solid #E8E8E8; border-radius:14px; padding:16px 18px; margin-bottom:12px; page-break-inside:avoid; }
-    .num { display:inline-block; width:20px; height:20px; border-radius:7px; background:#EAF1FF; color:#2563EB; font-size:10px; font-weight:700; text-align:center; line-height:20px; margin-right:8px; }
+    .num { display:inline-block; width:20px; height:20px; border-radius:7px; background:#E8F7EE; color:#1F9D57; font-size:10px; font-weight:700; text-align:center; line-height:20px; margin-right:8px; }
     table { width:100%; border-collapse:collapse; }
     .cover { width:100%; border-radius:18px; background-color:#F4F4F4; background-image:url('{{ $img('brand/proposal-cover.jpg') }}'); background-repeat:no-repeat; background-position:right center; background-size:auto 100%; margin-bottom:12px; }
     .chip { background:rgba(255,255,255,.75); border:1px solid #E6E6E6; border-radius:10px; padding:6px 10px; }
     .chip .l { font-size:7.5px; text-transform:uppercase; letter-spacing:.06em; color:#8A8A8A; } .chip .v { font-size:11px; font-weight:700; color:#393939; }
-    .chip.pu { background:rgba(15,23,42,.88); border-color:rgba(255,255,255,.3); } .chip.pu .l { color:#E4D6FB; } .chip.pu .v { color:#fff; }
+    .chip.pu { background:rgba(18,24,38,.88); border-color:rgba(255,255,255,.3); } .chip.pu .l { color:#E4D6FB; } .chip.pu .v { color:#fff; }
     .tag { background:rgba(255,255,255,.75); border:1px solid #E6E6E6; border-radius:20px; padding:3px 11px; font-size:9px; font-weight:600; color:#707070; }
     .info td { width:33%; padding:0 6px 8px 0; vertical-align:top; } .info .l { font-size:7.5px; text-transform:uppercase; letter-spacing:.05em; color:#8A8A8A; } .info .v { font-weight:600; }
-    .items th { text-align:left; font-size:8px; text-transform:uppercase; letter-spacing:.05em; color:#8A8A8A; padding:0 6px 5px; border-bottom:2px solid #2563EB; }
+    .items th { text-align:left; font-size:8px; text-transform:uppercase; letter-spacing:.05em; color:#8A8A8A; padding:0 6px 5px; border-bottom:2px solid #1F9D57; }
     .items td { padding:8px 6px; border-bottom:1px solid #EDEDED; vertical-align:top; }
     .r { text-align:right; white-space:nowrap; }
-    .grp { font-weight:700; margin:12px 0 5px; } .dot { color:#2563EB; }
+    .grp { font-weight:700; margin:12px 0 5px; } .dot { color:#1F9D57; }
     .idesc { color:#707070; font-size:9.5px; } .deliv { color:#707070; font-size:9.5px; margin:3px 0 0; }
-    .kpi { background:#EAF1FF; border-radius:12px; padding:9px 12px; } .kpi.p { background:#F1EAFD; }
-    .kpi .l { font-size:7.5px; text-transform:uppercase; letter-spacing:.05em; color:#707070; } .kpi .v { font-size:17px; font-weight:700; color:#2563EB; } .kpi.p .v { color:#0F172A; }
-    .tot td { padding:3px 0; } .grand td { background:#2563EB; color:#fff; font-weight:700; font-size:12.5px; padding:9px 12px; }
+    .kpi { background:#E8F7EE; border-radius:12px; padding:9px 12px; } .kpi.p { background:#F1EAFD; }
+    .kpi .l { font-size:7.5px; text-transform:uppercase; letter-spacing:.05em; color:#707070; } .kpi .v { font-size:17px; font-weight:700; color:#1F9D57; } .kpi.p .v { color:#121826; }
+    .tot td { padding:3px 0; } .grand td { background:#121826; color:#fff; font-weight:700; font-size:12.5px; padding:9px 12px; }
     .sign td { vertical-align:top; padding-right:18px; } .line { border-bottom:1px solid #9A9A9A; height:34px; } .cap { font-size:8px; color:#8A8A8A; margin-top:3px; }
     .tech { text-align:center; } .tech .cap { margin-bottom:5px; text-transform:uppercase; letter-spacing:.08em; }
     .foot { border:1px solid #E8E8E8; border-radius:14px; padding:16px 18px; page-break-inside:avoid; }
-    .hold-t { font-size:8px;font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:#707070; border-bottom:1px solid #2563EB; padding-bottom:5px; margin-bottom:8px; text-align:center; }
+    .hold-t { font-size:8px;font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:#707070; border-bottom:1px solid #1F9D57; padding-bottom:5px; margin-bottom:8px; text-align:center; }
 </style>
 </head>
 <body>
@@ -51,7 +51,7 @@
 <table class="cover"><tr><td style="padding:24px 28px 26px;height:215px;vertical-align:top">
     <img src="{{ $img('brand/ecortes-logo-dark.png') }}" style="height:19px" alt="ECORTESCL">
     <div style="margin-top:26px"><span class="tag">Propuesta comercial · N.º {{ $p->number }}</span></div>
-    <div style="font-size:25px;font-weight:600;line-height:1.15;margin:11px 0 5px;width:55%;color:#2563EB">{{ $p->title }}</div>
+    <div style="font-size:25px;font-weight:600;line-height:1.15;margin:11px 0 5px;width:55%;color:#1F9D57">{{ $p->title }}</div>
     <div style="font-size:12px;color:#707070">Preparada para <b style="color:#393939">{{ $company }}</b></div>
     <table style="margin-top:18px;width:auto"><tr>
         <td class="chip"><div class="l">Fecha</div><div class="v">{{ $issued }}</div></td><td style="width:7px"></td>

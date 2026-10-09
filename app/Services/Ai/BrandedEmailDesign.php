@@ -9,7 +9,7 @@ namespace App\Services\Ai;
  */
 class BrandedEmailDesign
 {
-    public const ORANGE = '#2563EB';
+    public const ORANGE = '#64D989';
 
     public const TEXT = '#393939';
 

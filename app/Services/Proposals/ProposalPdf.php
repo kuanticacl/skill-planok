@@ -21,7 +21,7 @@ class ProposalPdf
         $options->set('tempDir', $dir);
         $options->set('isRemoteEnabled', false);
         $options->set('isPhpEnabled', false);
-        $options->set('defaultFont', 'Asap');
+        $options->set('defaultFont', 'Open Sans');
         $options->set('dpi', 96);
 
         $d = ProposalView::data($p);
@@ -34,7 +34,7 @@ class ProposalPdf
 
         // Pie de página en todas las hojas.
         $canvas = $pdf->getCanvas();
-        $font = $pdf->getFontMetrics()->getFont('Asap', 'normal');
+        $font = $pdf->getFontMetrics()->getFont('Open Sans', 'normal');
         $w = $canvas->get_width();
         $h = $canvas->get_height();
         $canvas->page_text(36, $h - 28, 'Propuesta '.$p->number.' · '.($d['company']).' · ecortes.cl', $font, 7.5, [0.55, 0.55, 0.55]);
