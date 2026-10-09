@@ -178,7 +178,8 @@ const sample = (s?: Source) => `curl -X POST ${props.endpoint} \\
                             variant="ghost"
                             size="icon-sm"
                             class="text-destructive hover:text-destructive"
-                            title="Eliminar"
+                            :disabled="s.leads_count > 0"
+                            :title="s.leads_count > 0 ? `No se puede eliminar: tiene ${s.leads_count} ${s.leads_count === 1 ? 'lead' : 'leads'}. Desactívalo en «Editar».` : 'Eliminar'"
                             @click="toDelete = s"
                         >
                             <Trash2 />

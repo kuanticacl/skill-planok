@@ -97,7 +97,7 @@ class DashboardController extends Controller
                 'update' => $user->hasPermission('leads.update'),
                 'delete' => $user->hasPermission('leads.delete'),
                 'viewAll' => $user->hasPermission('leads.view_all'),
-                'email' => $user->hasPermission('campaigns.send') || $user->hasPermission('templates.send'),
+                'email' => $user->hasPermission('campaigns.send'),
             ],
         ]);
     }
