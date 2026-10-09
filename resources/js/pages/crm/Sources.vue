@@ -11,7 +11,7 @@ import {
     RefreshCw,
     Trash2,
 } from '@lucide/vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 import ColorPicker from '@/components/ColorPicker.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
@@ -45,6 +45,7 @@ type Source = {
     score_weight: number;
     is_system: boolean;
     leads_count: number;
+    proposals_count: number;
     api_key: string;
 };
 
@@ -96,10 +97,20 @@ const copy = async (text: string, id: string) => {
 };
 
 const toDelete = ref<Source | null>(null);
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+const deleteText = computed(() => {
+    const s = toDelete.value;
+    if (!s) return '';
+    const base = `Se eliminará «${s.name}» y su API key dejará de funcionar.`;
+    if (!s.leads_count) return base;
+    const rel = [plural(s.leads_count, 'lead', 'leads'), s.proposals_count ? plural(s.proposals_count, 'propuesta', 'propuestas') : ''].filter(Boolean).join(' y ');
+    return `${base} También se enviarán a la papelera ${rel} de este origen (con sus notas y actividad). ¿Confirmas?`;
+});
 const toRegen = ref<Source | null>(null);
 const act = (kind: 'delete' | 'regen') => {
     if (kind === 'delete' && toDelete.value) {
         router.delete(destroy(toDelete.value.id).url, {
+            data: { confirm_related: 1 },
             preserveScroll: true,
             onFinish: () => (toDelete.value = null),
         });
@@ -178,8 +189,7 @@ const sample = (s?: Source) => `curl -X POST ${props.endpoint} \\
                             variant="ghost"
                             size="icon-sm"
                             class="text-destructive hover:text-destructive"
-                            :disabled="s.leads_count > 0"
-                            :title="s.leads_count > 0 ? `No se puede eliminar: tiene ${s.leads_count} ${s.leads_count === 1 ? 'lead' : 'leads'}. Desactívalo en «Editar».` : 'Eliminar'"
+                            title="Eliminar"
                             @click="toDelete = s"
                         >
                             <Trash2 />
@@ -279,7 +289,7 @@ const sample = (s?: Source) => `curl -X POST ${props.endpoint} \\
     <ConfirmDialog
         :open="!!toDelete"
         title="Eliminar origen"
-        :description="`Se eliminará «${toDelete?.name}» y su API key dejará de funcionar.`"
+        :description="deleteText"
         confirm-label="Eliminar"
         @update:open="(v: boolean) => !v && (toDelete = null)"
         @confirm="act('delete')"

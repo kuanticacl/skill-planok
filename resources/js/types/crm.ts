@@ -64,6 +64,7 @@ export type ClientRow = {
     notes_html?: string;
     is_active: boolean;
     leads_count?: number;
+    proposals_count?: number;
     created_at: string;
     creator?: { id: number; name: string } | null;
 };

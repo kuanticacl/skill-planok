@@ -29,7 +29,9 @@ const data = computed<PanelData>(() => ({
 }));
 
 const confirmDelete = ref(false);
-const deleteLead = () => router.delete(destroy(props.lead.id).url);
+const proposalCount = computed(() => props.proposals?.length ?? 0);
+const deleteText = computed(() => `Se eliminará «${props.lead.full_name}» con su historial.${proposalCount.value ? ` También se enviarán a la papelera ${proposalCount.value === 1 ? '1 propuesta' : `${proposalCount.value} propuestas`} de este lead. ¿Confirmas?` : ''}`);
+const deleteLead = () => router.delete(destroy(props.lead.id).url, { data: { confirm_related: 1 } });
 // El panel guarda por fetch; aquí solo se recarga la ficha.
 const reload = () => router.reload();
 </script>
@@ -50,5 +52,5 @@ const reload = () => router.reload();
         </LeadPanel>
     </div>
 
-    <ConfirmDialog v-model:open="confirmDelete" title="Eliminar lead" :description="`Se eliminará «${lead.full_name}» con su historial.`" confirm-label="Eliminar" @confirm="deleteLead" />
+    <ConfirmDialog v-model:open="confirmDelete" title="Eliminar lead" :description="deleteText" confirm-label="Eliminar" @confirm="deleteLead" />
 </template>

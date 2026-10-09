@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Building2, Eye, Pencil, Plus, Search, Trash2 } from '@lucide/vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import DataCard from '@/components/DataCard.vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -29,9 +29,17 @@ const filters = ref({ q: props.filters.q ?? '', status: props.filters.status ?? 
 useDebouncedFilters(index().url, filters, ['clients', 'filters']);
 
 const toDelete = ref<ClientRow | null>(null);
+const deleteText = computed(() => {
+    const c = toDelete.value;
+    if (!c) return '';
+    const n = (k: number | undefined, one: string, many: string) => (k ? `${k} ${k === 1 ? one : many}` : '');
+    const rel = [n(c.leads_count, 'lead', 'leads'), n(c.proposals_count, 'propuesta', 'propuestas')].filter(Boolean).join(' y ');
+    return rel ? `Se eliminará «${c.name}» y se enviarán a la papelera ${rel} relacionados (con sus notas y actividad). ¿Confirmas?` : `Se eliminará «${c.name}».`;
+});
 const confirmDelete = () => {
     if (!toDelete.value) return;
     router.delete(destroy(toDelete.value.id).url, {
+        data: { confirm_related: 1 },
         preserveScroll: true,
         onFinish: () => (toDelete.value = null),
     });
@@ -116,7 +124,7 @@ const confirmDelete = () => {
     <ConfirmDialog
         :open="!!toDelete"
         title="Eliminar cliente"
-        :description="`Se eliminará «${toDelete?.name}». Sus leads se conservan sin cliente asociado.`"
+        :description="deleteText"
         confirm-label="Eliminar"
         @update:open="(v: boolean) => !v && (toDelete = null)"
         @confirm="confirmDelete"
