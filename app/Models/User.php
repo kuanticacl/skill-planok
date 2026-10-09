@@ -40,6 +40,13 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     /** Recuperación de contraseña por Resend con la plantilla de marca (en vez de la notificación por defecto). */
     public function sendPasswordResetNotification($token): void
     {
+        // Sin Resend configurado se usa el correo estándar de Laravel (mailer del .env) para no dejar al usuario sin recuperación.
+        if (! \App\Services\Email\MailSettings::apiKey()) {
+            parent::sendPasswordResetNotification($token);
+
+            return;
+        }
+
         app(\App\Services\Email\UserMailer::class)->sendReset($this, (string) $token);
     }
 

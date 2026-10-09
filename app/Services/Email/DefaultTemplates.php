@@ -13,12 +13,12 @@ class DefaultTemplates
 {
     public const SLUGS = ['bienvenida-usuario', 'recuperar-password', 'bienvenida-top-inmobiliario', 'confirmacion-asesoria', 'propuesta-comercial'];
 
-    /** Crea la plantilla si falta; si es una versión antigua en HTML que nadie editó, la pasa al editor visual. */
-    public function ensure(string $slug): EmailTemplate
+    /** Crea la plantilla si falta; con $upgrade, una versión antigua en HTML que nadie editó pasa al editor visual. */
+    public function ensure(string $slug, bool $upgrade = false): EmailTemplate
     {
         $existing = EmailTemplate::where('slug', $slug)->first();
 
-        if ($existing && ! $this->isUntouchedLegacy($existing)) {
+        if ($existing && (! $upgrade || ! $this->isUntouchedLegacy($existing))) {
             return $existing;
         }
 
@@ -39,7 +39,7 @@ class DefaultTemplates
 
     /**
      * Migración única: las primeras versiones de estas plantillas se crearon como HTML. Solo se pasan al editor visual
-     * las que conservan ese HTML original (y no se tocaron a mano: sin cambios más allá de la primera hora).
+     * las que conservan ese HTML original (y no se tocaron a mano: sin cambios pasadas las 3 primeras horas). Solo corre desde crm:landing-kit.
      */
     private function isUntouchedLegacy(EmailTemplate $t): bool
     {

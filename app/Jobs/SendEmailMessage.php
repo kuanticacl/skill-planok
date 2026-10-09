@@ -29,6 +29,7 @@ class SendEmailMessage implements ShouldQueue
 
         if ($message->kind !== 'test' && EmailSuppression::isSuppressed($message->to_email)) {
             $message->update(['status' => 'suppressed', 'error' => 'El destinatario está en la lista de bajas/rebotes.']);
+            $this->redact($message);
             $message->record('suppressed');
 
             return;
@@ -87,11 +88,15 @@ class SendEmailMessage implements ShouldQueue
     public function failed(\Throwable $e): void
     {
         EmailMessage::whereKey($this->messageId)->whereIn('status', ['queued', 'sending'])->update(['status' => 'failed', 'error' => $e->getMessage()]);
+        if ($message = EmailMessage::find($this->messageId)) {
+            $this->redact($message);
+        }
     }
 
     private function fail409(EmailMessage $message, string $error): void
     {
         $message->update(['status' => 'failed', 'error' => $error]);
+        $this->redact($message);
         $message->record('failed', ['error' => $error]);
     }
 }

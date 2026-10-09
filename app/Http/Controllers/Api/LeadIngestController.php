@@ -115,9 +115,10 @@ class LeadIngestController extends Controller
         $list = \App\Models\ContactList::whereRaw('lower(name) = ?', [mb_strtolower($name)])->first()
             ?? \App\Models\ContactList::create(['name' => $name, 'description' => 'Creada desde la API de leads']);
 
-        $entry = \App\Models\ContactListEntry::updateOrCreate(
+        // Si el correo ya estaba en la audiencia (p. ej. importado con variables) no se toca su fila.
+        $entry = \App\Models\ContactListEntry::firstOrCreate(
             ['contact_list_id' => $list->id, 'email' => mb_strtolower($lead->email)],
-            ['name' => $lead->full_name ?: null, 'data' => array_filter(['empresa' => $lead->company, 'lead_id' => $lead->id])],
+            ['name' => $lead->full_name ?: null, 'data' => array_filter(['empresa' => $lead->company, 'lead_id' => $lead->id]) ?: null],
         );
 
         return ['name' => $list->name, 'status' => $entry->wasRecentlyCreated ? 'subscribed' : 'already_subscribed'];

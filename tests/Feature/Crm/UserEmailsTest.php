@@ -71,4 +71,18 @@ class UserEmailsTest extends TestCase
             $this->assertTrue(\App\Models\LeadSource::where('slug', $slug)->exists(), $slug);
         }
     }
+
+    public function test_credentials_are_redacted_even_when_the_recipient_is_suppressed()
+    {
+        Bus::fake()->except([]);
+        $user = User::factory()->create(['email' => 'baja@quiebre.cl']);
+        \App\Models\EmailSuppression::create(['email' => 'baja@quiebre.cl', 'reason' => 'bounce']);
+
+        app(\App\Services\Email\UserMailer::class)->sendWelcome($user, 'Qb-Clave-Segura-1');
+        $m = EmailMessage::where('to_email', 'baja@quiebre.cl')->firstOrFail();
+        (new \App\Jobs\SendEmailMessage($m->id))->handle(app(\App\Services\Email\EmailComposer::class));
+
+        $this->assertSame('suppressed', $m->fresh()->status);
+        $this->assertNotSame('Qb-Clave-Segura-1', $m->fresh()->variables['password']);
+    }
 }

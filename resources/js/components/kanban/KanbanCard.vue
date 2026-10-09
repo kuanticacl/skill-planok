@@ -90,7 +90,7 @@ const stripe = computed(() => (props.lead.priority === 'urgent' || props.lead.pr
 
         <div v-if="lead.proposal" class="mt-2 flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px]" :title="`Propuesta ${lead.proposal.number} · ${lead.proposal.status_label}${lead.proposal.count > 1 ? ' (' + lead.proposal.count + ' propuestas)' : ''}`">
             <FileSignature class="size-3.5 shrink-0 text-primary" />
-            <span class="font-medium">{{ formatAmountShort(lead.proposal.total_net, lead.proposal.currency) }}</span>
+            <span class="font-medium">{{ (lead.proposal.total_net && formatAmountShort(lead.proposal.total_net, lead.proposal.currency)) || 'Propuesta' }}</span>
             <span class="rounded-full px-1.5 py-px font-semibold text-white" :style="{ backgroundColor: lead.proposal.status_color }">{{ lead.proposal.status_label }}</span>
             <span v-if="lead.proposal.count > 1" class="text-muted-foreground">+{{ lead.proposal.count - 1 }}</span>
         </div>

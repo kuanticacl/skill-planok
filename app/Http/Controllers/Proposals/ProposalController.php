@@ -184,6 +184,7 @@ class ProposalController extends Controller
         $this->authorizeView($request, $proposal);
         $data = $request->validate(['status' => ['required', Rule::in(['draft', 'sent', 'accepted', 'rejected'])], 'note' => ['nullable', 'string', 'max:1000']]);
 
+        $wasDraft = $proposal->status === 'draft';
         $proposal->status = $data['status'];
         if ($data['status'] === 'sent') {
             $proposal->sent_at ??= now();
@@ -192,6 +193,11 @@ class ProposalController extends Controller
             $proposal->forceFill(['responded_at' => now(), 'responded_by' => $request->user()->name.' (registrado internamente)', 'response_note' => $data['note'] ?? null]);
         }
         $proposal->save();
+
+        // Al pasar de borrador a enviada la UF del día queda congelada, igual que al enviarla por correo.
+        if ($wasDraft && $data['status'] !== 'draft') {
+            $this->builder->freezeUf($proposal);
+        }
 
         $this->touchLead($proposal, $request->user(), "Propuesta {$proposal->number}: ".mb_strtolower(Proposal::STATUSES[$data['status']]));
         $this->toast('Estado actualizado: '.Proposal::STATUSES[$data['status']].'.');

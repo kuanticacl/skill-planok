@@ -21,7 +21,10 @@ class UfService
 
         $row = UfValue::find($today);
         if (! $row) {
-            $this->sync();
+            // Si findic no responde, no se reintenta en cada petición (evita bloquear páginas hasta 16 s).
+            if (\Illuminate\Support\Facades\Cache::add('uf.sync.attempt', 1, now()->addMinutes(5))) {
+                $this->sync() === 0 ?: \Illuminate\Support\Facades\Cache::forget('uf.sync.attempt');
+            }
             $row = UfValue::find($today) ?? UfValue::where('date', '<=', $today)->orderByDesc('date')->first();
         }
 

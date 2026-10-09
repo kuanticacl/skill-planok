@@ -87,6 +87,25 @@ const toCurrency = (price: number, from: 'UF' | 'CLP') => {
     const v = from === 'UF' ? price * props.uf.value : price / props.uf.value;
     return Number(v.toFixed(decimals.value));
 };
+// Al cambiar de moneda, los valores ya cargados se convierten con la UF de hoy (sin UF no se puede convertir: se revierte).
+watch(
+    () => form.currency,
+    (to, from) => {
+        if (!from || to === from || !items.value.length) return;
+        if (!props.uf) {
+            form.currency = from;
+            toast.error('No hay valor de UF disponible para convertir los precios. Intenta de nuevo en unos minutos.');
+            return;
+        }
+        const dec = to === 'UF' ? 2 : 0;
+        const k = props.uf.value;
+        items.value.forEach((it) => (it.unit_price = Number((from === 'UF' ? it.unit_price * k : it.unit_price / k).toFixed(dec))));
+        if (form.discount_type === 'amount' && form.discount_value) {
+            form.discount_value = Number((from === 'UF' ? form.discount_value * k : form.discount_value / k).toFixed(dec));
+        }
+        toast.success(`Precios convertidos a ${to} con la UF de hoy`);
+    },
+);
 const addService = (s: CatalogService) => {
     items.value.push({ key: uid(), service_id: s.id, name: s.name, description: s.description ?? '', deliverables: [...(s.deliverables ?? [])], billing: s.billing, unit: s.unit, quantity: 1, unit_price: toCurrency(s.price, s.currency), discount_pct: 0 });
     toast.success(`«${s.name}» agregado`);
