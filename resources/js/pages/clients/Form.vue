@@ -16,7 +16,7 @@ import type { ClientRow } from '@/types';
 const props = defineProps<{ client: ClientRow | null }>();
 const isEdit = computed(() => !!props.client);
 
-defineOptions({ layout: { breadcrumbs: [{ title: 'Clientes', href: index() }] } });
+defineOptions({ layout: { breadcrumbs: [{ title: 'Empresas', href: index() }] } });
 
 const form = useForm({
     name: props.client?.name ?? '',
@@ -43,10 +43,10 @@ const submit = () => {
 </script>
 
 <template>
-    <Head :title="isEdit ? 'Editar cliente' : 'Nuevo cliente'" />
+    <Head :title="isEdit ? 'Editar empresa' : 'Nueva empresa'" />
 
     <div class="flex flex-col gap-6 p-4 md:p-6">
-        <PageHeader :title="isEdit ? `Editar ${client?.name}` : 'Nuevo cliente'" description="Datos de la empresa." />
+        <PageHeader :title="isEdit ? `Editar ${client?.name}` : 'Nueva empresa'" description="Datos de la empresa." />
 
         <form class="max-w-3xl" @submit.prevent="submit">
             <DataCard class="p-6">
@@ -82,17 +82,17 @@ const submit = () => {
                     <FormField label="Correo" for="email" :error="form.errors.email"><Input id="email" v-model="form.email" type="email" /></FormField>
                     <FormField label="Teléfono" for="phone" :error="form.errors.phone"><Input id="phone" v-model="form.phone" /></FormField>
                     <FormField label="Notas" for="notes" :error="form.errors.notes" class="sm:col-span-2">
-                        <RichTextEditor v-model="form.notes" compact :min-height="90" placeholder="Notas internas sobre este cliente…" />
+                        <RichTextEditor v-model="form.notes" compact :min-height="90" placeholder="Notas internas sobre esta empresa…" />
                     </FormField>
                     <label class="flex items-center gap-3 text-sm sm:col-span-2">
                         <Switch :model-value="form.is_active" @update:model-value="(v: boolean) => (form.is_active = v)" />
-                        Cliente activo
+                        Empresa activa
                     </label>
                 </div>
                 <div class="mt-6 flex items-center justify-end gap-2 border-t pt-5">
                     <Button variant="outline" as-child><Link :href="index()">Cancelar</Link></Button>
                     <Button type="submit" :disabled="form.processing">
-                        <Spinner v-if="form.processing" /> {{ isEdit ? 'Guardar cambios' : 'Crear cliente' }}
+                        <Spinner v-if="form.processing" /> {{ isEdit ? 'Guardar cambios' : 'Crear empresa' }}
                     </Button>
                 </div>
             </DataCard>

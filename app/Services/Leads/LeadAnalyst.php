@@ -84,7 +84,7 @@ class LeadAnalyst
         $result = $this->ai->structured(
             'lead_analysis',
             $this->instructions(),
-            "Analiza este lead de una empresa que nos contactó para un proyecto de software:\n".json_encode($ctx, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
+            "Analiza este cliente de una empresa que nos contactó para un proyecto de software:\n".json_encode($ctx, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
             fn (JsonSchema $s) => [
                 'summary' => $s->string()->description('Resumen de 1–2 frases: quién es y qué busca')->required(),
                 'temperature' => $s->string()->enum(['hot', 'warm', 'cold'])->description('Qué tan cerca está de comprar')->required(),

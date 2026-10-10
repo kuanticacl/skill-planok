@@ -70,7 +70,7 @@ const ufDay = computed(() => (props.proposal.uf_date ? new Intl.DateTimeFormat('
     <Head :title="proposal.title" />
 
     <div class="flex flex-col gap-5 p-4 md:p-6">
-        <PageHeader :title="proposal.title" :description="`${proposal.number} · ${proposal.company ?? 'Sin cliente'}`">
+        <PageHeader :title="proposal.title" :description="`${proposal.number} · ${proposal.company ?? 'Sin empresa'}`">
             <template #actions>
                 <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold text-white" :style="{ backgroundColor: proposal.status_color }">{{ proposal.status_label }}</span>
                 <Button v-if="editable" variant="outline" as-child><Link :href="edit(proposal.id)"><Pencil /> Editar</Link></Button>
@@ -125,11 +125,11 @@ const ufDay = computed(() => (props.proposal.uf_date ? new Intl.DateTimeFormat('
                 <DataCard v-if="proposal.lead || proposal.client" class="p-4">
                     <h3 class="mb-2 text-sm font-semibold">Asociada a</h3>
                     <p v-if="proposal.lead" class="text-sm"><Link :href="showLead(proposal.lead.id)" class="font-medium text-primary hover:underline">Lead: {{ proposal.lead.name }}</Link></p>
-                    <p v-if="proposal.client" class="text-sm"><Link :href="`/clients/${proposal.client.id}`" class="font-medium text-primary hover:underline">Cliente: {{ proposal.client.name }}</Link></p>
+                    <p v-if="proposal.client" class="text-sm"><Link :href="`/clients/${proposal.client.id}`" class="font-medium text-primary hover:underline">Empresa: {{ proposal.client.name }}</Link></p>
                 </DataCard>
 
                 <DataCard v-if="siblings.length" class="p-4">
-                    <h3 class="mb-2 text-sm font-semibold">Otras propuestas del mismo {{ proposal.lead ? 'lead' : 'cliente' }}</h3>
+                    <h3 class="mb-2 text-sm font-semibold">Otras propuestas del mismo {{ proposal.lead ? 'cliente' : 'empresa' }}</h3>
                     <ul class="grid gap-2">
                         <li v-for="s in siblings" :key="s.id">
                             <Link :href="show(s.id)" class="flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-sm transition hover:border-primary/40">

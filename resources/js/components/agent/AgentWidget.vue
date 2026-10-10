@@ -32,7 +32,7 @@ const fileInput = ref<HTMLInputElement | null>(null);
 let pid = 0;
 
 const suggestions = [
-    'Resume cómo vamos: leads por etapa y propuestas por estado',
+    'Resume cómo vamos: clientes por etapa y propuestas por estado',
     '¿En qué estado está la última propuesta que creé?',
     'Crea la propuesta con este texto: ',
     'Registra un seguimiento: llamé a … y quedamos en hablar el viernes',

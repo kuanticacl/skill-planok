@@ -55,13 +55,13 @@ const fmt = (d: string | null) => (d ? new Intl.DateTimeFormat('es-CL', { dateSt
             <div class="border-b p-4">
                 <div class="relative max-w-md">
                     <Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input v-model="filters.q" placeholder="Buscar por título, número o cliente…" class="pl-9" />
+                    <Input v-model="filters.q" placeholder="Buscar por título, número o empresa…" class="pl-9" />
                 </div>
             </div>
             <Table>
                 <TableHeader>
                     <TableRow class="hover:bg-transparent">
-                        <TableHead>Propuesta</TableHead><TableHead>Cliente</TableHead><TableHead>Estado</TableHead><TableHead class="text-right">Total neto</TableHead><TableHead>Vigencia</TableHead><TableHead>Responsable</TableHead>
+                        <TableHead>Propuesta</TableHead><TableHead>Empresa</TableHead><TableHead>Estado</TableHead><TableHead class="text-right">Total neto</TableHead><TableHead>Vigencia</TableHead><TableHead>Responsable</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>

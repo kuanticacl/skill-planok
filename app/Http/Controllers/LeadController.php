@@ -97,7 +97,7 @@ class LeadController extends Controller
             return response()->json(['id' => $lead->id]);
         }
 
-        $this->toast("Lead «{$lead->full_name}» creado.");
+        $this->toast("Cliente «{$lead->full_name}» creado.");
 
         return to_route('leads.show', $lead);
     }
@@ -250,6 +250,8 @@ class LeadController extends Controller
                 'assigned_to' => $lead->assigned_to,
                 'priority' => $lead->priority,
                 'estimated_value' => $lead->estimated_value,
+                'estimated_currency' => $lead->estimated_currency ?? 'CLP',
+                'estimated_amount' => $lead->estimated_amount ?? $lead->estimated_value,
                 'tags' => $lead->tags ?? [],
                 'next_follow_up_at' => $lead->next_follow_up_at?->format('Y-m-d\TH:i'),
                 'custom' => $lead->custom ?? (object) [],
@@ -276,7 +278,7 @@ class LeadController extends Controller
 
         $this->leads->update($lead, $data, $user);
 
-        $this->toast('Lead actualizado.');
+        $this->toast('Cliente actualizado.');
 
         return to_route('leads.show', $lead);
     }
@@ -288,14 +290,14 @@ class LeadController extends Controller
         $proposals = $lead->proposals()->count();
 
         if ($proposals && ! $request->boolean('confirm_related')) {
-            $this->toast('El lead tiene propuestas: confirma la eliminación para enviarlas a la papelera.', 'error');
+            $this->toast('El cliente tiene propuestas: confirma la eliminación para enviarlas a la papelera.', 'error');
 
             return back();
         }
 
         $cascade->lead($lead);
 
-        $this->toast($proposals ? "Lead eliminado junto con {$proposals} propuesta(s)." : 'Lead eliminado.');
+        $this->toast($proposals ? "Cliente eliminado junto con {$proposals} propuesta(s)." : 'Cliente eliminado.');
 
         return to_route('leads.index');
     }
@@ -310,11 +312,15 @@ class LeadController extends Controller
             'after_id' => ['nullable', 'integer'],
             'lost_reason' => ['nullable', 'string', 'max:255'],
             'estimated_value' => ['nullable', 'numeric', 'min:0'],
+            'estimated_amount' => ['nullable', 'numeric', 'min:0', 'max:99999999999'],
+            'estimated_currency' => ['nullable', Rule::in(['CLP', 'UF'])],
         ]);
 
         $this->leads->move($lead, $data['stage_id'], $data['after_id'] ?? null, $request->user(), [
             'lost_reason' => $data['lost_reason'] ?? null,
             'estimated_value' => $data['estimated_value'] ?? null,
+            'estimated_amount' => $data['estimated_amount'] ?? null,
+            'estimated_currency' => $data['estimated_currency'] ?? 'CLP',
         ]);
 
         // Etapas como «Propuesta» piden tener una propuesta asociada: se avisa para crearla.
@@ -347,6 +353,8 @@ class LeadController extends Controller
         $data = $request->validate([
             'priority' => ['sometimes', Rule::in(array_keys(Lead::PRIORITIES))],
             'estimated_value' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:99999999999'],
+            'estimated_amount' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:99999999999'],
+            'estimated_currency' => ['sometimes', Rule::in(['CLP', 'UF'])],
             'tags' => ['sometimes', 'nullable', 'array', 'max:15'],
             'tags.*' => ['string', 'max:30'],
             'next_follow_up_at' => ['sometimes', 'nullable', 'date'],
@@ -359,7 +367,7 @@ class LeadController extends Controller
 
         $this->leads->update($lead, $data, $request->user());
 
-        return $this->respond($request, [], 'Lead actualizado.');
+        return $this->respond($request, [], 'Cliente actualizado.');
     }
 
     /** Acciones masivas sobre los leads seleccionados en el tablero. */
@@ -403,7 +411,7 @@ class LeadController extends Controller
 
         Cache::forget('lead-tags');
 
-        return $this->respond($request, ['done' => $done, 'skipped' => count($data['ids']) - $done], "{$done} leads actualizados.");
+        return $this->respond($request, ['done' => $done, 'skipped' => count($data['ids']) - $done], "{$done} clientes actualizados.");
     }
 
     /** @return array<string, mixed> */

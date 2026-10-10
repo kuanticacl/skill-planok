@@ -100,7 +100,7 @@ const generate = async () => {
 
                 <p v-if="hasContent" class="flex items-start gap-2 rounded-xl bg-[#FFA165]/15 px-3 py-2 text-xs text-[#9A4B00]"><TriangleAlert class="mt-0.5 size-4 shrink-0" /> Esto reemplazará el diseño actual del editor (puedes deshacer cerrando sin guardar).</p>
                 <p v-if="error" class="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ error }}</p>
-                <p class="text-[11px] text-muted-foreground">La IA no recibe datos de leads ni de clientes. Revisa siempre el resultado antes de enviar.</p>
+                <p class="text-[11px] text-muted-foreground">La IA no recibe datos de clientes ni de empresas. Revisa siempre el resultado antes de enviar.</p>
             </div>
 
             <DialogFooter>

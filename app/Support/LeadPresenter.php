@@ -34,6 +34,8 @@ class LeadPresenter
             'score_grade' => $lead->score_grade,
             'profile_completeness' => $lead->profile_completeness,
             'estimated_value' => $lead->estimated_value,
+            'estimated_currency' => $lead->estimated_currency ?? 'CLP',
+            'estimated_amount' => $lead->estimated_amount ?? $lead->estimated_value,
             'tags' => $lead->tags ?? [],
             'next_follow_up_at' => $lead->next_follow_up_at?->toIso8601String(),
             'stage_changed_at' => ($lead->stage_changed_at ?? $lead->created_at)?->toIso8601String(),

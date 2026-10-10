@@ -47,6 +47,8 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
                 'permissions' => $user?->permissionKeys() ?? [],
             ],
+            // UF de hoy (para convertir UF ↔ CLP en formularios); en caché para no consultar la base en cada página.
+            'uf' => fn () => $user ? \Illuminate\Support\Facades\Cache::remember('uf.today.shared', 600, fn () => app(\App\Services\UfService::class)->today()) : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

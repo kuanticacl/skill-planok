@@ -27,6 +27,7 @@ import {
 import { computed, reactive, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 import CloseStageDialog from '@/components/kanban/CloseStageDialog.vue';
+import MoneyInput from '@/components/MoneyInput.vue';
 import AttachProposalDialog from '@/components/leads/AttachProposalDialog.vue';
 import LeadProfile from '@/components/leads/LeadProfile.vue';
 import RichTextEditor from '@/components/RichTextEditor.vue';
@@ -61,7 +62,8 @@ const q = reactive({
     stageId: lead.value.stage.id as number,
     assignee: (lead.value.assignee?.id ?? '') as number | string,
     priority: lead.value.priority as string,
-    value: lead.value.estimated_value ? String(lead.value.estimated_value) : '',
+    value: lead.value.estimated_amount ? String(lead.value.estimated_amount) : '',
+    currency: (lead.value.estimated_currency ?? 'CLP') as 'CLP' | 'UF',
     followUp: toLocalInput(lead.value.next_follow_up_at),
     tags: [...lead.value.tags],
 });
@@ -71,7 +73,8 @@ watch(
         q.stageId = d.lead.stage.id;
         q.assignee = d.lead.assignee?.id ?? '';
         q.priority = d.lead.priority;
-        q.value = d.lead.estimated_value ? String(d.lead.estimated_value) : '';
+        q.value = d.lead.estimated_amount ? String(d.lead.estimated_amount) : '';
+        q.currency = d.lead.estimated_currency ?? 'CLP';
         q.followUp = toLocalInput(d.lead.next_follow_up_at);
         q.tags = [...d.lead.tags];
     },
@@ -109,7 +112,7 @@ const offerProposal = (res: { needs_proposal?: boolean }) => {
         toast('Esta etapa pide una propuesta comercial', { action: { label: 'Crear propuesta', onClick: () => router.visit(`/proposals/create?lead=${lead.value.id}`) }, duration: 9000 });
     }
 };
-const confirmClose = (extra: { lost_reason: string | null; estimated_value: number | null }) => {
+const confirmClose = (extra: { lost_reason: string | null; estimated_amount: number | null; estimated_currency: 'CLP' | 'UF' }) => {
     const c = closing.value;
     closing.value = null;
     if (c) run(() => sendJson('PUT', move(lead.value.id).url, { stage_id: c.stageId, ...extra }), `Movido a ${c.name}`);
@@ -236,8 +239,8 @@ const sc = computed(() => props.data.scoring);
                     </div>
                 </div>
                 <div>
-                    <p class="mb-1.5 text-xs font-medium text-muted-foreground">Valor estimado (CLP)</p>
-                    <Input v-model="q.value" type="number" min="0" step="1000" :disabled="!can.update" placeholder="Sin definir" @change="saveQuick({ estimated_value: q.value === '' ? null : Number(q.value) })" />
+                    <p class="mb-1.5 text-xs font-medium text-muted-foreground">Valor estimado</p>
+                    <MoneyInput v-model="q.value" v-model:currency="q.currency" :disabled="!can.update" @commit="saveQuick({ estimated_amount: q.value === '' ? null : Number(q.value), estimated_currency: q.currency })" />
                 </div>
                 <div class="sm:col-span-2">
                     <p class="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
@@ -307,7 +310,7 @@ const sc = computed(() => props.data.scoring);
 
                 <TabsContent v-if="can.proposals" value="proposals" class="mt-3 flex flex-col gap-3">
                     <div class="flex items-center justify-between gap-2 rounded-2xl border bg-card p-4">
-                        <p class="text-sm text-muted-foreground">{{ data.proposals.length ? 'Puedes crear otra propuesta o una nueva versión para este lead.' : 'Este lead aún no tiene propuestas comerciales.' }}</p>
+                        <p class="text-sm text-muted-foreground">{{ data.proposals.length ? 'Puedes crear otra propuesta o una nueva versión para este cliente.' : 'Este cliente aún no tiene propuestas comerciales.' }}</p>
                         <div v-if="can.create_proposal" class="flex shrink-0 flex-wrap justify-end gap-2">
                             <Button size="sm" variant="outline" @click="attachOpen = true"><Link2 /> Asociar existente</Button>
                             <Button size="sm" as-child><Link :href="`/proposals/create?lead=${lead.id}`"><FileSignature /> Nueva propuesta</Link></Button>
@@ -317,7 +320,7 @@ const sc = computed(() => props.data.scoring);
                         <span class="min-w-0"><span class="block truncate text-sm font-semibold">{{ pr.title }}</span><span class="text-xs text-muted-foreground">{{ pr.number }} · {{ timeAgo(pr.created_at) }}<template v-if="pr.valid_until"> · vence {{ pr.valid_until }}</template></span></span>
                         <span class="flex shrink-0 items-center gap-2">
                             <span class="flex flex-col items-end gap-1"><strong class="text-sm">{{ formatAmount(pr.total_net, pr.currency) }}</strong><span class="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white" :style="{ backgroundColor: pr.status_color }">{{ pr.status_label }}</span></span>
-                            <button v-if="can.create_proposal" type="button" class="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-destructive" title="Desvincular de este lead (no la elimina)" @click.prevent.stop="detachProposal(pr.id)"><Unlink class="size-4" /></button>
+                            <button v-if="can.create_proposal" type="button" class="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-destructive" title="Desvincular de este cliente (no la elimina)" @click.prevent.stop="detachProposal(pr.id)"><Unlink class="size-4" /></button>
                         </span>
                     </Link>
                     <AttachProposalDialog v-model:open="attachOpen" :lead-id="lead.id" @attached="emit('changed')" />
@@ -329,7 +332,7 @@ const sc = computed(() => props.data.scoring);
 
                 <TabsContent value="notes" class="mt-3 flex flex-col gap-4">
                     <form v-if="can.note" class="grid gap-3 rounded-2xl border bg-card p-4" @submit.prevent="addNote">
-                        <RichTextEditor v-model="note.body" compact :min-height="80" placeholder="Escribe una nota interna sobre este lead…" />
+                        <RichTextEditor v-model="note.body" compact :min-height="80" placeholder="Escribe una nota interna sobre este cliente…" />
                         <div class="flex items-center justify-between gap-3">
                             <label class="flex items-center gap-2.5 text-sm">
                                 <Switch :model-value="note.is_private" @update:model-value="(v: boolean) => (note.is_private = v)" />

@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable([
     'first_name', 'last_name', 'email', 'phone', 'job_title', 'company', 'message',
     'client_id', 'source_id', 'stage_id', 'assigned_to', 'position',
-    'priority', 'estimated_value', 'tags', 'next_follow_up_at', 'stage_changed_at', 'closed_at', 'lost_reason',
+    'priority', 'estimated_value', 'estimated_currency', 'estimated_amount', 'tags', 'next_follow_up_at', 'stage_changed_at', 'closed_at', 'lost_reason',
     'score', 'score_grade', 'profile_completeness', 'score_breakdown', 'profile', 'scored_at',
     'ai_analysis', 'ai_analyzed_at', 'ai_input_hash', 'ai_adjustment',
     'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
@@ -34,6 +34,7 @@ class Lead extends Model
             'custom' => 'array',
             'tags' => 'array',
             'estimated_value' => 'float',
+            'estimated_amount' => 'float',
             'next_follow_up_at' => 'datetime',
             'stage_changed_at' => 'datetime',
             'closed_at' => 'datetime',

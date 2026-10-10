@@ -18,6 +18,39 @@ class LeadService
     private const GAP = 1024;
 
     /**
+     * Normaliza el valor estimado: se guarda el monto en la moneda elegida (CLP o UF) y su equivalente
+     * en pesos (estimated_value, con la UF de hoy), que es lo que suman el Kanban y el dashboard.
+     * Si solo llega estimated_value (API, agente, propuesta) se entiende en pesos.
+     *
+     * @param  array<string, mixed>  $a
+     * @return array<string, mixed>
+     */
+    public static function withValue(array $a): array
+    {
+        $legacy = array_key_exists('estimated_value', $a) && $a['estimated_value'] !== null;
+        if (array_key_exists('estimated_amount', $a) && ! ($legacy && ($a['estimated_amount'] ?? null) === null)) {
+            $amount = $a['estimated_amount'] === null || $a['estimated_amount'] === '' ? null : (float) $a['estimated_amount'];
+            $currency = strtoupper((string) ($a['estimated_currency'] ?? 'CLP')) === 'UF' ? 'UF' : 'CLP';
+            $clp = $amount;
+            if ($amount !== null && $currency === 'UF') {
+                $uf = app(\App\Services\UfService::class)->today()['value'] ?? null;
+                if (! $uf) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['estimated_amount' => 'No hay valor de UF disponible para convertir. Ingresa el monto en pesos.']);
+                }
+                $clp = round($amount * $uf);
+            }
+            $a['estimated_amount'] = $amount;
+            $a['estimated_currency'] = $amount === null ? 'CLP' : $currency;
+            $a['estimated_value'] = $clp;
+        } elseif (array_key_exists('estimated_value', $a)) {
+            $a['estimated_currency'] = 'CLP';
+            $a['estimated_amount'] = $a['estimated_value'];
+        }
+
+        return $a;
+    }
+
+    /**
      * Crea un lead en la primera etapa (arriba de la columna) y registra el ingreso.
      *
      * @param  array<string, mixed>  $attributes
@@ -27,13 +60,13 @@ class LeadService
         $lead = DB::transaction(function () use ($attributes, $actor, $activity) {
             $stageId = $attributes['stage_id'] ?? PipelineStage::initial()?->id;
 
-            $lead = new Lead($attributes);
+            $lead = new Lead(self::withValue($attributes));
             $lead->stage_id = $stageId;
             $lead->position = $this->topPosition($stageId);
             $lead->stage_changed_at = now();
             $lead->save();
 
-            $this->log($lead, 'created', $actor, 'Lead ingresado'.($lead->source ? " desde {$lead->source->name}" : ''), $activity);
+            $this->log($lead, 'created', $actor, 'Cliente ingresado'.($lead->source ? " desde {$lead->source->name}" : ''), $activity);
 
             if ($lead->assigned_to) {
                 $this->log($lead, 'assigned', $actor, 'Asignado a '.$lead->assignee?->name, ['to' => $lead->assigned_to]);
@@ -61,7 +94,7 @@ class LeadService
         $oldStage = $lead->stage_id;
         $oldAssignee = $lead->assigned_to;
 
-        $lead->fill($attributes);
+        $lead->fill(self::withValue($attributes));
         $changed = array_keys($lead->getDirty());
         $lead->save();
 
@@ -69,10 +102,10 @@ class LeadService
             'first_name' => 'nombre', 'last_name' => 'apellido', 'email' => 'correo', 'phone' => 'teléfono',
             'job_title' => 'cargo', 'company' => 'empresa', 'message' => 'mensaje', 'client_id' => 'cliente',
             'source_id' => 'origen', 'custom' => 'campos personalizados', 'priority' => 'prioridad',
-            'estimated_value' => 'valor estimado', 'tags' => 'etiquetas', 'next_follow_up_at' => 'próximo seguimiento',
+            'estimated_value' => 'valor estimado', 'estimated_amount' => 'valor estimado', 'estimated_currency' => 'valor estimado', 'tags' => 'etiquetas', 'next_follow_up_at' => 'próximo seguimiento',
         ];
 
-        $edited = collect($changed)->intersect(array_keys($labels))->map(fn ($k) => $labels[$k])->values();
+        $edited = collect($changed)->intersect(array_keys($labels))->map(fn ($k) => $labels[$k])->unique()->values();
         if ($edited->isNotEmpty()) {
             $this->log($lead, 'updated', $actor, 'Datos actualizados: '.$edited->implode(', '));
         }
@@ -149,8 +182,8 @@ class LeadService
             $lead->closed_at = now();
             $lead->next_follow_up_at = null;
             $lead->lost_reason = $type === 'lost' ? ($closing['lost_reason'] ?? $lead->lost_reason) : null;
-            if ($type === 'won' && isset($closing['estimated_value'])) {
-                $lead->estimated_value = $closing['estimated_value'];
+            if ($type === 'won' && (isset($closing['estimated_amount']) || isset($closing['estimated_value']))) {
+                $lead->fill(self::withValue($closing));
             }
         } else {
             $lead->closed_at = null;
