@@ -16,6 +16,8 @@ services:
     depends_on:
       ecortes-crm-db:
         condition: service_healthy
+      ecortes-crm-redis:
+        condition: service_healthy
     environment:
       APP_NAME: ${APP_NAME:-ECORTESCL CRM}
       APP_ENV: ${APP_ENV:-production}
@@ -34,10 +36,14 @@ services:
       DB_DATABASE: ${DB_DATABASE:-ecortes_crm}
       DB_USERNAME: ${DB_USERNAME:-ecortes}
       DB_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD}
-      SESSION_DRIVER: database
+      SESSION_DRIVER: ${SESSION_DRIVER:-redis}
       SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-true}
       SESSION_SAME_SITE: ${SESSION_SAME_SITE:-lax}
-      CACHE_STORE: database
+      CACHE_STORE: ${CACHE_STORE:-redis}
+      REDIS_CLIENT: phpredis
+      REDIS_HOST: ecortes-crm-redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-${DB_PASSWORD}}
       QUEUE_CONNECTION: database
       FILESYSTEM_DISK: local
       MAIL_MAILER: ${MAIL_MAILER:-log}
@@ -53,7 +59,7 @@ services:
   ecortes-crm-db:
     image: mariadb:11.4
     restart: unless-stopped
-    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci", "--skip-name-resolve", "--innodb-buffer-pool-size=256M"]
     environment:
       MARIADB_DATABASE: ${DB_DATABASE:-ecortes_crm}
       MARIADB_USER: ${DB_USERNAME:-ecortes}
@@ -72,9 +78,29 @@ services:
     networks:
       - dokploy-network
 
+  # Redis: sesiones y caché (la cola sigue en la base de datos para no perder trabajos pendientes).
+  # Persistente (AOF) para que las sesiones sobrevivan a un reinicio; solo accesible por la red del stack con contraseña.
+  ecortes-crm-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["sh", "-c", "exec redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy volatile-lru --requirepass \"$$REDIS_PASSWORD\""]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-${DB_PASSWORD}}
+    volumes:
+      - crm-redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    networks:
+      - dokploy-network
+
 volumes:
   crm-storage:
   crm-db-data:
+  crm-redis-data:
 
 # Red compartida de Dokploy/Traefik (no crea redes nuevas). Los nombres de servicio son únicos (ecortes-crm-*)
 # para no chocar con otros stacks que usan la misma red.

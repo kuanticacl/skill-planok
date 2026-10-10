@@ -29,10 +29,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 | Request::HEADER_X_FORWARDED_PROTO,
         );
 
+        // Primero de la pila: mide también las consultas de sesión y caché.
+        $middleware->prepend(\App\Http\Middleware\ServerTiming::class);
+
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->web(append: [
-            \App\Http\Middleware\ServerTiming::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
