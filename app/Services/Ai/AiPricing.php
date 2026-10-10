@@ -31,13 +31,26 @@ class AiPricing
         'deepseek-chat' => [0.27, 1.10],
     ];
 
+    /** @var array<string, array{0: float, 1: float}>|null */
+    private ?array $cache = null;
+
     /** @return array<string, array{0: float, 1: float}> precios definidos por el usuario, por clave exacta (proveedor/modelo). */
     public function overrides(): array
     {
+        if ($this->cache !== null) {
+            return $this->cache;
+        }
+
         $raw = Setting::get('ai.prices');
         $data = is_string($raw) ? json_decode($raw, true) : $raw;
 
-        return is_array($data) ? $data : [];
+        return $this->cache = is_array($data) ? $data : [];
+    }
+
+    /** Descarta la copia en memoria (tras guardar precios). */
+    public function forget(): void
+    {
+        $this->cache = null;
     }
 
     public static function key(?string $provider, ?string $model): string

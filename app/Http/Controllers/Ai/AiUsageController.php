@@ -107,6 +107,7 @@ class AiUsageController extends Controller
             $all[$data['key']] = [(float) ($data['input'] ?? 0), (float) ($data['output'] ?? 0)];
         }
         Setting::put('ai.prices', json_encode($all));
+        $pricing->forget();
 
         $this->toast('Precio actualizado.');
 
