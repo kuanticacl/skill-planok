@@ -21,10 +21,13 @@ import {
     StickyNote,
     Trash2,
     UserCheck,
+    Link2,
+    Unlink,
 } from '@lucide/vue';
 import { computed, reactive, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 import CloseStageDialog from '@/components/kanban/CloseStageDialog.vue';
+import AttachProposalDialog from '@/components/leads/AttachProposalDialog.vue';
 import LeadProfile from '@/components/leads/LeadProfile.vue';
 import RichTextEditor from '@/components/RichTextEditor.vue';
 import SourceIcon from '@/components/SourceIcon.vue';
@@ -84,6 +87,9 @@ const run = async (fn: () => Promise<unknown>, ok?: string) => {
         emit('changed');
     }
 };
+
+const attachOpen = ref(false);
+const detachProposal = (id: number) => run(() => sendJson('DELETE', `/leads/${lead.value.id}/proposals/${id}/attach`), 'Propuesta desvinculada');
 
 const saveQuick = (patch: Record<string, unknown>) => run(() => sendJson('PATCH', quick(lead.value.id).url, patch));
 
@@ -264,7 +270,7 @@ const sc = computed(() => props.data.scoring);
 
             <!-- Seguimiento / Notas / Datos -->
             <Tabs v-model="tab">
-                <TabsList>
+                <TabsList class="h-auto w-full flex-wrap justify-start gap-0.5 rounded-2xl">
                     <TabsTrigger value="followup"><ListChecks /> Seguimiento</TabsTrigger>
                     <TabsTrigger v-if="can.proposals" value="proposals"><FileSignature /> Propuestas ({{ data.proposals.length }})</TabsTrigger>
                     <TabsTrigger value="profile"><Gauge /> Perfil e IA</TabsTrigger>
@@ -302,12 +308,19 @@ const sc = computed(() => props.data.scoring);
                 <TabsContent v-if="can.proposals" value="proposals" class="mt-3 flex flex-col gap-3">
                     <div class="flex items-center justify-between gap-2 rounded-2xl border bg-card p-4">
                         <p class="text-sm text-muted-foreground">{{ data.proposals.length ? 'Puedes crear otra propuesta o una nueva versión para este lead.' : 'Este lead aún no tiene propuestas comerciales.' }}</p>
-                        <Button v-if="can.create_proposal" size="sm" as-child><Link :href="`/proposals/create?lead=${lead.id}`"><FileSignature /> Nueva propuesta</Link></Button>
+                        <div v-if="can.create_proposal" class="flex shrink-0 flex-wrap justify-end gap-2">
+                            <Button size="sm" variant="outline" @click="attachOpen = true"><Link2 /> Asociar existente</Button>
+                            <Button size="sm" as-child><Link :href="`/proposals/create?lead=${lead.id}`"><FileSignature /> Nueva propuesta</Link></Button>
+                        </div>
                     </div>
                     <Link v-for="pr in data.proposals" :key="pr.id" :href="`/proposals/${pr.id}`" class="flex items-center justify-between gap-3 rounded-2xl border bg-card p-4 transition hover:border-primary/40">
                         <span class="min-w-0"><span class="block truncate text-sm font-semibold">{{ pr.title }}</span><span class="text-xs text-muted-foreground">{{ pr.number }} · {{ timeAgo(pr.created_at) }}<template v-if="pr.valid_until"> · vence {{ pr.valid_until }}</template></span></span>
-                        <span class="flex shrink-0 flex-col items-end gap-1"><strong class="text-sm">{{ formatAmount(pr.total_net, pr.currency) }}</strong><span class="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white" :style="{ backgroundColor: pr.status_color }">{{ pr.status_label }}</span></span>
+                        <span class="flex shrink-0 items-center gap-2">
+                            <span class="flex flex-col items-end gap-1"><strong class="text-sm">{{ formatAmount(pr.total_net, pr.currency) }}</strong><span class="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white" :style="{ backgroundColor: pr.status_color }">{{ pr.status_label }}</span></span>
+                            <button v-if="can.create_proposal" type="button" class="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-destructive" title="Desvincular de este lead (no la elimina)" @click.prevent.stop="detachProposal(pr.id)"><Unlink class="size-4" /></button>
+                        </span>
                     </Link>
+                    <AttachProposalDialog v-model:open="attachOpen" :lead-id="lead.id" @attached="emit('changed')" />
                 </TabsContent>
 
                 <TabsContent value="profile" class="mt-3">

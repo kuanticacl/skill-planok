@@ -258,6 +258,65 @@ class ProposalController extends Controller
         return response()->json(['proposals' => Proposal::where('lead_id', $lead->id)->latest('id')->get()->map(fn ($p) => $this->row($p))]);
     }
 
+
+    /** Busca propuestas visibles para el usuario (para asociarlas a un lead). */
+    public function search(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->query('q'));
+        $exclude = $request->integer('exclude_lead') ?: null;
+
+        $rows = Proposal::query()->visibleTo($request->user())->with(['client:id,name', 'lead:id,first_name,last_name'])
+            ->when($exclude, fn ($w) => $w->where(fn ($x) => $x->whereNull('lead_id')->orWhere('lead_id', '!=', $exclude)))
+            ->when($q !== '', fn ($w) => $w->where(fn ($x) => $x->where('number', 'like', "%$q%")->orWhere('title', 'like', "%$q%")
+                ->orWhere('recipient', 'like', "%$q%")->orWhereHas('client', fn ($c) => $c->where('name', 'like', "%$q%"))))
+            ->latest('id')->limit(15)->get();
+
+        return response()->json(['proposals' => $rows->map(fn (Proposal $p) => [
+            'id' => $p->id, 'number' => $p->number, 'title' => $p->title,
+            'company' => $p->recipient['company'] ?? $p->client?->name,
+            'status' => $p->effectiveStatus(), 'status_label' => Proposal::STATUSES[$p->effectiveStatus()] ?? $p->status,
+            'status_color' => Proposal::STATUS_COLORS[$p->effectiveStatus()] ?? '#8A8A8A',
+            'currency' => $p->currency, 'total_net' => $p->total_net,
+            'lead' => $p->lead ? ['id' => $p->lead->id, 'name' => $p->lead->full_name] : null,
+        ])->values()]);
+    }
+
+    /** Asocia una propuesta ya existente a un lead (si estaba en otro, se mueve). */
+    public function attach(Request $request, Lead $lead): JsonResponse
+    {
+        $this->authorize('view', $lead);
+        $data = $request->validate(['proposal_id' => ['required', 'integer']]);
+        $proposal = Proposal::visibleTo($request->user())->findOrFail($data['proposal_id']);
+        $previous = $proposal->lead_id && $proposal->lead_id !== $lead->id ? Lead::find($proposal->lead_id) : null;
+
+        $proposal->lead_id = $lead->id;
+        if (! $proposal->client_id && $lead->client_id) {
+            $proposal->client_id = $lead->client_id;
+        }
+        $proposal->save();
+
+        $leads = app(LeadService::class);
+        $leads->log($lead, 'proposal', $request->user(), "Propuesta {$proposal->number} asociada a este lead", ['proposal_id' => $proposal->id]);
+        if ($previous) {
+            $leads->log($previous, 'proposal', $request->user(), "Propuesta {$proposal->number} pasó a otro lead", ['proposal_id' => $proposal->id]);
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    /** Quita la asociación de una propuesta con el lead (la propuesta no se elimina). */
+    public function detach(Request $request, Lead $lead, Proposal $proposal): JsonResponse
+    {
+        $this->authorize('view', $lead);
+        abort_unless($proposal->lead_id === $lead->id, 404);
+        abort_unless(Proposal::visibleTo($request->user())->whereKey($proposal->id)->exists(), 403);
+
+        $proposal->update(['lead_id' => null]);
+        app(LeadService::class)->log($lead, 'proposal', $request->user(), "Propuesta {$proposal->number} desvinculada de este lead", ['proposal_id' => $proposal->id]);
+
+        return response()->json(['ok' => true]);
+    }
+
     // ------------------------------------------------------------------------------------------
 
     public static function pdfResponse(Proposal $proposal, ProposalPdf $pdf): \Illuminate\Http\Response
