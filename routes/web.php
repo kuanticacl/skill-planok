@@ -128,6 +128,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Propuestas comerciales y catálogo de servicios
     Route::prefix('proposals')->group(function () {
         Route::get('/', [ProposalController::class, 'index'])->middleware('can:proposals.view')->name('proposals.index');
+        Route::get('search', [ProposalController::class, 'search'])->middleware('can:proposals.view')->name('proposals.search');
         Route::middleware('can:proposals.create')->group(function () {
             Route::get('create', [ProposalController::class, 'create'])->name('proposals.create');
             Route::post('/', [ProposalController::class, 'store'])->name('proposals.store');
@@ -155,6 +156,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('service', [AiProposalController::class, 'service'])->name('proposals.ai.service');
     });
     Route::get('leads/{lead}/proposals', [ProposalController::class, 'forLead'])->middleware('can:proposals.view')->name('leads.proposals');
+    Route::post('leads/{lead}/proposals/attach', [ProposalController::class, 'attach'])->middleware('can:proposals.create')->name('leads.proposals.attach');
+    Route::delete('leads/{lead}/proposals/{proposal}/attach', [ProposalController::class, 'detach'])->middleware('can:proposals.create')->name('leads.proposals.detach');
     Route::middleware('can:agent.use')->prefix('agent')->name('agent.')->group(function () {
         Route::get('status', [AgentController::class, 'status'])->name('status');
         Route::post('chat', [AgentController::class, 'chat'])->middleware('throttle:20,1')->name('chat');
