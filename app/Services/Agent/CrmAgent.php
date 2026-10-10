@@ -1,0 +1,72 @@
+<?php
+
+namespace App\Services\Agent;
+
+use App\Models\User;
+use App\Services\Agent\Tools\AddFollowUp;
+use App\Services\Agent\Tools\CreateClient;
+use App\Services\Agent\Tools\CreateLead;
+use App\Services\Agent\Tools\CreateProposal;
+use App\Services\Agent\Tools\CrmOverview;
+use App\Services\Agent\Tools\FindProposals;
+use App\Services\Agent\Tools\GetLead;
+use App\Services\Agent\Tools\ListServices;
+use App\Services\Agent\Tools\MoveLead;
+use App\Services\Agent\Tools\SearchClients;
+use App\Services\Agent\Tools\SearchLeads;
+use App\Services\Agent\Tools\UpdateProposalStatus;
+use App\Services\Ai\AiGateway;
+use Laravel\Ai\Attributes\MaxSteps;
+use Laravel\Ai\Messages\Message;
+
+use function Laravel\Ai\agent;
+
+/**
+ * Agent conversacional del CRM: un modelo con herramientas internas que actúan como el usuario
+ * (mismos permisos y visibilidad). No puede eliminar datos, enviar correos a clientes ni tocar la configuración.
+ */
+class CrmAgent
+{
+    public function __construct(private AiGateway $ai) {}
+
+    /**
+     * @param  array<int, array{role: string, content: string}>  $history  mensajes previos (sin el último)
+     * @return array{reply: string, actions: array<int, array<string, mixed>>}
+     */
+    public function chat(User $user, array $history, string $message): array
+    {
+        $ctx = new AgentContext($user);
+        $tools = [
+            new CrmOverview($ctx), new SearchLeads($ctx), new GetLead($ctx), new CreateLead($ctx), new AddFollowUp($ctx), new MoveLead($ctx),
+            new SearchClients($ctx), new CreateClient($ctx), new ListServices($ctx), new CreateProposal($ctx), new FindProposals($ctx), new UpdateProposalStatus($ctx),
+        ];
+
+        $messages = collect($history)->map(fn ($m) => new Message($m['role'] === 'assistant' ? 'assistant' : 'user', (string) $m['content']))->all();
+        $agent = agent(instructions: $this->instructions($user), messages: $messages, tools: $tools);
+
+        $response = $this->ai->run('agent', $agent, $message, [], 150);
+
+        return ['reply' => trim((string) $response) ?: 'Listo.', 'actions' => $ctx->actions];
+    }
+
+    private function instructions(User $user): string
+    {
+        $today = now()->locale('es')->translatedFormat('l d \d\e F \d\e Y');
+
+        return <<<TXT
+Eres «Agent», el asistente interno del CRM. Hablas con {$user->name} ({$user->role?->name}). Hoy es {$today}. Responde en español de Chile, claro y breve.
+
+Puedes consultar y operar el CRM SOLO con tus herramientas: buscar y ver leads, crear leads, registrar seguimientos y notas, mover leads de etapa, buscar y crear clientes, consultar el catálogo de servicios, crear propuestas en borrador, consultar su estado y registrar su estado manualmente. Actúas con los permisos del usuario; si una herramienta devuelve falta de permiso, díselo.
+
+Reglas:
+- Nunca inventes datos (RUT, correos, montos, ids). Si falta algo imprescindible, pregunta una sola vez, de forma concreta. Lo opcional déjalo vacío.
+- Antes de crear un cliente, búscalo (search_clients) por RUT y por nombre; si existe, úsalo. Antes de crear un lead, búscalo con search_leads.
+- Para armar una propuesta desde un texto: extrae empresa (nombre, razón social, RUT, giro, dirección), contacto (nombre, cargo, correo, teléfono), servicios con sus montos NETOS, moneda (UF por defecto; CLP si habla de pesos), plazos y forma de pago. Crea el cliente si no existe, luego el lead si el texto lo sugiere, y por último la propuesta con create_proposal. Usa list_services para reutilizar servicios del catálogo cuando coincidan. Respeta el texto del usuario en las secciones (resumen, alcance, plan, condiciones); no lo reescribas ni agregues promesas. Las cuotas e hitos de pago van en la sección «Condiciones comerciales».
+- Las propuestas quedan en BORRADOR. No puedes enviarlas por correo ni eliminar nada: indica que se envían desde la ficha de la propuesta.
+- accepted/rejected solo se registran si el usuario lo pide de forma explícita; confirma antes.
+- Fechas: usa YYYY-MM-DD o YYYY-MM-DD HH:MM; interpreta «mañana», «el viernes», etc. respecto de hoy.
+- Al terminar, resume en pocas líneas qué hiciste e incluye los enlaces (url) de lo creado. Si consultas estados, responde directo con el estado y la fecha relevante.
+- Si te piden algo fuera de tus herramientas (eliminar, enviar correos, cambiar configuración, usuarios), explica que no puedes y dónde se hace en el CRM.
+TXT;
+    }
+}

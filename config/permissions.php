@@ -103,6 +103,7 @@ return [
             'permissions' => [
                 'ai.use' => 'Usar el asistente de IA (mailings y análisis de leads)',
                 'ai.manage' => 'Configurar proveedores de IA y API keys',
+                'agent.use' => 'Usar el Agent (asistente que opera el CRM por chat)',
             ],
         ],
         'settings' => [
@@ -148,7 +149,7 @@ return [
                 'leads.view', 'leads.view_all', 'leads.create', 'leads.update', 'leads.move', 'leads.assign', 'leads.notes',
                 'clients.view', 'clients.create', 'clients.update', 'proposals.view', 'proposals.create', 'proposals.send', 'proposals.delete', 'services.view', 'services.manage', 'agency.manage',
                 'users.view',
-                'templates.view', 'campaigns.view', 'email_logs.view', 'ai.use',
+                'templates.view', 'campaigns.view', 'email_logs.view', 'ai.use', 'agent.use',
             ],
         ],
         'lectura' => [

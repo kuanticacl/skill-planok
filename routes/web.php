@@ -5,6 +5,7 @@ use App\Http\Controllers\Ai\AiProposalController;
 use App\Http\Controllers\Ai\AiSettingsController;
 use App\Http\Controllers\Ai\LeadAiController;
 use App\Http\Controllers\AgencyController;
+use App\Http\Controllers\AgentController;
 use App\Http\Controllers\DemoDataController;
 use App\Http\Controllers\TrashController;
 use App\Http\Controllers\ClientController;
@@ -151,6 +152,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('service', [AiProposalController::class, 'service'])->name('proposals.ai.service');
     });
     Route::get('leads/{lead}/proposals', [ProposalController::class, 'forLead'])->middleware('can:proposals.view')->name('leads.proposals');
+    Route::middleware('can:agent.use')->prefix('agent')->name('agent.')->group(function () {
+        Route::get('status', [AgentController::class, 'status'])->name('status');
+        Route::post('chat', [AgentController::class, 'chat'])->middleware('throttle:20,1')->name('chat');
+    });
+
     Route::middleware('can:demo.purge')->group(function () {
         Route::get('demo-data', [DemoDataController::class, 'index'])->name('demo-data.index');
         Route::post('demo-data/purge', [DemoDataController::class, 'purge'])->name('demo-data.purge');
