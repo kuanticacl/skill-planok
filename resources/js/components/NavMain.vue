@@ -28,7 +28,7 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
                     :is-active="isCurrentOrParentUrl(item.href)"
                     :tooltip="item.title"
                 >
-                    <Link :href="item.href">
+                    <Link :href="item.href" prefetch>
                         <component :is="item.icon" />
                         <span>{{ item.title }}</span>
                     </Link>

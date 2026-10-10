@@ -17,6 +17,7 @@ class ServerTiming
     public function handle(Request $request, Closure $next): Response
     {
         $start = defined('LARAVEL_START') ? LARAVEL_START : microtime(true);
+        $boot = isset($_SERVER['REQUEST_TIME_FLOAT']) ? max(0, ($start - $_SERVER['REQUEST_TIME_FLOAT']) * 1000) : 0; // desde que nginx entrega la petición a PHP hasta que arranca Laravel
         $queries = 0;
         $dbMs = 0.0;
         DB::listen(function ($q) use (&$queries, &$dbMs) {
@@ -28,7 +29,7 @@ class ServerTiming
 
         if (config('app.perf_headers') || $request->user()?->role?->isAdmin()) {
             $total = (microtime(true) - $start) * 1000;
-            $response->headers->set('Server-Timing', sprintf('app;dur=%.1f, db;dur=%.1f;desc="%d consultas", mem;desc="%.1f MB"', $total, $dbMs, $queries, memory_get_peak_usage(true) / 1048576));
+            $response->headers->set('Server-Timing', sprintf('boot;dur=%.1f, app;dur=%.1f, db;dur=%.1f;desc="%d consultas", mem;desc="%.1f MB"', $boot, $total, $dbMs, $queries, memory_get_peak_usage(true) / 1048576));
         }
 
         return $response;
