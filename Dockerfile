@@ -50,6 +50,7 @@ FROM base AS final
 COPY --from=build /var/www/html /var/www/html
 
 COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
+RUN mkdir -p /tmp/nginx/client_body /tmp/nginx/fastcgi /tmp/nginx/proxy && chown -R www-data:www-data /tmp/nginx
 COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
 COPY docker/php/php-fpm.conf /usr/local/etc/php-fpm.d/zz-www.conf
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/zz-custom.ini
