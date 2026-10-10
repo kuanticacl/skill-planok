@@ -23,7 +23,8 @@ class AiSettingsController extends Controller
     {
         $rows = AiProvider::all()->keyBy('slug');
 
-        $providers = collect(AiCatalog::PROVIDERS)->map(function (array $c, string $slug) use ($rows) {
+        $voice = $ai->transcriptionProvider()?->slug;
+        $providers = collect(AiCatalog::PROVIDERS)->map(function (array $c, string $slug) use ($rows, $voice) {
             $row = $rows->get($slug);
 
             return [
@@ -42,6 +43,7 @@ class AiSettingsController extends Controller
                 'key_masked' => $row?->keyHint(),
                 'base_url' => $row?->base_url,
                 'model' => $row?->model,
+                'stt' => [...AiCatalog::transcription($slug), 'model' => $row?->transcription_model, 'effective' => $row ? ($row->transcription_model ?: (\App\Models\Setting::get('ai.transcription_model') ?: (AiCatalog::transcription($slug)['default'] ?? null))) : null, 'in_use' => $voice === $slug],
                 'is_enabled' => $row?->is_enabled ?? true,
                 'is_default' => $row?->is_default ?? false,
                 'usable' => $row?->isUsable() ?? false,
@@ -77,6 +79,7 @@ class AiSettingsController extends Controller
             'api_key' => ['nullable', 'string', 'max:600'],
             'base_url' => [($catalog['url_required'] ?? false) ? 'required' : 'nullable', 'url', 'max:255'],
             'model' => ['nullable', 'string', 'max:160'],
+            'transcription_model' => ['nullable', 'string', 'max:120'],
             'is_enabled' => ['boolean'],
         ]);
 
@@ -88,6 +91,7 @@ class AiSettingsController extends Controller
             'driver' => $catalog['driver'],
             'base_url' => $catalog['url_editable'] ? ($data['base_url'] ?? null) : null,
             'model' => $data['model'] ?? null,
+            'transcription_model' => AiCatalog::transcription($slug)['supported'] ? ($data['transcription_model'] ?? null) : null,
             'is_enabled' => $data['is_enabled'] ?? true,
             'created_by' => $provider->created_by ?? $request->user()->id,
         ]);
@@ -157,6 +161,20 @@ class AiSettingsController extends Controller
         }
 
         return response()->json($ai->test($provider));
+    }
+
+    public function testVoice(string $slug, AiGateway $ai): JsonResponse
+    {
+        $provider = AiProvider::where('slug', $slug)->firstOrFail();
+
+        if (! $provider->isUsable()) {
+            return response()->json(['ok' => false, 'message' => 'Falta la API key o el proveedor está deshabilitado.', 'ms' => 0], 422);
+        }
+        if (! AiCatalog::transcription($slug)['supported']) {
+            return response()->json(['ok' => false, 'message' => 'Este proveedor no ofrece transcripción de voz. Usa OpenAI, Groq, Gemini o Mistral para el micrófono.', 'ms' => 0], 422);
+        }
+
+        return response()->json($ai->testTranscription($provider));
     }
 
     public function models(string $slug, ModelLister $lister): JsonResponse

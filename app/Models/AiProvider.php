@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Model;
 
 /** Proveedor de IA configurado en el CRM. La API key se guarda cifrada y nunca se envía al navegador. */
-#[Fillable(['slug', 'name', 'driver', 'api_key', 'base_url', 'model', 'is_enabled', 'is_default', 'last_tested_at', 'last_test_ok', 'last_test_message', 'last_test_ms', 'created_by'])]
+#[Fillable(['slug', 'name', 'driver', 'api_key', 'base_url', 'model', 'transcription_model', 'is_enabled', 'is_default', 'last_tested_at', 'last_test_ok', 'last_test_message', 'last_test_ms', 'created_by'])]
 #[Hidden(['api_key'])]
 class AiProvider extends Model
 {

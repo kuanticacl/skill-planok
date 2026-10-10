@@ -273,6 +273,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('providers/{slug}', [AiSettingsController::class, 'destroy'])->name('ai.providers.destroy');
         Route::post('providers/{slug}/default', [AiSettingsController::class, 'makeDefault'])->name('ai.providers.default');
         Route::post('providers/{slug}/test', [AiSettingsController::class, 'test'])->middleware('throttle:20,1')->name('ai.providers.test');
+        Route::post('providers/{slug}/test-voice', [AiSettingsController::class, 'testVoice'])->middleware('throttle:20,1')->name('ai.providers.test-voice');
         Route::get('providers/{slug}/models', [AiSettingsController::class, 'models'])->middleware('throttle:20,1')->name('ai.providers.models');
     });
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { CheckCircle2, CircleAlert, ExternalLink, KeyRound, Lock, Plug, RefreshCw, RotateCcw, ShieldCheck, Sparkles, Star, Trash2, Zap } from '@lucide/vue';
+import { CheckCircle2, CircleAlert, ExternalLink, KeyRound, Lock, Mic, Plug, RefreshCw, RotateCcw, ShieldCheck, Sparkles, Star, Trash2, Zap } from '@lucide/vue';
 import { computed, reactive, ref } from 'vue';
 import { toast } from 'vue-sonner';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
@@ -19,11 +19,12 @@ import { timeAgo } from '@/lib/format';
 import { HttpError, sendJson } from '@/lib/http';
 import { cn } from '@/lib/utils';
 import { index } from '@/routes/ai';
-import { defaultMethod as makeDefault, destroy, models as modelsRoute, test as testRoute, update } from '@/routes/ai/providers';
+import { defaultMethod as makeDefault, destroy, models as modelsRoute, test as testRoute, testVoice as testVoiceRoute, update } from '@/routes/ai/providers';
 import { update as updateSettings } from '@/routes/ai/settings';
 
 type Provider = {
     slug: string; name: string; color: string; description: string; keys_url: string | null; key_hint_format: string; url_editable: boolean; url_required: boolean;
+    stt: { supported: boolean; suggest: string[]; default: string | null; model: string | null; effective: string | null; in_use: boolean };
     default_url: string; suggest: string[]; configured: boolean; has_key: boolean; key_masked: string | null; base_url: string | null; model: string | null;
     is_enabled: boolean; is_default: boolean; usable: boolean; last_tested_at: string | null; last_test_ok: boolean | null; last_test_message: string | null; last_test_ms: number | null;
 };
@@ -41,14 +42,14 @@ const featureLabel: Record<string, string> = { email_design: 'Diseño de mailing
 
 // ---------------------------------------------------------------- configurar
 const editing = ref<Provider | null>(null);
-const form = useForm({ api_key: '', base_url: '', model: '', is_enabled: true });
+const form = useForm({ api_key: '', base_url: '', model: '', transcription_model: '', is_enabled: true });
 const models = ref<{ id: string; name: string }[]>([]);
 const loadingModels = ref(false);
 const modelsError = ref('');
 
 const open = (p: Provider) => {
     editing.value = p;
-    form.defaults({ api_key: '', base_url: p.base_url ?? p.default_url ?? '', model: p.model ?? '', is_enabled: p.is_enabled }).reset();
+    form.defaults({ api_key: '', base_url: p.base_url ?? p.default_url ?? '', model: p.model ?? '', transcription_model: p.stt.model ?? '', is_enabled: p.is_enabled }).reset();
     form.clearErrors();
     models.value = [];
     modelsError.value = '';
@@ -101,6 +102,20 @@ const runTest = async (slug: string) => {
     }
 };
 
+const testingVoice = reactive<Record<string, boolean>>({});
+const voiceResults = reactive<Record<string, { ok: boolean; message: string; ms: number }>>({});
+const runVoiceTest = async (slug: string) => {
+    testingVoice[slug] = true;
+    try {
+        voiceResults[slug] = await sendJson('POST', testVoiceRoute(slug).url);
+    } catch (e) {
+        const b = e instanceof HttpError ? (e.body as { message?: string } | null) : null;
+        voiceResults[slug] = { ok: false, message: b?.message ?? 'No se pudo probar la voz.', ms: 0 };
+    } finally {
+        testingVoice[slug] = false;
+    }
+};
+
 const setDefault = (p: Provider) => router.post(makeDefault(p.slug).url, {}, { preserveScroll: true });
 const toDelete = ref<Provider | null>(null);
 const confirmDelete = () => toDelete.value && router.delete(destroy(toDelete.value.slug).url, { preserveScroll: true, onFinish: () => (toDelete.value = null) });
@@ -148,17 +163,26 @@ const total = computed(() => props.usage.reduce((a, u) => a + u.runs, 0));
                 <dl v-if="p.configured" class="grid gap-1.5 text-xs">
                     <div class="flex items-center justify-between gap-3"><dt class="flex items-center gap-1.5 text-muted-foreground"><Lock class="size-3" /> API key</dt><dd class="font-mono">{{ p.key_masked ?? '—' }}</dd></div>
                     <div class="flex items-center justify-between gap-3"><dt class="text-muted-foreground">Modelo</dt><dd class="max-w-[60%] truncate font-mono" :title="p.model ?? ''">{{ p.model ?? 'por defecto del SDK' }}</dd></div>
+                    <div class="flex items-center justify-between gap-3">
+                        <dt class="flex items-center gap-1.5 text-muted-foreground"><Mic class="size-3" /> Voz (micrófono)</dt>
+                        <dd v-if="!p.stt.supported" class="text-muted-foreground" title="Claude, DeepSeek y xAI no transcriben audio">no compatible</dd>
+                        <dd v-else class="max-w-[60%] truncate font-mono" :title="p.stt.effective ?? ''">{{ p.stt.effective ?? 'predeterminado' }}<Badge v-if="p.stt.in_use" variant="secondary" class="ml-1.5">en uso</Badge></dd>
+                    </div>
                     <div v-if="p.last_tested_at" class="flex items-center justify-between gap-3"><dt class="text-muted-foreground">Última prueba</dt><dd>{{ timeAgo(p.last_tested_at) }}<template v-if="p.last_test_ms"> · {{ p.last_test_ms }} ms</template></dd></div>
                 </dl>
 
                 <p v-if="results[p.slug]" :class="cn('flex items-start gap-2 rounded-xl p-3 text-xs', results[p.slug].ok ? 'bg-brand-green/10 text-brand-green' : 'bg-destructive/10 text-destructive')">
                     <CheckCircle2 v-if="results[p.slug].ok" class="mt-0.5 size-4 shrink-0" /><CircleAlert v-else class="mt-0.5 size-4 shrink-0" />{{ results[p.slug].message }}<template v-if="results[p.slug].ms"> ({{ results[p.slug].ms }} ms)</template>
                 </p>
+                <p v-if="voiceResults[p.slug]" :class="cn('flex items-start gap-2 rounded-xl p-3 text-xs', voiceResults[p.slug].ok ? 'bg-brand-green/10 text-brand-green' : 'bg-destructive/10 text-destructive')">
+                    <Mic class="mt-0.5 size-4 shrink-0" />{{ voiceResults[p.slug].message }}<template v-if="voiceResults[p.slug].ms"> ({{ voiceResults[p.slug].ms }} ms)</template>
+                </p>
                 <p v-else-if="p.last_test_ok === false && p.last_test_message" class="flex items-start gap-2 rounded-xl bg-destructive/10 p-3 text-xs text-destructive"><CircleAlert class="mt-0.5 size-4 shrink-0" />{{ p.last_test_message }}</p>
 
                 <div class="mt-auto flex flex-wrap items-center gap-2 border-t pt-3">
                     <Button size="sm" :variant="p.configured ? 'outline' : 'default'" @click="open(p)"><KeyRound /> {{ p.configured ? 'Configurar' : 'Conectar' }}</Button>
                     <Button v-if="p.usable" size="sm" variant="outline" :disabled="testing[p.slug]" @click="runTest(p.slug)"><Spinner v-if="testing[p.slug]" /><Zap v-else /> Probar conexión</Button>
+                    <Button v-if="p.usable && p.stt.supported" size="sm" variant="outline" :disabled="testingVoice[p.slug]" @click="runVoiceTest(p.slug)"><Spinner v-if="testingVoice[p.slug]" /><Mic v-else /> Probar voz</Button>
                     <Button v-if="p.usable && !p.is_default" size="sm" variant="ghost" @click="setDefault(p)"><Star /> Usar por defecto</Button>
                     <Button v-if="p.configured" size="icon-sm" variant="ghost" class="ml-auto text-destructive hover:text-destructive" title="Eliminar y borrar la key" @click="toDelete = p"><Trash2 /></Button>
                 </div>
@@ -206,6 +230,11 @@ const total = computed(() => props.usage.reduce((a, u) => a + u.runs, 0));
                     <NativeSelect v-if="models.length" class="mt-2" :model-value="form.model" @update:model-value="(v) => (form.model = String(v))"><option value="">— elige un modelo ({{ models.length }}) —</option><option v-for="m in models" :key="m.id" :value="m.id">{{ m.id }}</option></NativeSelect>
                     <p v-if="modelsError" class="mt-1 text-xs text-destructive">{{ modelsError }}</p>
                 </FormField>
+                <FormField v-if="editing.stt.supported" label="Modelo de transcripción (micrófono del Agent)" for="tm" :error="form.errors.transcription_model" :hint="editing.stt.default ? `Vacío = ${editing.stt.default}. Es el modelo de voz a texto; distinto del modelo de chat.` : 'Vacío = el modelo de transcripción por defecto del proveedor. Es distinto del modelo de chat.'">
+                    <Input id="tm" v-model="form.transcription_model" list="stt-suggest" :placeholder="editing.stt.suggest[0] ?? 'predeterminado del proveedor'" class="font-mono text-xs" />
+                    <datalist id="stt-suggest"><option v-for="m in editing.stt.suggest" :key="m" :value="m" /></datalist>
+                </FormField>
+                <p v-else class="flex items-start gap-2 rounded-xl bg-muted p-3 text-xs text-muted-foreground"><Mic class="mt-0.5 size-4 shrink-0" /> {{ editing.name }} no transcribe audio. Para usar el micrófono del Agent conecta además OpenAI, Groq, Gemini o Mistral (se elige solo), o se usará el dictado del navegador.</p>
                 <label class="flex items-center gap-3 text-sm"><Switch :model-value="form.is_enabled" @update:model-value="(v: boolean) => (form.is_enabled = v)" /> Habilitado</label>
                 <DialogFooter class="gap-2"><Button type="button" variant="outline" @click="editing = null">Cancelar</Button><Button type="submit" variant="outline" :disabled="form.processing">Guardar</Button><Button type="button" :disabled="form.processing" @click="save(true)"><Plug /> Guardar y probar</Button></DialogFooter>
             </form>

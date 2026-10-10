@@ -138,7 +138,34 @@ class AiGateway
     /** Modelo de transcripción: el definido en Setting «ai.transcription_model»; los gateways compatibles con OpenAI exigen uno explícito. */
     private function transcriptionModel(AiProvider $p): ?string
     {
-        return \App\Models\Setting::get('ai.transcription_model') ?: ($p->driver === 'openai-compatible' ? 'whisper-1' : null);
+        return $p->transcription_model ?: \App\Models\Setting::get('ai.transcription_model') ?: (AiCatalog::transcription($p->slug)['default'] ?? null);
+    }
+
+    /** Prueba la voz con un segundo de silencio: valida credenciales, URL y modelo de transcripción. @return array{ok: bool, message: string, ms: int} */
+    public function testTranscription(AiProvider $p): array
+    {
+        $start = microtime(true);
+        $path = tempnam(sys_get_temp_dir(), 'stt').'.wav';
+
+        try {
+            $rate = 16000;
+            $data = str_repeat("\0\0", $rate); // 1 s de silencio, 16-bit mono
+            file_put_contents($path, 'RIFF'.pack('V', 36 + strlen($data)).'WAVEfmt '.pack('VvvVVvv', 16, 1, 1, $rate, $rate * 2, 2, 16).'data'.pack('V', strlen($data)).$data);
+            $file = new \Illuminate\Http\UploadedFile($path, 'prueba.wav', 'audio/wav', null, true);
+
+            Transcription::fromUpload($file)->language('es')->timeout(60)->generate([$this->build($p, $this->transcriptionModel($p))]);
+            $model = $this->transcriptionModel($p) ?? 'modelo predeterminado';
+            $this->log('transcribe_test', $p, 'ok', $start, 0, 0, null, []);
+
+            return ['ok' => true, 'message' => "Voz funcionando con «{$model}»", 'ms' => (int) round((microtime(true) - $start) * 1000)];
+        } catch (Throwable $e) {
+            $message = $this->friendly($e, $p);
+            $this->log('transcribe_test', $p, 'error', $start, 0, 0, $message, []);
+
+            return ['ok' => false, 'message' => $message, 'ms' => (int) round((microtime(true) - $start) * 1000)];
+        } finally {
+            @unlink($path);
+        }
     }
 
     /** Transcribe un audio a texto (español). Registra uso y errores en ai_runs. */
