@@ -1,10 +1,10 @@
 # ECORTESCL CRM
 
-CRM interno de **ECORTESCL** ([ecortes.cl](https://www.ecortes.cl)) para gestionar prospectos y propuestas de una software factory, con
+CRM interno de **ECORTESCL** ([ecortes.cl](https://www.ecortes.cl)) para gestionar prospectos y propuestas de una software factory y agencia de growth marketing, con
 Kanban comercial y un módulo completo de **email marketing sobre Resend**.
 Laravel 13 · Inertia 3 · Vue 3 (TypeScript) · Tailwind 4 · shadcn-vue · SQLite (configurable).
 
-Identidad visual de ECORTESCL (software factory), tomada de ecortes.cl: azul marino `#121826`, verde `#64D989`, fuente **Open Sans**, logo con isotipo verde (`public/brand/ecortes-logo*.png`) y botones tipo píldora.
+Identidad visual de ECORTESCL (software factory y growth marketing), tomada de ecortes.cl: azul marino `#121826`, verde `#64D989`, fuente **Open Sans**, logo con isotipo verde (`public/brand/ecortes-logo*.png`) y botones tipo píldora.
 
 ## Contenido
 
@@ -236,7 +236,7 @@ Integrada con el **SDK oficial `laravel/ai`**. Todo es opcional: sin proveedor c
 - **Servicios y tarifas** (*Servicios y tarifas*): catálogo de servicios pre armados con categoría, modalidad (**pago único** o **mensual**), tarifa neta en **UF** (o CLP), descripción y entregables. Permisos `services.view` / `services.manage`.
 - **Propuestas** (*Propuestas*): se arman con servicios del catálogo (ajustables por propuesta sin tocar el catálogo) y **servicios únicos** creados solo para ese cliente. Soportan duración en meses para servicios mensuales, descuento (% o monto), IVA, vigencia y secciones editables (resumen, objetivos, alcance, plan, condiciones). Los totales siempre los recalcula el servidor.
 - **Documento de marca:** la propuesta se ve (y se descarga como PDF desde «Descargar PDF», con estilos de impresión A4) con la identidad de ECORTESCL: logo, naranja `#3DBB6C`, 'Open Sans', tarjetas redondeadas y botones en píldora. El mismo documento se usa en la vista previa en vivo, en la ficha y en el enlace público.
-- **PDF real:** botón «Descargar PDF» en la ficha y en el enlace público; se genera en el servidor (dompdf, sin navegador) con 'Open Sans', el logo y el estilo glass (portada con fondo de red de nodos, chips translúcidos y azul de marca). Incluye firma de ECORTESCL y del cliente, bloque «Software Factory» a la izquierda, **ubicación, contacto y redes** a la derecha, y los **logos de tecnologías** (Laravel, Vue, Nuxt, Node, Vercel, Google) pequeños al final.
+- **PDF real:** botón «Descargar PDF» en la ficha y en el enlace público; se genera en el servidor (dompdf, sin navegador) con 'Open Sans', el logo y el estilo glass (portada con fondo de red de nodos, chips translúcidos y azul de marca). Incluye firma de ECORTESCL y del cliente, bloque «Software Factory & Growth Marketing» a la izquierda, **ubicación, contacto y redes** a la derecha, y los **logos de tecnologías** (Laravel, Vue, Nuxt, Node, Vercel, Google) pequeños al final.
 - **Datos de la agencia** (*Configuración CRM → Datos de la agencia*, permiso `agency.manage`): razón social, RUT, dirección, correo, teléfono y redes sociales que salen en la firma y el pie (vienen precargados con los datos legales de ecortes.cl; las redes se muestran solo si las completas).
 - **Enlace público** `/p/{token}` (sin iniciar sesión, `noindex`): registra la primera vista y las visitas, y permite **aceptar o rechazar** con nombre y comentario (queda IP y fecha). Cada hito queda en el historial del lead. Se puede enviar por correo desde el CRM (plantilla transaccional *Propuesta comercial*, editable en Plantillas; requiere el worker de colas) o compartir el enlace por WhatsApp y marcarla como enviada.
 - **Versiones:** un lead o cliente puede tener varias propuestas; «Nueva versión» duplica una existente como borrador. Una propuesta aceptada o rechazada queda bloqueada.

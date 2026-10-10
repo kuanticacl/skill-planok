@@ -84,7 +84,7 @@ class LeadAnalyst
         $result = $this->ai->structured(
             'lead_analysis',
             $this->instructions(),
-            "Analiza este cliente de una empresa que nos contactó para un proyecto de software:\n".json_encode($ctx, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
+            "Analiza este cliente de una empresa que nos contactó para un proyecto de software o de growth marketing:\n".json_encode($ctx, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
             fn (JsonSchema $s) => [
                 'summary' => $s->string()->description('Resumen de 1–2 frases: quién es y qué busca')->required(),
                 'temperature' => $s->string()->enum(['hot', 'warm', 'cold'])->description('Qué tan cerca está de comprar')->required(),
@@ -181,7 +181,7 @@ class LeadAnalyst
     private function instructions(): string
     {
         return <<<TXT
-Eres un analista comercial senior de ECORTESCL, software factory en Chile (web, apps, automatización e IA). Tu trabajo es ayudar al equipo comercial a prospectar mejor cada lead: entender su potencial, decidir el siguiente paso y completar su perfil.
+Eres un analista comercial senior de ECORTESCL, software factory y agencia de growth marketing en Chile (web, apps, automatización, IA, campañas de performance, SEO y email marketing). Tu trabajo es ayudar al equipo comercial a prospectar mejor cada lead: entender su potencial, decidir el siguiente paso y completar su perfil.
 
 {$this->brand()}
 

@@ -31,7 +31,7 @@ class ProposalAssistant
     {
         $result = $this->ai->structured(
             'proposal_draft',
-            $this->system("Redactas el contenido de propuestas comerciales de ECORTESCL, una software factory, para empresas que necesitan tecnología a medida.\n\nEntrega SOLO estas 4 secciones, en este orden y con estos títulos: «Resumen ejecutivo», «Objetivos», «Alcance de los servicios», «Plan de trabajo y plazos».\n- Resumen ejecutivo: 2 párrafos cortos que muestren que entendemos el contexto del cliente y cómo lo ayudaremos.\n- Objetivos: 3 a 5 viñetas (con «- ») medibles y realistas, sin cifras inventadas.\n- Alcance de los servicios: 1 párrafo que introduzca los servicios elegidos (una tabla con detalle y precios se agrega automáticamente debajo; no repitas precios).\n- Plan de trabajo y plazos: viñetas por semana/etapa, en términos relativos (semana 1, semana 2…) y marcado como referencial.\nNo escribas condiciones comerciales, formas de pago ni valores: se agregan aparte."),
+            $this->system("Redactas el contenido de propuestas comerciales de ECORTESCL, una software factory y agencia de growth marketing, para empresas que necesitan tecnología a medida y/o estrategias de crecimiento y captación de clientes.\n\nEntrega SOLO estas 4 secciones, en este orden y con estos títulos: «Resumen ejecutivo», «Objetivos», «Alcance de los servicios», «Plan de trabajo y plazos».\n- Resumen ejecutivo: 2 párrafos cortos que muestren que entendemos el contexto del cliente y cómo lo ayudaremos.\n- Objetivos: 3 a 5 viñetas (con «- ») medibles y realistas, sin cifras inventadas.\n- Alcance de los servicios: 1 párrafo que introduzca los servicios elegidos (una tabla con detalle y precios se agrega automáticamente debajo; no repitas precios).\n- Plan de trabajo y plazos: viñetas por semana/etapa, en términos relativos (semana 1, semana 2…) y marcado como referencial.\nNo escribas condiciones comerciales, formas de pago ni valores: se agregan aparte."),
             $this->context($in)."\nTono: ".($in['tone'] ?? 'Cercano y profesional')."\nInstrucciones adicionales: ".mb_substr((string) ($in['brief'] ?? '—'), 0, 1200),
             fn (JsonSchema $s) => [
                 'title' => $s->string()->description('Título corto de la propuesta, sin nombre del cliente')->required(),
@@ -81,7 +81,7 @@ class ProposalAssistant
     {
         $result = $this->ai->structured(
             'service_describe',
-            $this->system('Redactas la descripción de servicios de una software factory (web, apps, automatización e IA) para el catálogo y las propuestas. Descripción: 2 a 3 frases claras, orientadas al beneficio. Entregables: 3 a 6 ítems concretos y verificables, sin inventar cantidades que el usuario no haya indicado.'),
+            $this->system('Redactas la descripción de servicios de una software factory y agencia de growth marketing (web, apps, automatización, IA, performance, SEO y email marketing) para el catálogo y las propuestas. Descripción: 2 a 3 frases claras, orientadas al beneficio. Entregables: 3 a 6 ítems concretos y verificables, sin inventar cantidades que el usuario no haya indicado.'),
             'Servicio: '.mb_substr((string) $in['name'], 0, 160)."\nCategoría: ".($in['category'] ?? '—')."\nModalidad: ".(($in['billing'] ?? '') === 'monthly' ? 'mensual recurrente' : 'pago único')."\nNotas del usuario: ".mb_substr((string) ($in['hint'] ?? '—'), 0, 800),
             fn (JsonSchema $s) => [
                 'description' => $s->string()->required(),

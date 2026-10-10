@@ -44,7 +44,7 @@ defineProps<{
                     <slot />
                 </div>
                 <p class="text-center text-xs text-muted-foreground">
-                    Software Factory · CRM interno
+                    Software Factory & Growth Marketing · CRM interno
                 </p>
             </div>
         </div>

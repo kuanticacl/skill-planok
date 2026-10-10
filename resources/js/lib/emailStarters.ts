@@ -44,7 +44,7 @@ export const starters: Starter[] = [
                 make('header'),
                 make('heading', { text: 'Hola {{ first_name | default:"" }}, esto es lo nuevo', size: 28 }),
                 make('text', { text: 'Resumimos lo más relevante del mes para que tomes mejores decisiones comerciales.' }),
-                make('columns', { title: 'Software a la medida', text: 'Cómo usamos desarrollo, automatización e IA para ahorrarte tiempo.', buttonLabel: 'Leer más' }),
+                make('columns', { title: 'Tecnología y growth a tu medida', text: 'Cómo usamos desarrollo, automatización, IA y marketing de performance para ahorrarte tiempo y conseguir más clientes.', buttonLabel: 'Leer más' }),
                 make('divider'),
                 make('heading', { text: 'Proyectos destacados', size: 20 }),
                 make('list'),

@@ -263,8 +263,8 @@
                     @foreach ($holding as $h)<a href="{{ $h['url'] }}" target="_blank" rel="noopener" title="{{ $h['name'] }}"><img src="{{ $asset('brand/partners/'.$h['logo'].'.png') }}" alt="{{ $h['name'] }}"></a>@endforeach
                 </div>
             @else
-                <h3>Software Factory</h3>
-                <p class="hold-note" style="margin-top:0">Más de 10 años transformando empresas con desarrollo web, aplicaciones móviles, automatizaciones e inteligencia artificial.</p>
+                <h3>Software Factory &amp; Growth Marketing</h3>
+                <p class="hold-note" style="margin-top:0">Más de 10 años transformando empresas con desarrollo web, aplicaciones móviles, automatizaciones, inteligencia artificial y growth marketing.</p>
             @endif
         </div>
         <div>
