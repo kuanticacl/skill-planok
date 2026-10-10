@@ -47,6 +47,7 @@ import { index as demoData } from '@/routes/demo-data';
 import { index as trash } from '@/routes/trash';
 import { index as clients } from '@/routes/clients';
 import { index as fields } from '@/routes/fields';
+import { index as kanbanIndex } from '@/routes/kanban';
 import { index as leads } from '@/routes/leads';
 import { index as ai, usage as aiUsage } from '@/routes/ai';
 import { index as apiKeys } from '@/routes/api-keys';
@@ -79,6 +80,7 @@ const groups: NavGroup[] = [
                 icon: LayoutDashboard,
                 permission: 'dashboard.view',
             },
+            { title: 'Kanban', href: kanbanIndex(), icon: Columns3, permission: 'dashboard.view' },
             { title: 'Leads', href: leads(), icon: Users, permission: 'leads.view' },
             { title: 'Clientes', href: clients(), icon: Building2, permission: 'clients.view' },
             { title: 'Propuestas', href: proposals(), icon: FileSignature, permission: 'proposals.view' },

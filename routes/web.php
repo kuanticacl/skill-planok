@@ -19,6 +19,7 @@ use App\Http\Controllers\Email\EmailSettingsController;
 use App\Http\Controllers\Email\EmailTemplateController;
 use App\Http\Controllers\Email\SuppressionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\KanbanController;
 use App\Http\Controllers\LeadActivityController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LeadNoteController;
@@ -53,7 +54,8 @@ Route::post('p/{token}/respond', [PublicProposalController::class, 'answer'])->m
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->middleware('can:dashboard.view')->name('dashboard');
-    Route::get('kanban/stages/{stage}/leads', [DashboardController::class, 'column'])->middleware('can:dashboard.view')->name('kanban.column');
+    Route::get('kanban', [KanbanController::class, 'index'])->middleware('can:dashboard.view')->name('kanban.index');
+    Route::get('kanban/stages/{stage}/leads', [KanbanController::class, 'column'])->middleware('can:dashboard.view')->name('kanban.column');
 
     // Leads
     Route::middleware('can:leads.view')->group(function () {

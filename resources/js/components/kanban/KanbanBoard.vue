@@ -175,7 +175,7 @@ const confirmBulkClose = (extra: { lost_reason: string | null }) => {
 </script>
 
 <template>
-    <div class="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-4 md:mx-0 md:px-0">
+    <div class="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0">
         <KanbanColumn
             v-for="col in columns"
             :key="col.id"
