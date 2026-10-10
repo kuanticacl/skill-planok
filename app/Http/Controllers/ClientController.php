@@ -45,7 +45,7 @@ class ClientController extends Controller
     {
         $client = Client::create([...$request->validated(), 'created_by' => $request->user()->id]);
 
-        $this->toast("Cliente «{$client->name}» creado.");
+        $this->toast("Empresa «{$client->name}» creada.");
 
         return to_route('clients.show', $client);
     }
@@ -83,7 +83,7 @@ class ClientController extends Controller
     {
         $client->update($request->validated());
 
-        $this->toast("Cliente «{$client->name}» actualizado.");
+        $this->toast("Empresa «{$client->name}» actualizada.");
 
         return to_route('clients.show', $client);
     }
@@ -94,7 +94,7 @@ class ClientController extends Controller
         $proposals = $client->proposals()->count();
 
         if (($leads || $proposals) && ! $request->boolean('confirm_related')) {
-            $this->toast('El cliente tiene datos relacionados: confirma la eliminación para enviarlos a la papelera.', 'error');
+            $this->toast('La empresa tiene datos relacionados: confirma la eliminación para enviarlos a la papelera.', 'error');
 
             return back();
         }
@@ -108,14 +108,14 @@ class ClientController extends Controller
         $cascade->client($client, $target);
 
         if ($target) {
-            $this->toast("Cliente eliminado. {$leads} lead(s) y {$proposals} propuesta(s) pasaron a «{$target->name}».");
+            $this->toast("Empresa eliminada. {$leads} cliente(s) y {$proposals} propuesta(s) pasaron a «{$target->name}».");
 
             return to_route('clients.index');
         }
 
         $this->toast($leads || $proposals
-            ? "Cliente eliminado junto con {$leads} lead(s) y {$proposals} propuesta(s) relacionados."
-            : 'Cliente eliminado.');
+            ? "Empresa eliminada junto con {$leads} cliente(s) y {$proposals} propuesta(s) relacionados."
+            : 'Empresa eliminada.');
 
         return to_route('clients.index');
     }

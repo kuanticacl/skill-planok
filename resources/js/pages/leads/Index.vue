@@ -17,7 +17,7 @@ import { formatDate } from '@/lib/format';
 import { create, index, show } from '@/routes/leads';
 import type { LeadCard, Paginated, StageRef, SourceRef, UserOption } from '@/types';
 
-defineOptions({ layout: { breadcrumbs: [{ title: 'Leads', href: index() }] } });
+defineOptions({ layout: { breadcrumbs: [{ title: 'Clientes', href: index() }] } });
 
 const props = defineProps<{
     leads: Paginated<LeadCard & { stage: StageRef }>;
@@ -44,13 +44,13 @@ const clear = () => (filters.value = { q: '', source: '', stage: '', assignee: '
 </script>
 
 <template>
-    <Head title="Leads" />
+    <Head title="Clientes" />
 
     <div class="flex flex-col gap-6 p-4 md:p-6">
-        <PageHeader title="Leads" description="Todos los prospectos que ingresan por API, formularios o carga manual.">
+        <PageHeader title="Clientes" description="Todos los prospectos que ingresan por API, formularios o carga manual.">
             <template #actions>
                 <Button v-if="can('leads.create')" as-child>
-                    <Link :href="create()"><Plus /> Nuevo lead</Link>
+                    <Link :href="create()"><Plus /> Nuevo cliente</Link>
                 </Button>
             </template>
         </PageHeader>
@@ -85,7 +85,7 @@ const clear = () => (filters.value = { q: '', source: '', stage: '', assignee: '
             <Table>
                 <TableHeader>
                     <TableRow class="hover:bg-transparent">
-                        <TableHead>Lead</TableHead>
+                        <TableHead>Cliente</TableHead>
                         <TableHead>Origen</TableHead>
                         <TableHead>Etapa</TableHead>
                         <TableHead>Responsable</TableHead>
@@ -94,7 +94,7 @@ const clear = () => (filters.value = { q: '', source: '', stage: '', assignee: '
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    <TableEmpty v-if="!leads.data.length" :colspan="6">No hay leads que coincidan con los filtros.</TableEmpty>
+                    <TableEmpty v-if="!leads.data.length" :colspan="6">No hay clientes que coincidan con los filtros.</TableEmpty>
                     <TableRow v-for="l in leads.data" :key="l.id">
                         <TableCell>
                             <Link :href="show(l.id)" class="block">

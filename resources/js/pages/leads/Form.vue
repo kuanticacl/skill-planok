@@ -40,7 +40,7 @@ const props = defineProps<{
     can: { assign: boolean; move: boolean };
 }>();
 
-defineOptions({ layout: { breadcrumbs: [{ title: 'Leads', href: index() }] } });
+defineOptions({ layout: { breadcrumbs: [{ title: 'Clientes', href: index() }] } });
 
 const isEdit = computed(() => !!props.lead);
 const l = props.lead;
@@ -88,10 +88,10 @@ const customError = (key: string) => (form.errors as Record<string, string>)[`cu
 </script>
 
 <template>
-    <Head :title="isEdit ? 'Editar lead' : 'Nuevo lead'" />
+    <Head :title="isEdit ? 'Editar cliente' : 'Nuevo cliente'" />
 
     <div class="flex flex-col gap-6 p-4 md:p-6">
-        <PageHeader :title="isEdit ? `Editar a ${lead?.first_name} ${lead?.last_name ?? ''}` : 'Nuevo lead'" description="Datos de contacto, gestión comercial y campos personalizados." />
+        <PageHeader :title="isEdit ? `Editar a ${lead?.first_name} ${lead?.last_name ?? ''}` : 'Nuevo cliente'" description="Datos de contacto, gestión comercial y campos personalizados." />
 
         <form class="flex max-w-4xl flex-col gap-5" @submit.prevent="submit">
             <DataCard class="p-6">
@@ -129,9 +129,9 @@ const customError = (key: string) => (form.errors as Record<string, string>)[`cu
                             <option v-for="u in users" :key="u.id" :value="u.id">{{ u.name }}</option>
                         </NativeSelect>
                     </FormField>
-                    <FormField label="Cliente (inmobiliaria)" for="client_id" :error="form.errors.client_id" hint="Opcional: vincula el lead a un cliente de tu base.">
+                    <FormField label="Empresa (inmobiliaria)" for="client_id" :error="form.errors.client_id" hint="Opcional: vincula el cliente a una empresa de tu base.">
                         <NativeSelect id="client_id" v-model="form.client_id">
-                            <option value="">Sin cliente</option>
+                            <option value="">Sin empresa</option>
                             <option v-for="c in clients" :key="c.id" :value="c.id">{{ c.name }}</option>
                         </NativeSelect>
                     </FormField>
@@ -151,7 +151,7 @@ const customError = (key: string) => (form.errors as Record<string, string>)[`cu
             <div class="flex items-center justify-end gap-2">
                 <Button variant="outline" as-child><Link :href="lead ? show(lead.id) : index()">Cancelar</Link></Button>
                 <Button type="submit" :disabled="form.processing">
-                    <Spinner v-if="form.processing" /> {{ isEdit ? 'Guardar cambios' : 'Crear lead' }}
+                    <Spinner v-if="form.processing" /> {{ isEdit ? 'Guardar cambios' : 'Crear cliente' }}
                 </Button>
             </div>
         </form>

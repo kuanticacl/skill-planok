@@ -23,7 +23,7 @@ type LeadRow = {
 const props = defineProps<{ client: ClientRow; leads: LeadRow[] }>();
 const { can } = usePermissions();
 
-defineOptions({ layout: { breadcrumbs: [{ title: 'Clientes', href: index() }] } });
+defineOptions({ layout: { breadcrumbs: [{ title: 'Empresas', href: index() }] } });
 
 const fmt = (d: string) => new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium' }).format(new Date(d));
 const info = [
@@ -77,11 +77,11 @@ const info = [
                 <Table>
                     <TableHeader>
                         <TableRow class="hover:bg-transparent">
-                            <TableHead>Lead</TableHead><TableHead>Origen</TableHead><TableHead>Etapa</TableHead><TableHead>Responsable</TableHead><TableHead>Ingreso</TableHead>
+                            <TableHead>Cliente</TableHead><TableHead>Origen</TableHead><TableHead>Etapa</TableHead><TableHead>Responsable</TableHead><TableHead>Ingreso</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        <TableEmpty v-if="!leads.length" :colspan="5">Este cliente aún no tiene leads asociados.</TableEmpty>
+                        <TableEmpty v-if="!leads.length" :colspan="5">Esta empresa aún no tiene clientes asociados.</TableEmpty>
                         <TableRow v-for="l in leads" :key="l.id">
                             <TableCell><p class="font-medium">{{ l.full_name }}</p><p class="text-xs text-muted-foreground">{{ l.email }}</p></TableCell>
                             <TableCell><span class="inline-flex items-center gap-1.5 text-sm"><span class="size-2 rounded-full" :style="{ backgroundColor: l.source.color }" />{{ l.source.name }}</span></TableCell>

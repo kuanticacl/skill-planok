@@ -106,13 +106,13 @@ class SourceController extends Controller
         $cascade->source($source, $target);
 
         if ($target) {
-            $this->toast("Origen eliminado. {$impact['leads']} lead(s) pasaron a «{$target->name}».");
+            $this->toast("Origen eliminado. {$impact['clientes']} cliente(s) pasaron a «{$target->name}».");
 
             return back();
         }
 
         $this->toast($impact['leads'] > 0
-            ? "Origen eliminado junto con {$impact['leads']} lead(s) y {$impact['proposals']} propuesta(s) relacionados."
+            ? "Origen eliminado junto con {$impact['clientes']} cliente(s) y {$impact['proposals']} propuesta(s) relacionados."
             : 'Origen eliminado.');
 
         return back();

@@ -22,8 +22,8 @@ class TrashController extends Controller
     private const CASCADE_WINDOW_SECONDS = 10;
 
     private const TYPES = [
-        'leads' => ['label' => 'Leads', 'model' => Lead::class],
-        'clients' => ['label' => 'Clientes', 'model' => Client::class],
+        'leads' => ['label' => 'Clientes', 'model' => Lead::class],
+        'clients' => ['label' => 'Empresas', 'model' => Client::class],
         'proposals' => ['label' => 'Propuestas', 'model' => Proposal::class],
         'sources' => ['label' => 'Orígenes', 'model' => LeadSource::class],
     ];
@@ -138,7 +138,7 @@ class TrashController extends Controller
 
     private function restoreLead(Lead $lead, array &$restored): void
     {
-        abort_unless($this->sourceIsAlive($lead), 422, 'El origen de este lead está en la papelera: restáuralo primero.');
+        abort_unless($this->sourceIsAlive($lead), 422, 'El origen de este cliente está en la papelera: restáuralo primero.');
 
         $at = $lead->deleted_at;
         $lead->restore();

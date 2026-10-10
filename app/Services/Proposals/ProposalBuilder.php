@@ -19,7 +19,7 @@ class ProposalBuilder
     {
         return [
             ['title' => 'Resumen ejecutivo', 'body' => "Gracias por la oportunidad de presentar esta propuesta a **[CLIENTE]**. En Quiebre ayudamos a inmobiliarias a atraer y cerrar más ventas con datos y gestión comercial: dejar de adivinar y empezar a convertir.\n\nEste documento resume lo que proponemos, cómo lo haremos y la inversión asociada."],
-            ['title' => 'Objetivos', 'body' => "- Generar leads calificados para sus proyectos\n- Mejorar la conversión de contacto a visita y de visita a venta\n- Medir el retorno de cada peso invertido con reportes claros"],
+            ['title' => 'Objetivos', 'body' => "- Generar clientes calificados para sus proyectos\n- Mejorar la conversión de contacto a visita y de visita a venta\n- Medir el retorno de cada peso invertido con reportes claros"],
             ['title' => 'Alcance de los servicios', 'body' => 'A continuación se detallan los servicios incluidos, sus entregables y la modalidad de cobro de cada uno.'],
             ['title' => 'Plan de trabajo y plazos', 'body' => "- **Semana 1:** kick-off, accesos y diagnóstico\n- **Semana 2:** configuración y puesta en marcha\n- **Desde la semana 3:** optimización continua y reporte mensual"],
             ['title' => 'Condiciones comerciales', 'body' => "- Valores netos expresados en la moneda indicada (UF o pesos); se agrega IVA\n- La UF de referencia es la del día de emisión de esta propuesta (queda indicada en el documento)\n- Los servicios mensuales se facturan por mes anticipado\n- Los servicios de pago único se facturan 50% al aceptar y 50% al entregar\n- La inversión publicitaria en plataformas (Meta, Google, etc.) no está incluida y la paga directamente el cliente"],

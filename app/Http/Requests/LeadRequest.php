@@ -30,6 +30,8 @@ class LeadRequest extends FormRequest
             'assigned_to' => ['nullable', 'integer', Rule::exists('users', 'id')->where('is_active', true)],
             'priority' => ['nullable', Rule::in(array_keys(\App\Models\Lead::PRIORITIES))],
             'estimated_value' => ['nullable', 'numeric', 'min:0', 'max:99999999999'],
+            'estimated_amount' => ['nullable', 'numeric', 'min:0', 'max:99999999999'],
+            'estimated_currency' => ['nullable', Rule::in(['CLP', 'UF'])],
             'tags' => ['nullable', 'array', 'max:15'],
             'tags.*' => ['string', 'max:30'],
             'next_follow_up_at' => ['nullable', 'date'],

@@ -10,6 +10,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import MoneyInput from '@/components/MoneyInput.vue';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
 import { lostReasons } from '@/lib/leadUi';
@@ -23,13 +24,14 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
     'update:open': [boolean];
-    confirm: [{ lost_reason: string | null; estimated_value: number | null }];
+    confirm: [{ lost_reason: string | null; estimated_amount: number | null; estimated_currency: 'CLP' | 'UF' }];
     cancel: [];
 }>();
 
 const preset = ref(lostReasons[0]);
 const other = ref('');
 const value = ref('');
+const currency = ref<'CLP' | 'UF'>('CLP');
 
 watch(
     () => props.open,
@@ -38,6 +40,7 @@ watch(
             preset.value = lostReasons[0];
             other.value = '';
             value.value = '';
+            currency.value = 'CLP';
         }
     },
 );
@@ -45,7 +48,8 @@ watch(
 const submit = () => {
     emit('confirm', {
         lost_reason: props.type === 'lost' ? (preset.value === 'Otro' ? other.value.trim() || 'Otro' : preset.value) : null,
-        estimated_value: props.type === 'won' && value.value ? Number(value.value) : null,
+        estimated_amount: props.type === 'won' && value.value ? Number(value.value) : null,
+        estimated_currency: currency.value,
     });
 };
 const close = (v: boolean) => {
@@ -59,15 +63,15 @@ const close = (v: boolean) => {
         <DialogContent class="sm:max-w-md">
             <DialogHeader>
                 <DialogTitle>
-                    {{ type === 'won' ? '🎉 Marcar como concretado' : 'Descartar lead' }}
-                    <template v-if="count && count > 1"> ({{ count }} leads)</template>
+                    {{ type === 'won' ? '🎉 Marcar como concretado' : 'Descartar cliente' }}
+                    <template v-if="count && count > 1"> ({{ count }} clientes)</template>
                 </DialogTitle>
                 <DialogDescription>
                     <template v-if="type === 'won'">
-                        {{ leadName ?? 'El lead' }} pasará a «{{ stageName }}». Puedes registrar el valor final del negocio.
+                        {{ leadName ?? 'El cliente' }} pasará a «{{ stageName }}». Puedes registrar el valor final del negocio.
                     </template>
                     <template v-else>
-                        {{ leadName ?? 'El lead' }} pasará a «{{ stageName }}». Indica el motivo para poder analizar por qué se pierden oportunidades.
+                        {{ leadName ?? 'El cliente' }} pasará a «{{ stageName }}». Indica el motivo para poder analizar por qué se pierden oportunidades.
                     </template>
                 </DialogDescription>
             </DialogHeader>
@@ -84,8 +88,8 @@ const close = (v: boolean) => {
                         <Input id="lost-other" v-model="other" placeholder="Describe el motivo" />
                     </FormField>
                 </template>
-                <FormField v-else label="Valor final (CLP)" for="won-value" hint="Opcional. Reemplaza el valor estimado.">
-                    <Input id="won-value" v-model="value" type="number" min="0" step="1000" placeholder="Ej: 4500000" />
+                <FormField v-else label="Valor final" for="won-value" hint="Opcional. Reemplaza el valor estimado.">
+                    <MoneyInput id="won-value" v-model="value" v-model:currency="currency" placeholder="Ej: 4500000" />
                 </FormField>
                 <DialogFooter class="gap-2">
                     <Button type="button" variant="outline" @click="close(false)">Cancelar</Button>

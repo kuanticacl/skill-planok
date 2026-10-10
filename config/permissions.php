@@ -26,27 +26,27 @@ return [
             ],
         ],
         'leads' => [
-            'label' => 'Leads',
+            'label' => 'Clientes',
             'icon' => 'users',
             'permissions' => [
-                'leads.view' => 'Ver leads asignados a él/ella',
-                'leads.view_all' => 'Ver todos los leads',
-                'leads.create' => 'Crear leads',
-                'leads.update' => 'Editar leads',
+                'leads.view' => 'Ver clientes asignados a él/ella',
+                'leads.view_all' => 'Ver todos los clientes',
+                'leads.create' => 'Crear clientes',
+                'leads.update' => 'Editar clientes',
                 'leads.move' => 'Mover entre etapas',
                 'leads.assign' => 'Asignar a otros usuarios',
-                'leads.delete' => 'Eliminar leads',
+                'leads.delete' => 'Eliminar clientes',
                 'leads.notes' => 'Agregar notas y seguimientos',
             ],
         ],
         'clients' => [
-            'label' => 'Clientes',
+            'label' => 'Empresas',
             'icon' => 'building-2',
             'permissions' => [
-                'clients.view' => 'Ver clientes',
-                'clients.create' => 'Crear clientes',
-                'clients.update' => 'Editar clientes',
-                'clients.delete' => 'Eliminar clientes',
+                'clients.view' => 'Ver empresas',
+                'clients.create' => 'Crear empresas',
+                'clients.update' => 'Editar empresas',
+                'clients.delete' => 'Eliminar empresas',
             ],
         ],
         'proposals' => [
@@ -101,7 +101,7 @@ return [
             'label' => 'Inteligencia artificial',
             'icon' => 'sparkles',
             'permissions' => [
-                'ai.use' => 'Usar el asistente de IA (mailings y análisis de leads)',
+                'ai.use' => 'Usar el asistente de IA (mailings y análisis de clientes)',
                 'ai.manage' => 'Configurar proveedores de IA y API keys',
                 'agent.use' => 'Usar el Agent (asistente que opera el CRM por chat)',
             ],
@@ -114,7 +114,7 @@ return [
                 'stages.manage' => 'Gestionar etapas del Kanban',
                 'fields.manage' => 'Gestionar campos personalizados',
                 'trash.manage' => 'Ver la papelera y restaurar datos eliminados',
-                'demo.purge' => 'Limpiar datos de prueba (borrado definitivo de leads, clientes y propuestas)',
+                'demo.purge' => 'Limpiar datos de prueba (borrado definitivo de clientes, empresas y propuestas)',
             ],
         ],
     ],
@@ -132,7 +132,7 @@ return [
         ],
         'comercial' => [
             'name' => 'Ejecutivo comercial',
-            'description' => 'Gestiona sus leads asignados y consulta clientes.',
+            'description' => 'Gestiona sus clientes asignados y consulta empresas.',
             'is_system' => false,
             'permissions' => [
                 'dashboard.view',
@@ -142,7 +142,7 @@ return [
         ],
         'supervisor' => [
             'name' => 'Supervisor',
-            'description' => 'Ve y asigna todos los leads; administra clientes.',
+            'description' => 'Ve y asigna todos los clientes; administra empresas.',
             'is_system' => false,
             'permissions' => [
                 'dashboard.view',

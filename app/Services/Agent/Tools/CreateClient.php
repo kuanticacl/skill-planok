@@ -18,7 +18,7 @@ class CreateClient extends CrmTool
 
     public function description(): string
     {
-        return 'Crea un cliente (empresa). Busca antes con search_clients; si ya existe, usa ese. El RUT se valida (dígito verificador) y se formatea.';
+        return 'Crea una EMPRESA (organización con RUT; no una persona: para personas usa create_lead). Busca antes con search_clients; si ya existe, usa ese. El RUT se valida (dígito verificador) y se formatea.';
     }
 
     public function schema(JsonSchema $schema): array
@@ -53,12 +53,12 @@ class CreateClient extends CrmTool
         if (! empty($d['tax_id'])) {
             $d['tax_id'] = Rut::format($d['tax_id']);
             if ($dup = Client::where('tax_id', $d['tax_id'])->first()) {
-                return "ERROR: ya existe un cliente con ese RUT (id {$dup->id}, {$dup->name}). Úsalo en vez de crear otro.";
+                return "ERROR: ya existe una empresa con ese RUT (id {$dup->id}, {$dup->name}). Úsalo en vez de crear otro.";
             }
         }
 
         $client = Client::create([...$d, 'is_active' => true, 'created_by' => $this->ctx->user->id]);
-        $this->ctx->record($this->name(), "Creó el cliente {$client->name}", url('/clients/'.$client->id));
+        $this->ctx->record($this->name(), "Creó la empresa {$client->name}", url('/clients/'.$client->id));
 
         return ['id' => $client->id, 'name' => $client->name, 'rut' => $client->tax_id, 'url' => url('/clients/'.$client->id)];
     }

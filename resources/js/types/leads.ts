@@ -19,6 +19,8 @@ export type LeadCard = {
     score_grade: 'A' | 'B' | 'C' | 'D' | null;
     profile_completeness: number | null;
     estimated_value: number | null;
+    estimated_currency: 'CLP' | 'UF';
+    estimated_amount: number | null;
     tags: string[];
     next_follow_up_at: string | null;
     stage_changed_at: string;

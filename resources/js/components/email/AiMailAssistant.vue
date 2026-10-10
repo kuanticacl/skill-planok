@@ -31,7 +31,7 @@ watch(() => props.open, (o) => {
 const examples = [
     'Boletín mensual para inmobiliarias con 3 novedades de marketing inmobiliario y una invitación a agendar una demo.',
     'Correo de bienvenida para quien se registra en una landing de un proyecto inmobiliario: confirmar recepción y avisar que un ejecutivo lo contactará.',
-    'Invitación a un webinar sobre cómo mejorar la conversión de leads inmobiliarios.',
+    'Invitación a un webinar sobre cómo mejorar la conversión de clientes inmobiliarios.',
 ];
 
 const generate = async () => {
@@ -71,7 +71,7 @@ const generate = async () => {
 
             <div class="grid gap-4">
                 <FormField label="¿De qué trata el correo?" :error="errors.brief">
-                    <Textarea v-model="form.brief" rows="4" placeholder="Ej: Invitar a inmobiliarias a una demo de integraleads, destacando el seguimiento de leads y los reportes." />
+                    <Textarea v-model="form.brief" rows="4" placeholder="Ej: Invitar a inmobiliarias a una demo de integraleads, destacando el seguimiento de clientes y los reportes." />
                     <div class="mt-2 flex flex-wrap gap-1.5">
                         <button v-for="(ex, i) in examples" :key="i" type="button" class="rounded-full border bg-muted/40 px-2.5 py-1 text-[11px] text-muted-foreground transition hover:border-primary/50 hover:text-foreground" @click="form.brief = ex">Ejemplo {{ i + 1 }}</button>
                     </div>
@@ -100,7 +100,7 @@ const generate = async () => {
 
                 <p v-if="hasContent" class="flex items-start gap-2 rounded-xl bg-[#FFA165]/15 px-3 py-2 text-xs text-[#9A4B00]"><TriangleAlert class="mt-0.5 size-4 shrink-0" /> Esto reemplazará el diseño actual del editor (puedes deshacer cerrando sin guardar).</p>
                 <p v-if="error" class="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ error }}</p>
-                <p class="text-[11px] text-muted-foreground">La IA no recibe datos de leads ni de clientes. Revisa siempre el resultado antes de enviar.</p>
+                <p class="text-[11px] text-muted-foreground">La IA no recibe datos de clientes ni de empresas. Revisa siempre el resultado antes de enviar.</p>
             </div>
 
             <DialogFooter>

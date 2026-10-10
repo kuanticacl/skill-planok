@@ -13,7 +13,7 @@ export type Starter = { key: string; name: string; description: string; category
 export const starters: Starter[] = [
     {
         key: 'welcome',
-        name: 'Bienvenida a un lead (landing)',
+        name: 'Bienvenida a un cliente (landing)',
         description: 'Se envía cuando alguien se registra en una landing. Usa los datos que llegan por la API.',
         category: 'transactional',
         subject: '{{ first_name | default:"Hola" }}, recibimos tu solicitud',

@@ -96,7 +96,7 @@ const stripe = computed(() => (props.lead.priority === 'urgent' || props.lead.pr
         </div>
 
         <div v-if="(prefs.show.value && lead.estimated_value) || (prefs.show.followup && followUp)" class="mt-2 flex flex-wrap items-center gap-1.5">
-            <span v-if="prefs.show.value && lead.estimated_value" class="rounded-full bg-brand-green/10 px-2 py-0.5 text-[11px] font-semibold text-brand-green">{{ formatMoneyShort(lead.estimated_value) }}</span>
+            <span v-if="prefs.show.value && lead.estimated_value" class="rounded-full bg-brand-green/10 px-2 py-0.5 text-[11px] font-semibold text-brand-green" :title="lead.estimated_currency === 'UF' ? `≈ ${formatMoneyShort(lead.estimated_value)}` : undefined">{{ lead.estimated_currency === 'UF' ? formatAmountShort(lead.estimated_amount, 'UF') : formatMoneyShort(lead.estimated_value) }}</span>
             <span v-if="prefs.show.followup && followUp" :class="cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium', followUpClass[followUp.state])">
                 <TriangleAlert v-if="followUp.state === 'overdue'" class="size-3" />{{ followUp.label }}
             </span>

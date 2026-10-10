@@ -18,7 +18,7 @@ class FindProposals extends CrmTool
     public function description(): string
     {
         return 'Busca propuestas y devuelve su ESTADO (borrador, enviada, vista, ajustes solicitados, aceptada, rechazada, vencida), vistas, respuesta del cliente y totales. '
-            .'Filtra por texto (número, título, empresa), por estado, cliente o lead.';
+            .'Filtra por texto (número, título, empresa), por estado, empresa (client_id) o cliente (lead_id).';
     }
 
     public function schema(JsonSchema $schema): array
