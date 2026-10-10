@@ -147,7 +147,7 @@ const ufDay = computed(() => (props.proposal.uf_date ? new Intl.DateTimeFormat('
 
     <Dialog v-model:open="sendOpen">
         <DialogContent class="sm:max-w-lg">
-            <DialogHeader><DialogTitle class="flex items-center gap-2"><Mail class="size-5 text-primary" /> Enviar propuesta por correo</DialogTitle><DialogDescription>Se envía con el diseño de ECORTESCL y un botón al enlace de la propuesta. Quedará registrada en el historial del lead.</DialogDescription></DialogHeader>
+            <DialogHeader><DialogTitle class="flex items-center gap-2"><Mail class="size-5 text-primary" /> Enviar propuesta por correo</DialogTitle><DialogDescription>Se envía con el diseño de ECORTESCL y un botón al enlace de la propuesta. Quedará registrada en el historial del cliente.</DialogDescription></DialogHeader>
             <form class="grid gap-4" @submit.prevent="submitSend">
                 <div class="grid gap-4 sm:grid-cols-2">
                     <FormField label="Correo" for="s-to" :error="sendForm.errors.to" required><Input id="s-to" v-model="sendForm.to" type="email" /></FormField>

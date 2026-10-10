@@ -131,8 +131,8 @@ class ProposalAssistant
 
         if (! empty($in['lead_id']) && ($lead = Lead::with(['source', 'stage'])->find($in['lead_id']))) {
             $lines[] = 'Cargo del contacto: '.($lead->job_title ?: 'no informado');
-            $lines[] = 'Mensaje original del lead: '.($lead->message ? mb_substr($lead->message, 0, 800) : 'sin mensaje');
-            $lines[] = 'Origen del lead: '.($lead->source?->name ?? '—').($lead->utm_campaign ? " · campaña {$lead->utm_campaign}" : '');
+            $lines[] = 'Mensaje original del cliente: '.($lead->message ? mb_substr($lead->message, 0, 800) : 'sin mensaje');
+            $lines[] = 'Origen del cliente: '.($lead->source?->name ?? '—').($lead->utm_campaign ? " · campaña {$lead->utm_campaign}" : '');
             $lines[] = 'Ubicación: '.collect([$lead->city, $lead->country])->filter()->implode(', ');
         }
 
