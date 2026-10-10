@@ -18,6 +18,7 @@ import {
     ListPlus,
     Plug,
     Trash2,
+    ChartColumn,
     Eraser,
     ShieldCheck,
     UserCog,
@@ -47,7 +48,7 @@ import { index as trash } from '@/routes/trash';
 import { index as clients } from '@/routes/clients';
 import { index as fields } from '@/routes/fields';
 import { index as leads } from '@/routes/leads';
-import { index as ai } from '@/routes/ai';
+import { index as ai, usage as aiUsage } from '@/routes/ai';
 import { index as apiKeys } from '@/routes/api-keys';
 import { index as automations } from '@/routes/automations';
 import { index as campaigns } from '@/routes/campaigns';
@@ -99,7 +100,10 @@ const groups: NavGroup[] = [
     },
     {
         label: 'Inteligencia artificial',
-        items: [{ title: 'Proveedores de IA', href: ai(), icon: Sparkles, permission: 'ai.manage' }],
+        items: [
+            { title: 'Proveedores de IA', href: ai(), icon: Sparkles, permission: 'ai.manage' },
+            { title: 'Consumo y gastos', href: aiUsage(), icon: ChartColumn, permission: 'ai.manage' },
+        ],
     },
     {
         label: 'Configuración CRM',

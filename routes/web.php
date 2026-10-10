@@ -3,6 +3,7 @@
 use App\Http\Controllers\Ai\AiEmailController;
 use App\Http\Controllers\Ai\AiProposalController;
 use App\Http\Controllers\Ai\AiSettingsController;
+use App\Http\Controllers\Ai\AiUsageController;
 use App\Http\Controllers\Ai\LeadAiController;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AgentController;
@@ -264,6 +265,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Inteligencia artificial: proveedores y API keys
     Route::prefix('ai')->middleware('can:ai.manage')->group(function () {
         Route::get('/', [AiSettingsController::class, 'index'])->name('ai.index');
+        Route::get('usage', [AiUsageController::class, 'index'])->name('ai.usage');
+        Route::put('usage/prices', [AiUsageController::class, 'prices'])->name('ai.usage.prices');
+        Route::put('usage/budget', [AiUsageController::class, 'budget'])->name('ai.usage.budget');
         Route::put('settings', [AiSettingsController::class, 'settings'])->name('ai.settings.update');
         Route::put('providers/{slug}', [AiSettingsController::class, 'update'])->name('ai.providers.update');
         Route::delete('providers/{slug}', [AiSettingsController::class, 'destroy'])->name('ai.providers.destroy');
