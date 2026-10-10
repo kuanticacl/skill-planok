@@ -252,6 +252,13 @@ Integrada con el **SDK oficial `laravel/ai`**. Todo es opcional: sin proveedor c
 - **Plantillas por defecto en el editor visual:** `bienvenida-usuario`, `recuperar-password`, `bienvenida-top-inmobiliario`, `confirmacion-asesoria` y `propuesta-comercial` se definen con bloques (`resources/email-designs/*.json`, generados con `node scripts/build-email-designs.mjs` usando el mismo compilador del editor), así que se abren y modifican en *Plantillas → Visual*. Si cambias su diseño en el CRM, el sistema no lo pisa.
 - **Holding:** `crm:landing-kit` también crea los orígenes *Formulario Landing Kuántica*, *Formulario Landing Be Modular* y *Formulario Landing integraleads* (cada uno con su API key; usa la API de leads igual que la landing de Top Inmobiliario). Todos los correos que sale del CRM —plantillas, boletines, transaccionales y pruebas— llevan al pie «Parte del holding» con los logos de Be Modular, Kuántica e integraleads, como en la propuesta comercial.
 
+## Rendimiento
+
+- **Medir:** los administradores reciben la cabecera `Server-Timing` en cada respuesta (pestaña *Network → Timing* del navegador): `boot` (arranque de PHP), `app` (tiempo total de la aplicación), `db` (tiempo y cantidad de consultas) y memoria. `PERF_HEADERS=true` la emite para todos.
+- **Redis** (servicio `*-crm-redis` del stack, persistente con AOF y con contraseña): guarda **sesiones y caché** (límites de peticiones incluidos). La cola de trabajos sigue en la base de datos para no perder tareas pendientes (`QUEUE_CONNECTION=redis` es opcional). Si Redis no estuviera disponible, se puede volver a la base con `SESSION_DRIVER=database` y `CACHE_STORE=database`. Al activarlo por primera vez se cierran las sesiones abiertas (hay que volver a iniciar sesión).
+- **Arranque en frío:** el contenedor cachea configuración, **rutas**, eventos y vistas al iniciar; OPcache sin revalidación (192 MB) y caché de rutas de archivos; MariaDB con `skip-name-resolve` y buffer pool de 256 MB.
+- **Navegador:** los enlaces del menú precargan la pantalla al pasar el mouse (`prefetch`) y, ya con sesión, se calientan en segundo plano los módulos de Dashboard, Leads, Clientes y Propuestas; los assets llevan caché de 1 año y compresión gzip.
+
 ## Estructura
 
 ```
