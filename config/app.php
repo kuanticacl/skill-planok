@@ -13,6 +13,9 @@ return [
     |
     */
 
+    // Emite la cabecera Server-Timing para todos los usuarios (por defecto solo para administradores).
+    'perf_headers' => (bool) env('PERF_HEADERS', false),
+
     'name' => env('APP_NAME', 'Laravel'),
 
     /*
