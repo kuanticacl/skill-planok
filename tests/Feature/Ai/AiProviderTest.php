@@ -44,4 +44,17 @@ class AiProviderTest extends TestCase
 
         $this->actingAs($user)->postJson('/email/ai/design', ['brief' => 'Correo de bienvenida para un lead'])->assertForbidden();
     }
+
+    public function test_transcription_model_is_saved_only_for_providers_that_transcribe(): void
+    {
+        $admin = $this->userWithRole('admin');
+
+        $this->actingAs($admin)->put('/ai/providers/openai', ['api_key' => 'sk-test-1234567890', 'transcription_model' => 'gpt-4o-mini-transcribe', 'is_enabled' => true])->assertRedirect();
+        $this->assertSame('gpt-4o-mini-transcribe', \App\Models\AiProvider::where('slug', 'openai')->value('transcription_model'));
+
+        $this->actingAs($admin)->put('/ai/providers/anthropic', ['api_key' => 'sk-ant-test-1234567890', 'transcription_model' => 'whisper-1', 'is_enabled' => true])->assertRedirect();
+        $this->assertNull(\App\Models\AiProvider::where('slug', 'anthropic')->value('transcription_model'));
+
+        $this->actingAs($admin)->postJson('/ai/providers/anthropic/test-voice')->assertStatus(422);
+    }
 }

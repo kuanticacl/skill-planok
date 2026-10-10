@@ -60,6 +60,25 @@ class AiCatalog
     ];
 
     /** @return array<string, mixed>|null */
+    /**
+     * Transcripción de voz por driver: si el SDK la soporta y qué modelos sugerir (el primero es el recomendado).
+     *
+     * @return array{supported: bool, suggest: array<int, string>, default: string|null}
+     */
+    public static function transcription(string $slug): array
+    {
+        $driver = self::PROVIDERS[$slug]['driver'] ?? $slug;
+
+        return match ($driver) {
+            'openai' => ['supported' => true, 'suggest' => ['gpt-4o-mini-transcribe', 'gpt-4o-transcribe', 'whisper-1'], 'default' => null],
+            'groq' => ['supported' => true, 'suggest' => ['whisper-large-v3-turbo', 'whisper-large-v3'], 'default' => null],
+            'mistral' => ['supported' => true, 'suggest' => ['voxtral-mini-latest'], 'default' => null],
+            'gemini', 'openrouter' => ['supported' => true, 'suggest' => [], 'default' => null],
+            'openai-compatible' => ['supported' => true, 'suggest' => ['whisper-1'], 'default' => 'whisper-1'],
+            default => ['supported' => false, 'suggest' => [], 'default' => null], // Claude, DeepSeek, xAI…
+        };
+    }
+
     public static function get(string $slug): ?array
     {
         return self::PROVIDERS[$slug] ?? null;
