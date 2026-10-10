@@ -155,6 +155,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('can:agent.use')->prefix('agent')->name('agent.')->group(function () {
         Route::get('status', [AgentController::class, 'status'])->name('status');
         Route::post('chat', [AgentController::class, 'chat'])->middleware('throttle:20,1')->name('chat');
+        Route::post('attachments', [AgentController::class, 'attachments'])->middleware('throttle:30,1')->name('attachments');
+        Route::post('transcribe', [AgentController::class, 'transcribe'])->middleware('throttle:30,1')->name('transcribe');
     });
 
     Route::middleware('can:demo.purge')->group(function () {

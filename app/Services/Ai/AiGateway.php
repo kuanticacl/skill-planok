@@ -11,6 +11,7 @@ use Laravel\Ai\Ai;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Exceptions\AiException;
 use Laravel\Ai\Providers\Provider;
+use Laravel\Ai\Transcription;
 use Throwable;
 
 use function Laravel\Ai\agent;
@@ -47,7 +48,7 @@ class AiGateway
     }
 
     /** Proveedor del SDK construido en caliente con la key guardada (no se toca config/ai.php ni el .env). */
-    public function build(AiProvider $p): Provider
+    public function build(AiProvider $p, ?string $transcriptionModel = null): Provider
     {
         $catalog = AiCatalog::get($p->slug);
 
@@ -55,7 +56,10 @@ class AiGateway
             'driver' => $p->driver,
             'key' => $p->api_key,
             'url' => $p->base_url ?: ($catalog['url'] ?? null),
-            'models' => $p->model ? ['text' => ['default' => $p->model]] : null,
+            'models' => array_filter([
+                'text' => $p->model ? ['default' => $p->model] : null,
+                'transcription' => $transcriptionModel ? ['default' => $transcriptionModel] : null,
+            ]) ?: null,
         ], fn ($v) => $v !== null && $v !== ''));
     }
 
@@ -115,6 +119,45 @@ class AiGateway
         }
 
         return $json;
+    }
+
+    /** Drivers del SDK que ofrecen transcripción de audio. */
+    private const TRANSCRIPTION_DRIVERS = ['openai', 'gemini', 'groq', 'mistral', 'openrouter', 'openai-compatible'];
+
+    /** Proveedor para transcribir voz: el predeterminado si sirve; si no, cualquier otro habilitado que sí transcriba. */
+    public function transcriptionProvider(): ?AiProvider
+    {
+        $default = $this->default();
+        if ($default && in_array($default->driver, self::TRANSCRIPTION_DRIVERS, true)) {
+            return $default;
+        }
+
+        return AiProvider::where('is_enabled', true)->whereIn('driver', self::TRANSCRIPTION_DRIVERS)->get()->first(fn (AiProvider $p) => $p->isUsable());
+    }
+
+    /** Modelo de transcripción: el definido en Setting «ai.transcription_model»; los gateways compatibles con OpenAI exigen uno explícito. */
+    private function transcriptionModel(AiProvider $p): ?string
+    {
+        return \App\Models\Setting::get('ai.transcription_model') ?: ($p->driver === 'openai-compatible' ? 'whisper-1' : null);
+    }
+
+    /** Transcribe un audio a texto (español). Registra uso y errores en ai_runs. */
+    public function transcribe(\Illuminate\Http\UploadedFile $audio): string
+    {
+        $provider = $this->transcriptionProvider() ?? throw new AiNotConfigured;
+        $start = microtime(true);
+
+        try {
+            $text = trim((string) Transcription::fromUpload($audio)->language('es')->timeout(90)->generate([$this->build($provider, $this->transcriptionModel($provider))]));
+            $this->log('transcribe', $provider, 'ok', $start, 0, 0, null, []);
+
+            return $text;
+        } catch (Throwable $e) {
+            $message = $this->friendly($e, $provider);
+            $this->log('transcribe', $provider, 'error', $start, 0, 0, $message, []);
+
+            throw new AiFailed($message, previous: $e);
+        }
     }
 
     /** Prueba de conexión: pide una respuesta mínima y mide la latencia. @return array{ok: bool, message: string, ms: int} */
