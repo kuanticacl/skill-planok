@@ -113,6 +113,7 @@ return [
                 'stages.manage' => 'Gestionar etapas del Kanban',
                 'fields.manage' => 'Gestionar campos personalizados',
                 'trash.manage' => 'Ver la papelera y restaurar datos eliminados',
+                'demo.purge' => 'Limpiar datos de prueba (borrado definitivo de leads, clientes y propuestas)',
             ],
         ],
     ],

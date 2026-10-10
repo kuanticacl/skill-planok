@@ -18,6 +18,7 @@ import {
     ListPlus,
     Plug,
     Trash2,
+    Eraser,
     ShieldCheck,
     UserCog,
     Users,
@@ -41,6 +42,7 @@ import {
 import { usePermissions } from '@/composables/usePermissions';
 import { dashboard } from '@/routes';
 import { edit as agencyEdit } from '@/routes/agency';
+import { index as demoData } from '@/routes/demo-data';
 import { index as trash } from '@/routes/trash';
 import { index as clients } from '@/routes/clients';
 import { index as fields } from '@/routes/fields';
@@ -107,6 +109,7 @@ const groups: NavGroup[] = [
             { title: 'Campos personalizados', href: fields(), icon: ListPlus, permission: 'fields.manage' },
             { title: 'Datos de la agencia', href: agencyEdit(), icon: Building, permission: 'agency.manage' },
             { title: 'Papelera', href: trash(), icon: Trash2, permission: 'trash.manage' },
+            { title: 'Datos de prueba', href: demoData(), icon: Eraser, permission: 'demo.purge' },
         ],
     },
     {
