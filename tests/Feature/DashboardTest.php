@@ -35,4 +35,20 @@ class DashboardTest extends TestCase
 
         $response->assertForbidden();
     }
+
+    public function test_dashboard_is_a_summary_and_the_kanban_board_lives_on_its_own_page(): void
+    {
+        $this->seedCrm();
+        $admin = $this->userWithRole('admin');
+        $this->makeLead(['first_name' => 'Ana']);
+
+        $this->actingAs($admin)->get(route('dashboard'))->assertOk()->assertInertia(fn ($p) => $p
+            ->component('Dashboard')->has('funnel')->has('daily', 14)->has('followUps')->has('recent')->missing('board'));
+
+        $this->actingAs($admin)->get(route('kanban.index'))->assertOk()->assertInertia(fn ($p) => $p
+            ->component('Kanban')->has('board')->has('stages')->where('stats.total', 1));
+
+        $this->actingAs($this->userWithRole('comercial'))->get(route('kanban.index'))->assertOk();
+        $this->actingAs($this->userWithPermissions(['clients.view']))->get(route('kanban.index'))->assertForbidden();
+    }
 }

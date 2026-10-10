@@ -37,7 +37,7 @@ const remaining = () => props.col.total - props.col.leads.length;
     <button
         v-if="collapsed"
         type="button"
-        class="flex w-12 shrink-0 flex-col items-center gap-3 rounded-2xl bg-muted/60 py-3 ring-1 ring-border/60 transition hover:bg-muted"
+        class="flex h-full w-12 shrink-0 flex-col items-center gap-3 rounded-2xl bg-muted/60 py-3 ring-1 ring-border/60 transition hover:bg-muted"
         :title="`Expandir ${col.name}`"
         @click="emit('toggleCollapse')"
     >
@@ -47,7 +47,7 @@ const remaining = () => props.col.total - props.col.leads.length;
         <ChevronsLeftRight class="mt-auto size-4 text-muted-foreground" />
     </button>
 
-    <section v-else class="flex max-h-[calc(100vh-15rem)] min-h-64 w-[19rem] shrink-0 snap-start flex-col rounded-2xl bg-muted/60 ring-1 ring-border/60">
+    <section v-else class="flex h-full min-h-64 w-[19.5rem] shrink-0 snap-start flex-col rounded-2xl bg-muted/60 ring-1 ring-border/60">
         <header class="px-3.5 pt-3 pb-2">
             <div class="flex items-center gap-2">
                 <span class="size-3 rounded-full" :style="{ backgroundColor: col.color }" />
