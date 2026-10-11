@@ -110,7 +110,7 @@ const info = [
 
         <DataCard v-if="services !== null">
             <div class="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3">
-                <span class="font-semibold">Servicios contratados ({{ services.length }})</span>
+                <span class="font-semibold">Servicios ({{ services.length }})</span>
                 <Button v-if="can('contracts.create')" size="sm" variant="outline" as-child><Link :href="`/contracts/create?client=${client.id}`"><Plus /> Nuevo servicio</Link></Button>
             </div>
             <Table>

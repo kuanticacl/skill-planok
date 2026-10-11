@@ -27,6 +27,7 @@ use App\Http\Controllers\LeadFieldController;
 use App\Http\Controllers\Proposals\ProposalController;
 use App\Http\Controllers\Public\ProposalViewController as PublicProposalController;
 use App\Http\Controllers\Proposals\ServiceController;
+use App\Http\Controllers\Billing\AccountsController;
 use App\Http\Controllers\Billing\ContractController;
 use App\Http\Controllers\Billing\ExpenseController;
 use App\Http\Controllers\Billing\InvoiceController;
@@ -106,6 +107,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('clients/{client}/edit', [ClientController::class, 'edit'])->middleware('can:clients.update')->name('clients.edit');
     Route::put('clients/{client}', [ClientController::class, 'update'])->middleware('can:clients.update')->name('clients.update');
     Route::delete('clients/{client}', [ClientController::class, 'destroy'])->middleware('can:clients.delete')->name('clients.destroy');
+
+    // Dashboard y Kanban de cuentas (empresas con servicios contratados)
+    Route::get('accounts', [AccountsController::class, 'dashboard'])->middleware('can:contracts.view')->name('accounts.dashboard');
+    Route::get('accounts/kanban', [AccountsController::class, 'kanban'])->middleware('can:contracts.view')->name('accounts.kanban');
 
     // Servicios contratados (con costos y gastos internos)
     Route::prefix('contracts')->group(function () {

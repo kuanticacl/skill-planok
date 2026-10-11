@@ -38,7 +38,7 @@ const fmt = (d: string | null) => (d ? new Intl.DateTimeFormat('es-CL', { dateSt
     <div class="flex flex-col gap-6 p-4 md:p-6">
         <PageHeader title="Propuestas comerciales" description="Arma propuestas con la identidad de ECORTESCL, envíalas por correo o enlace y sigue si el cliente las vio y aceptó.">
             <template #actions>
-                <Button v-if="can.services" variant="outline" as-child><Link :href="services()"><Package /> Servicios y tarifas</Link></Button>
+                <Button v-if="can.services" variant="outline" as-child><Link :href="services()"><Package /> Catálogo</Link></Button>
                 <Button v-if="can.create" as-child><Link :href="create()"><Plus /> Nueva propuesta</Link></Button>
             </template>
         </PageHeader>

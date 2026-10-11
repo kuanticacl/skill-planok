@@ -31,7 +31,7 @@ const props = defineProps<{
 }>();
 
 const isEdit = computed(() => !!props.service);
-defineOptions({ layout: { breadcrumbs: [{ title: 'Servicios contratados', href: '/contracts' }] } });
+defineOptions({ layout: { breadcrumbs: [{ title: 'Servicios', href: '/contracts' }] } });
 
 const s = props.service;
 const form = useForm({

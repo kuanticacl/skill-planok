@@ -16,7 +16,7 @@ import { cycleLabels, cyclePer, fmtDate, money } from '@/lib/billingUi';
 import type { Paginated } from '@/types';
 import type { ServiceRow } from '@/types/billing';
 
-defineOptions({ layout: { breadcrumbs: [{ title: 'Servicios contratados', href: '/contracts' }] } });
+defineOptions({ layout: { breadcrumbs: [{ title: 'Servicios', href: '/contracts' }] } });
 
 const props = defineProps<{
     services: Paginated<ServiceRow>;
@@ -38,10 +38,10 @@ const cards = [
 </script>
 
 <template>
-    <Head title="Servicios contratados" />
+    <Head title="Servicios" />
 
     <div class="flex flex-col gap-6 p-4 md:p-6">
-        <PageHeader title="Servicios contratados" description="Lo que cada empresa tiene contratado: fechas, ciclo de cobro, renovación y servicios asociados.">
+        <PageHeader title="Servicios" description="Lo que cada empresa tiene contratado: fechas, ciclo de cobro, renovación y servicios asociados.">
             <template #actions>
                 <Button v-if="can('contracts.create')" as-child>
                     <Link href="/contracts/create"><Plus /> Nuevo servicio</Link>

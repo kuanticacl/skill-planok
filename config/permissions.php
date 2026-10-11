@@ -63,7 +63,7 @@ return [
             ],
         ],
         'contracts' => [
-            'label' => 'Servicios contratados',
+            'label' => 'Servicios',
             'icon' => 'package-check',
             'permissions' => [
                 'contracts.view' => 'Ver servicios contratados',

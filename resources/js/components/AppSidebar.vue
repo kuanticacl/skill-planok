@@ -86,13 +86,15 @@ const groups: NavGroup[] = [
             { title: 'Clientes', href: leads(), icon: Users, permission: 'leads.view' },
             { title: 'Empresas', href: clients(), icon: Building2, permission: 'clients.view' },
             { title: 'Propuestas', href: proposals(), icon: FileSignature, permission: 'proposals.view' },
-            { title: 'Servicios y tarifas', href: services(), icon: Package, permission: 'services.view' },
+            { title: 'Catálogo', href: services(), icon: Package, permission: 'services.view' },
         ],
     },
     {
         label: 'Cobranza',
         items: [
-            { title: 'Servicios contratados', href: '/contracts', icon: PackageCheck, permission: 'contracts.view' },
+            { title: 'Dashboard de cuentas', href: '/accounts', icon: ChartColumn, permission: 'contracts.view' },
+            { title: 'Kanban de cuentas', href: '/accounts/kanban', icon: Columns3, permission: 'contracts.view' },
+            { title: 'Servicios', href: '/contracts', icon: PackageCheck, permission: 'contracts.view' },
             { title: 'Facturación', href: '/billing', icon: Receipt, permission: 'billing.view' },
         ],
     },

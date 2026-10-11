@@ -33,7 +33,7 @@ const props = defineProps<{
     taxRate: number;
 }>();
 
-defineOptions({ layout: { breadcrumbs: [{ title: 'Servicios contratados', href: '/contracts' }] } });
+defineOptions({ layout: { breadcrumbs: [{ title: 'Servicios', href: '/contracts' }] } });
 const { can } = usePermissions();
 const canCosts = computed(() => props.can.costs);
 
