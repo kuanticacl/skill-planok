@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { Sparkles, TriangleAlert } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import FormField from '@/components/FormField.vue';
@@ -24,6 +24,8 @@ const props = defineProps<{
     aiAvailable?: boolean;
 }>();
 const { can } = usePermissions();
+const page = usePage();
+const aiOn = computed(() => props.aiAvailable ?? Boolean(page.props.ai_available));
 const open = defineModel<boolean>('open', { default: false });
 
 const blank = () => ({
@@ -116,7 +118,7 @@ const readWithAi = async () => {
 
 const onFile = (e: Event) => {
     form.pdf = (e.target as HTMLInputElement).files?.[0] ?? null;
-    if (form.pdf && props.aiAvailable && !props.invoice) void readWithAi();
+    if (form.pdf && aiOn.value && !props.invoice) void readWithAi();
 };
 
 const submit = () => {
@@ -158,7 +160,8 @@ const submit = () => {
                 <FormField label="PDF de la factura" for="inv-pdf" class="sm:col-span-2" :hint="invoice?.has_pdf ? `Ya hay un PDF adjunto (${invoice.pdf_name}). Elige otro para reemplazarlo.` : 'Máx. 10 MB.'" :error="form.errors.pdf">
                     <input id="inv-pdf" ref="fileInput" type="file" accept="application/pdf" class="block w-full text-sm file:mr-3 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary" @change="onFile" />
                 </FormField>
-                <div v-if="form.pdf && aiAvailable" class="flex flex-wrap items-center gap-2 sm:col-span-2">
+                <p v-if="form.pdf && !aiOn" class="text-xs text-muted-foreground sm:col-span-2">Para que la IA lea la factura y complete los datos, configura un proveedor en <strong>Proveedores de IA</strong> (y que tu rol tenga el permiso «Usar IA»).</p>
+                <div v-if="form.pdf && aiOn" class="flex flex-wrap items-center gap-2 sm:col-span-2">
                     <Button type="button" size="sm" variant="outline" :disabled="reading" @click="readWithAi"><Spinner v-if="reading" /><Sparkles v-else /> {{ reading ? 'Leyendo la factura…' : 'Leer datos del PDF con IA' }}</Button>
                     <span v-if="aiNote" class="text-xs text-brand-green">{{ aiNote }}</span>
                 </div>

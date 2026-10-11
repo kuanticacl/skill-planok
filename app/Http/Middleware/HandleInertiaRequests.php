@@ -50,6 +50,10 @@ class HandleInertiaRequests extends Middleware
             ],
             // UF de hoy (para convertir UF ↔ CLP en formularios); en caché para no consultar la base en cada página.
             'uf' => fn () => $user ? \Illuminate\Support\Facades\Cache::remember('uf.today.shared', 600, fn () => app(\App\Services\UfService::class)->today()) : null,
+            // ¿Hay un proveedor de IA utilizable? (lectura de facturas en cualquier formulario de cobro). Solo para quien puede usar IA.
+            'ai_available' => fn () => $user && $user->hasPermission('ai.use')
+                ? \Illuminate\Support\Facades\Cache::remember('ai.available', 60, fn () => app(\App\Services\Ai\AiGateway::class)->isAvailable())
+                : false,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
