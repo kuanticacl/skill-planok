@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { ArrowRight, CircleAlert, FileText, Package, Receipt } from '@lucide/vue';
+import BankAccountsCard from '@/components/portal/BankAccountsCard.vue';
+import type { PortalBank } from '@/components/portal/BankAccountsCard.vue';
 import InvoiceCard from '@/components/portal/InvoiceCard.vue';
 import type { PortalInvoice } from '@/components/portal/InvoiceCard.vue';
 import { Button } from '@/components/ui/button';
@@ -10,6 +12,7 @@ const props = defineProps<{
     company: { id: number; name: string };
     summary: { active_services: number; pending_invoices: number; overdue_invoices: number; pending_total_clp: number; proposals: number };
     next_invoice: PortalInvoice | null;
+    bank: PortalBank | null;
     recent_invoices: PortalInvoice[];
 }>();
 
@@ -45,6 +48,8 @@ const cards = [
             <h2 class="font-semibold">Próxima factura por pagar</h2>
             <InvoiceCard :invoice="next_invoice" />
         </section>
+
+        <BankAccountsCard v-if="bank" :bank="bank" />
 
         <section class="grid gap-3">
             <div class="flex items-center justify-between"><h2 class="font-semibold">Últimas facturas</h2><Button variant="ghost" size="sm" as-child><Link href="/portal/facturas">Ver todas <ArrowRight /></Link></Button></div>

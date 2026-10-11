@@ -124,6 +124,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('billing')->group(function () {
         Route::get('/', [InvoiceController::class, 'index'])->middleware('can:billing.view')->name('billing.index');
         Route::put('settings', [InvoiceController::class, 'settings'])->middleware('can:billing.settings')->name('billing.settings');
+        Route::put('bank-accounts', [InvoiceController::class, 'bankAccounts'])->middleware('can:billing.settings')->name('billing.bank-accounts');
         Route::get('invoices/{invoice}/download', [InvoiceController::class, 'download'])->middleware('can:billing.view')->name('billing.download');
         Route::middleware('can:billing.manage')->group(function () {
             Route::post('invoices', [InvoiceController::class, 'store'])->name('billing.store');

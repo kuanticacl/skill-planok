@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import BankAccountsCard from '@/components/portal/BankAccountsCard.vue';
+import type { PortalBank } from '@/components/portal/BankAccountsCard.vue';
 import InvoiceCard from '@/components/portal/InvoiceCard.vue';
 import type { PortalInvoice } from '@/components/portal/InvoiceCard.vue';
 import { cn } from '@/lib/utils';
 
-const props = defineProps<{ company: { id: number; name: string }; invoices: PortalInvoice[] }>();
+const props = defineProps<{ company: { id: number; name: string }; invoices: PortalInvoice[]; bank: PortalBank }>();
 
 const tab = ref<'pending' | 'paid' | 'all'>('pending');
 const pendingCount = computed(() => props.invoices.filter((i) => i.status !== 'paid').length);
@@ -31,5 +33,7 @@ const tabs = computed(() => [
 
         <p v-if="!list.length" class="rounded-2xl border border-dashed bg-card p-8 text-center text-sm text-muted-foreground">{{ tab === 'pending' ? 'No tienes facturas por pagar. ¡Estás al día!' : 'No hay facturas para mostrar.' }}</p>
         <div class="grid gap-3"><InvoiceCard v-for="i in list" :key="i.id" :invoice="i" /></div>
+
+        <BankAccountsCard v-if="tab !== 'paid'" :bank="bank" />
     </div>
 </template>

@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\ClientService;
 use App\Models\Invoice;
 use App\Models\Setting;
+use App\Services\Billing\BankAccounts;
 use App\Services\Billing\InvoiceService;
 use App\Services\Billing\ReminderRunner;
 use Illuminate\Http\RedirectResponse;
@@ -61,6 +62,7 @@ class InvoiceController extends Controller
             'services' => ClientService::orderBy('name')->get(['id', 'name', 'client_id', 'currency', 'price']),
             'taxRate' => config('portal.tax_rate'),
             'reminderOffsets' => ReminderRunner::defaultOffsets(),
+            'bank' => ['accounts' => BankAccounts::all(), 'note' => BankAccounts::note(), 'types' => BankAccounts::TYPES],
         ]);
     }
 
@@ -181,6 +183,27 @@ class InvoiceController extends Controller
         Setting::put('billing.reminder_offsets', implode(',', ReminderRunner::clean($d['reminder_offsets'])));
 
         $this->toast('Recordatorios de pago actualizados.');
+
+        return back();
+    }
+
+    /** Datos bancarios para recibir transferencias (portal y correos de cobro). */
+    public function bankAccounts(Request $request): RedirectResponse
+    {
+        $d = $request->validate([
+            'accounts' => ['present', 'array', 'max:5'],
+            'accounts.*.bank' => ['required', 'string', 'max:80'],
+            'accounts.*.account_type' => ['required', 'string', 'max:40'],
+            'accounts.*.number' => ['required', 'string', 'max:40'],
+            'accounts.*.holder' => ['nullable', 'string', 'max:150'],
+            'accounts.*.tax_id' => ['nullable', 'string', 'max:20', fn ($a, $v, $fail) => $v && ! \App\Support\Rut::isValid($v) ? $fail('El RUT no es válido.') : null],
+            'accounts.*.email' => ['nullable', 'email:rfc', 'max:150'],
+            'note' => ['nullable', 'string', 'max:500'],
+        ]);
+        $accounts = collect($d['accounts'])->map(fn ($a) => [...$a, 'tax_id' => \App\Support\Rut::format($a['tax_id'] ?? null)])->all();
+        BankAccounts::save($accounts, $d['note'] ?? null);
+
+        $this->toast('Datos bancarios guardados: se muestran en el portal y en los correos de cobro.');
 
         return back();
     }

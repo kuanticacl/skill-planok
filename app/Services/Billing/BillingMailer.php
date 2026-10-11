@@ -89,6 +89,7 @@ class BillingMailer
             'headline' => $headline,
             'message' => $message,
             'subject_line' => $subject,
+            'bank_details' => BankAccounts::html(),
         ];
     }
 

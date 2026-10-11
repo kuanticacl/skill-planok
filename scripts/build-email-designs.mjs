@@ -89,6 +89,7 @@ const templates = {
             ['total', 'Total a pagar', '', '$119.000'],
             ['due_date', 'Vencimiento', '', '15-11-2026'],
             ['payment_link', 'Enlace de pago', '', ''],
+            ['bank_details', 'Datos para transferencia', '', '<strong>Banco Estado</strong> · Cuenta corriente<br>N° 123456789'],
             ['portal_url', 'Enlace al portal', 'https://clientes.ecortes.cl/portal/facturas', 'https://clientes.ecortes.cl/portal/facturas'],
         ],
         blocks: [
@@ -98,6 +99,7 @@ const templates = {
             text('Concepto\n**{{ concept }}**\n\nTotal a pagar\n**{{ total }}**\n\nVence el\n**{{ due_date }}**', { bg: '#FAFAFA', padY: 16, size: 16 }),
             button('Ver mi factura', '{{ portal_url }}'),
             text('{{#if payment_link}}También puedes pagar directamente aquí: {{ payment_link }}{{/if}}', { size: 14, color: '#707070', align: 'center', padY: 4 }),
+            text('{{#if bank_details}}**Pago por transferencia**\n\n{{{ bank_details }}}{{/if}}', { bg: '#FAFAFA', padY: 14, size: 14 }),
             note('Si ya realizaste el pago, puedes ignorar este correo.'),
             footer(true),
         ],
@@ -118,6 +120,7 @@ const templates = {
             ['total', 'Total a pagar', '', '$119.000'],
             ['due_date', 'Vencimiento', '', '15-11-2026'],
             ['payment_link', 'Enlace de pago', '', ''],
+            ['bank_details', 'Datos para transferencia', '', '<strong>Banco Estado</strong> · Cuenta corriente<br>N° 123456789'],
             ['portal_url', 'Enlace al portal', 'https://clientes.ecortes.cl/portal/facturas', 'https://clientes.ecortes.cl/portal/facturas'],
         ],
         blocks: [
@@ -127,6 +130,7 @@ const templates = {
             text('Factura\n**{{ invoice_number }}** · {{ concept }}\n\nTotal a pagar\n**{{ total }}**\n\nVencimiento\n**{{ due_date }}**', { bg: '#FAFAFA', padY: 16, size: 16 }),
             button('Ver y pagar mi factura', '{{ portal_url }}'),
             text('{{#if payment_link}}Enlace de pago directo: {{ payment_link }}{{/if}}', { size: 14, color: '#707070', align: 'center', padY: 4 }),
+            text('{{#if bank_details}}**Pago por transferencia**\n\n{{{ bank_details }}}{{/if}}', { bg: '#FAFAFA', padY: 14, size: 14 }),
             note('Si ya realizaste el pago, avísanos respondiendo este correo para actualizar tu estado.'),
             footer(true),
         ],

@@ -8,6 +8,7 @@ use App\Models\ClientService;
 use App\Models\Invoice;
 use App\Models\Lead;
 use App\Models\Proposal;
+use App\Services\Billing\BankAccounts;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -40,6 +41,7 @@ class PortalController extends Controller
                 'proposals' => $this->proposals($client)->count(),
             ],
             'next_invoice' => $next ? $this->invoice($next) : null,
+            'bank' => $pending->isNotEmpty() ? ['accounts' => BankAccounts::all(), 'note' => BankAccounts::note()] : null,
             'recent_invoices' => Invoice::where('client_id', $client->id)->visibleToClient()->orderByDesc('due_date')->limit(4)->get()->map(fn ($i) => $this->invoice($i)),
         ]);
     }
@@ -79,6 +81,7 @@ class PortalController extends Controller
 
         return Inertia::render('portal/Invoices', [
             'company' => $this->company($client),
+            'bank' => ['accounts' => BankAccounts::all(), 'note' => BankAccounts::note()],
             // Por pagar primero (la que vence antes arriba) y luego las pagadas, de la más reciente a la más antigua.
             'invoices' => Invoice::where('client_id', $client->id)->visibleToClient()->get()
                 ->sortBy(fn (Invoice $i) => $i->status === 'issued' ? $i->due_date->timestamp : PHP_INT_MAX - $i->due_date->timestamp)

@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { AlarmClock, CircleAlert, Plus, Search, Settings2, Wallet } from '@lucide/vue';
+import { AlarmClock, CircleAlert, Landmark, Plus, Search, Settings2, Wallet } from '@lucide/vue';
 import { ref } from 'vue';
 import DataCard from '@/components/DataCard.vue';
 import FormField from '@/components/FormField.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import Pagination from '@/components/Pagination.vue';
+import BankAccountsDialog from '@/components/billing/BankAccountsDialog.vue';
 import InvoiceFormDialog from '@/components/billing/InvoiceFormDialog.vue';
 import InvoiceList from '@/components/billing/InvoiceList.vue';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,7 @@ const props = defineProps<{
     services: { id: number; name: string; client_id: number; currency: string; price: number }[];
     taxRate: number;
     reminderOffsets: number[];
+    bank: { accounts: { bank: string; account_type: string; number: string; holder: string; tax_id: string; email: string }[]; note: string; types: string[] };
 }>();
 
 const { can } = usePermissions();
@@ -53,6 +55,7 @@ const cards = [
 ];
 
 const newOpen = ref(false);
+const bankOpen = ref(false);
 
 // ---- recordatorios por defecto ----
 const settingsOpen = ref(false);
@@ -71,10 +74,16 @@ void router;
     <div class="flex flex-col gap-6 p-4 md:p-6">
         <PageHeader title="Facturación y cobranza" description="Cobros y facturas de tus clientes. La factura se emite en tu sistema externo: aquí adjuntas el PDF, envías el cobro y controlas los pagos.">
             <template #actions>
+                <Button v-if="can('billing.settings')" variant="outline" @click="bankOpen = true"><Landmark /> Datos bancarios</Button>
                 <Button v-if="can('billing.settings')" variant="outline" @click="settingsOpen = true"><Settings2 /> Recordatorios</Button>
                 <Button v-if="can('billing.manage')" @click="newOpen = true"><Plus /> Nuevo cobro</Button>
             </template>
         </PageHeader>
+
+        <div v-if="!bank.accounts.length && can('billing.settings')" class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
+            <p><strong>Aún no cargas tus datos bancarios.</strong> Agrégalos para que tus clientes vean cómo transferirte en el portal y en los correos de cobro.</p>
+            <Button size="sm" variant="outline" @click="bankOpen = true"><Landmark /> Cargar datos</Button>
+        </div>
 
         <div class="grid gap-3 sm:grid-cols-3">
             <DataCard v-for="c in cards" :key="c.label" class="flex items-center gap-4 p-4">
@@ -104,6 +113,8 @@ void router;
     </div>
 
     <InvoiceFormDialog v-model:open="newOpen" :invoice="null" :clients="clients" :services="services" :tax-rate="taxRate" />
+
+    <BankAccountsDialog v-model:open="bankOpen" :accounts="bank.accounts" :note="bank.note" :types="bank.types" />
 
     <Dialog v-model:open="settingsOpen">
         <DialogContent class="sm:max-w-md">
