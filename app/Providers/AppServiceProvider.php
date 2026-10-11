@@ -11,6 +11,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -31,6 +32,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureAuthorization();
+
+        // Scripts, estilos y fuentes del build se piden al mismo dominio desde el que se navega (crm.… y clientes.…).
+        // Con ASSET_URL fijo a un dominio, el otro host los bloquea por CORS.
+        Vite::createAssetPathsUsing(fn (string $path, ?bool $secure = null) => '/'.ltrim($path, '/'));
 
         RateLimiter::for('email-api', fn (Request $request) => Limit::perMinute(60)->by(($request->bearerToken() ?: $request->header('X-Api-Key')) ?: $request->ip()));
         RateLimiter::for('lead-ingest', fn (Request $request) => Limit::perMinute(120)->by($request->header('X-Api-Key') ?: $request->ip()));
