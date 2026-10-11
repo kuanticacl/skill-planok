@@ -109,7 +109,7 @@ class AgentActions
         $clean = $this->validateChanges($entity, $model, $changes);
         $lines = [];
         foreach ($clean as $field => $new) {
-            $lines[] = $this->label($field).': '.$this->show($this->current($entity, $model, $field)).' → '.$this->show($new);
+            $lines[] = $this->label($field).': '.$this->show($this->readable($entity, $field, $this->current($entity, $model, $field))).' → '.$this->show($this->readable($entity, $field, $new));
         }
 
         return ['entity' => $entity, 'id' => $id, 'op' => 'update', 'title' => 'Editar '.$meta['label'].' «'.$this->name($entity, $model).'»', 'lines' => $lines, 'changes' => $clean, 'destructive' => false];
@@ -286,6 +286,19 @@ class AgentActions
         }
 
         return $m->getAttribute($field);
+    }
+
+    /** Valores de lista con su nombre legible (p. ej. «blocked» → «Bloqueado»). */
+    private function readable(string $entity, string $field, mixed $v): mixed
+    {
+        $map = match ([$entity, $field]) {
+            ['contract', 'status'] => ClientService::STATUSES,
+            ['contract', 'billing_cycle'] => ClientService::CYCLES,
+            ['lead', 'priority'] => Lead::PRIORITIES,
+            default => null,
+        };
+
+        return $map && is_string($v) && isset($map[$v]) ? $map[$v] : $v;
     }
 
     private function show(mixed $v): string

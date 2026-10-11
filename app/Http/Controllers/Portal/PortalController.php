@@ -34,7 +34,7 @@ class PortalController extends Controller
         return Inertia::render('portal/Home', [
             'company' => $this->company($client),
             'summary' => [
-                'active_services' => $this->services($client)->where('status', 'active')->count(),
+                'active_services' => $this->services($client)->get()->filter(fn (ClientService $s) => $s->isLive())->count(),
                 'pending_invoices' => $pending->count(),
                 'overdue_invoices' => $pending->filter(fn (Invoice $i) => $i->isOverdue())->count(),
                 'pending_total_clp' => (float) $pending->sum('total_clp'),
@@ -195,7 +195,7 @@ class PortalController extends Controller
             'id' => $s->id, 'name' => $s->name, 'description' => $s->description,
             'billing_cycle' => $s->billing_cycle, 'start_date' => $s->start_date?->toDateString(), 'end_date' => $s->end_date?->toDateString(),
             'auto_renew' => $s->auto_renew, 'status' => $s->effectiveStatus(),
-            'next_charge_on' => $s->isRecurring() && $s->effectiveStatus() === 'active' ? $s->next_charge_on?->toDateString() : null,
+            'next_charge_on' => $s->isRecurring() && $s->isLive() ? $s->next_charge_on?->toDateString() : null,
             'proposal' => $s->proposal && $s->proposal->status !== 'draft' ? ['number' => $s->proposal->number, 'title' => $s->proposal->title, 'url' => $s->proposal->publicUrl()] : null,
             'related' => $all->where('parent_id', $s->id)->values()->map(fn (ClientService $c) => [
                 'id' => $c->id, 'name' => $c->name, 'description' => $c->description, 'billing_cycle' => $c->billing_cycle,

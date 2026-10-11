@@ -20,7 +20,11 @@ class ClientService extends Model
 
     public const CYCLES = ['one_time' => 'Pago único', 'monthly' => 'Mensual', 'quarterly' => 'Trimestral', 'yearly' => 'Anual'];
 
-    public const STATUSES = ['pending' => 'Por iniciar', 'active' => 'Activo', 'paused' => 'Pausado', 'ended' => 'Finalizado', 'cancelled' => 'Cancelado'];
+    /** Estados que se eligen a mano. «Por iniciar» y «Finalizado» se deducen de las fechas (ver effectiveStatus). */
+    public const STATUSES = ['active' => 'Activo', 'pending_payment' => 'Pendiente de pago', 'blocked' => 'Bloqueado', 'cancelled' => 'Cancelado'];
+
+    /** Estados que solo se muestran (según las fechas) y sirven de filtro. */
+    public const DERIVED = ['pending' => 'Por iniciar', 'ended' => 'Finalizado'];
 
     protected function casts(): array
     {
@@ -72,7 +76,9 @@ class ClientService extends Model
     /** Estado según las fechas: un servicio activo cuyo término ya pasó (sin renovación) figura como finalizado. */
     public function effectiveStatus(): string
     {
-        if ($this->status === 'active' && $this->end_date && ! $this->auto_renew && $this->end_date->lt(today())) {
+        $running = in_array($this->status, ['active', 'pending_payment'], true);
+
+        if ($running && $this->end_date && ! $this->auto_renew && $this->end_date->lt(today())) {
             return 'ended';
         }
         if ($this->status === 'active' && $this->start_date && $this->start_date->gt(today())) {
@@ -80,6 +86,12 @@ class ClientService extends Model
         }
 
         return $this->status;
+    }
+
+    /** ¿Está vigente y generando ingreso? (activo o pendiente de pago, dentro de sus fechas). */
+    public function isLive(): bool
+    {
+        return in_array($this->effectiveStatus(), ['active', 'pending_payment'], true);
     }
 
     /** Suma un período de cobro a una fecha (mantiene el día de cobro sin desbordar el mes). */

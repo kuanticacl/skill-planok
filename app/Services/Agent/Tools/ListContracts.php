@@ -26,7 +26,7 @@ class ListContracts extends CrmTool
         return [
             'client_id' => $schema->integer()->description('Id de la empresa (search_clients).'),
             'query' => $schema->string()->description('Texto del nombre del servicio.'),
-            'status' => $schema->string()->enum(['active', 'pending', 'paused', 'ended', 'cancelled']),
+            'status' => $schema->string()->enum(['active', 'pending_payment', 'blocked', 'cancelled']),
             'limit' => $schema->integer(),
         ];
     }

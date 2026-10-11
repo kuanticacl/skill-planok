@@ -18,7 +18,7 @@ class ChargeGenerator
         $created = 0;
 
         ClientService::query()
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'pending_payment'])
             ->where('billing_cycle', '!=', 'one_time')
             ->whereNotNull('next_charge_on')
             ->whereDate('next_charge_on', '<=', $horizon)
@@ -44,11 +44,6 @@ class ChargeGenerator
                 }
                 $s->save();
             });
-
-        // Servicios cuyo término pasó y no se renuevan.
-        ClientService::where('status', 'active')->where('auto_renew', false)->whereNotNull('end_date')->whereDate('end_date', '<', today())
-            ->where(fn ($q) => $q->where('billing_cycle', 'one_time')->orWhereNull('next_charge_on'))
-            ->update(['status' => 'ended']);
 
         return $created;
     }

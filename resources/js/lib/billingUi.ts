@@ -23,7 +23,8 @@ type Meta = { label: string; cls: string };
 export const serviceStatus: Record<string, Meta> = {
     active: { label: 'Activo', cls: 'bg-brand-green/10 text-brand-green' },
     pending: { label: 'Por iniciar', cls: 'bg-sky-500/10 text-sky-600 dark:text-sky-400' },
-    paused: { label: 'Pausado', cls: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
+    pending_payment: { label: 'Pendiente de pago', cls: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
+    blocked: { label: 'Bloqueado', cls: 'bg-red-500/10 text-red-600 dark:text-red-400' },
     ended: { label: 'Finalizado', cls: 'bg-muted text-muted-foreground' },
     cancelled: { label: 'Cancelado', cls: 'bg-muted text-muted-foreground' },
 };

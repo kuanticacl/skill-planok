@@ -94,6 +94,10 @@ const submit = () => {
         <PageHeader :title="isEdit ? `Editar ${service?.name}` : 'Nuevo servicio contratado'" description="Registra lo que la empresa contrató: el cliente verá su descripción, fechas y renovación (nunca costos ni gastos)." />
 
         <form class="grid max-w-4xl gap-6" @submit.prevent="submit">
+            <div v-if="form.hasErrors" class="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive" role="alert">
+                <p class="font-medium">No se pudo guardar. Revisa estos campos:</p>
+                <ul class="mt-1 list-disc pl-5"><li v-for="(m, k) in form.errors" :key="k">{{ m }}</li></ul>
+            </div>
             <DataCard class="p-6">
                 <div class="grid gap-5 sm:grid-cols-2">
                     <p class="text-xs font-semibold tracking-wide text-muted-foreground uppercase sm:col-span-2">Contratación</p>

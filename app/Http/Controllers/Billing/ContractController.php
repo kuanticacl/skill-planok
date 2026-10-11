@@ -32,11 +32,14 @@ class ContractController extends Controller
             ->when($filters['client'] ?? null, fn ($q, $c) => $q->where('client_id', $c))
             ->when($filters['cycle'] ?? null, fn ($q, $c) => $q->where('billing_cycle', $c))
             ->when($filters['status'] ?? null, fn ($q, $s) => match ($s) {
-                'ended' => $q->where(fn ($w) => $w->where('status', 'ended')->orWhere(fn ($x) => $x->where('status', 'active')->where('auto_renew', false)->whereDate('end_date', '<', today()))),
-                'active' => $q->where('status', 'active')->where(fn ($w) => $w->whereNull('end_date')->orWhere('auto_renew', true)->orWhereDate('end_date', '>=', today())),
+                // Estados deducidos de las fechas.
+                'ended' => $q->whereIn('status', ['active', 'pending_payment'])->where('auto_renew', false)->whereDate('end_date', '<', today()),
+                'pending' => $q->where('status', 'active')->whereDate('start_date', '>', today()),
+                // Activo: marcado así y dentro de sus fechas.
+                'active' => $q->where('status', 'active')->whereDate('start_date', '<=', today())->where(fn ($w) => $w->whereNull('end_date')->orWhere('auto_renew', true)->orWhereDate('end_date', '>=', today())),
                 default => $q->where('status', $s),
             })
-            ->orderByRaw("case when status = 'active' then 0 when status = 'pending' then 1 when status = 'paused' then 2 else 3 end")
+            ->orderByRaw("case when status = 'active' then 0 when status = 'pending_payment' then 1 when status = 'blocked' then 2 else 3 end")
             ->orderBy('next_charge_on')->orderByDesc('id')
             ->paginate(20)->withQueryString()
             ->through(fn (ClientService $s) => $this->row($s));
@@ -46,7 +49,7 @@ class ContractController extends Controller
             'filters' => $filters,
             'clients' => Client::orderBy('name')->get(['id', 'name']),
             'kpis' => $this->kpis(),
-            'meta' => ['cycles' => ClientService::CYCLES, 'statuses' => ClientService::STATUSES],
+            'meta' => ['cycles' => ClientService::CYCLES, 'statuses' => [...ClientService::STATUSES, ...ClientService::DERIVED]],
         ]);
     }
 
@@ -167,15 +170,15 @@ class ContractController extends Controller
     {
         $uf = app(UfService::class)->today()['value'] ?? 0;
         $mrr = 0.0;
-        ClientService::where('status', 'active')->where('billing_cycle', '!=', 'one_time')->get(['billing_cycle', 'currency', 'price'])->each(function ($s) use ($uf, &$mrr) {
+        ClientService::whereIn('status', ['active', 'pending_payment'])->where('billing_cycle', '!=', 'one_time')->get(['billing_cycle', 'currency', 'price'])->each(function ($s) use ($uf, &$mrr) {
             $clp = $s->currency === 'UF' ? $s->price * $uf : $s->price;
             $mrr += match ($s->billing_cycle) { 'monthly' => $clp, 'quarterly' => $clp / 3, 'yearly' => $clp / 12, default => 0 };
         });
 
         return [
-            'active' => ClientService::where('status', 'active')->count(),
+            'active' => ClientService::whereIn('status', ['active', 'pending_payment'])->count(),
             'recurring_monthly_clp' => round($mrr),
-            'ending_soon' => ClientService::where('status', 'active')->where('auto_renew', false)->whereBetween('end_date', [today(), today()->addDays(30)])->count(),
+            'ending_soon' => ClientService::whereIn('status', ['active', 'pending_payment'])->where('auto_renew', false)->whereBetween('end_date', [today(), today()->addDays(30)])->count(),
         ];
     }
 }

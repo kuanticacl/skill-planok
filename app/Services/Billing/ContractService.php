@@ -36,7 +36,7 @@ class ContractService
      */
     public function syncSchedule(ClientService $s, bool $recompute): void
     {
-        if (! $s->isRecurring() || in_array($s->status, ['paused', 'ended', 'cancelled'], true)) {
+        if (! $s->isRecurring() || in_array($s->status, ['blocked', 'cancelled'], true)) {
             $s->next_charge_on = null;
 
             return;

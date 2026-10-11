@@ -23,7 +23,7 @@ class AccountInsights
         'renewal' => ['name' => 'Renovación próxima', 'color' => '#A855F7', 'hint' => 'Servicios que terminan en 60 días sin renovación automática'],
         'ok' => ['name' => 'Al día', 'color' => '#3DBB6C', 'hint' => 'Servicios activos sin pendientes'],
         'pending' => ['name' => 'Por iniciar', 'color' => '#38BDF8', 'hint' => 'Contratados que aún no parten'],
-        'inactive' => ['name' => 'Sin servicios activos', 'color' => '#94A3B8', 'hint' => 'Pausados, finalizados o cancelados'],
+        'inactive' => ['name' => 'Sin servicios activos', 'color' => '#94A3B8', 'hint' => 'Bloqueados, cancelados o finalizados'],
     ];
 
     private float $uf;
@@ -48,7 +48,7 @@ class AccountInsights
     public function dashboard(bool $withBilling, bool $withCosts): array
     {
         $services = ClientService::with('client:id,name')->whereNotIn('status', ['cancelled'])->get();
-        $active = $services->filter(fn (ClientService $s) => $s->effectiveStatus() === 'active');
+        $active = $services->filter(fn (ClientService $s) => $s->isLive());
 
         $mrr = $active->sum(fn (ClientService $s) => $this->monthlyClp($s));
         $byClient = $active->groupBy('client_id')->map(fn (Collection $g) => [
@@ -72,7 +72,7 @@ class AccountInsights
             ],
             'top_accounts' => $byClient->take(6)->map(fn ($a) => [...$a, 'share' => $mrr > 0 ? round($a['mrr'] / $mrr * 100, 1) : 0])->all(),
             'renewals' => $renewals->take(10)->all(),
-            'without_services' => Client::where('is_active', true)->whereDoesntHave('services', fn ($q) => $q->whereIn('status', ['active', 'pending']))
+            'without_services' => Client::where('is_active', true)->whereDoesntHave('services', fn ($q) => $q->whereIn('status', ['active', 'pending_payment']))
                 ->whereHas('invoices')->limit(8)->get(['id', 'name'])->all(),
             'cycle_mix' => $active->groupBy('billing_cycle')->map(fn ($g, $k) => ['cycle' => $k, 'count' => $g->count(), 'mrr' => round($g->sum(fn ($s) => $this->monthlyClp($s)))])->values()->all(),
             'billing' => null,
@@ -149,7 +149,7 @@ class AccountInsights
             ])->orderBy('name')->get();
 
         $cards = $clients->map(function (Client $c) {
-            $active = $c->services->filter(fn (ClientService $s) => $s->effectiveStatus() === 'active');
+            $active = $c->services->filter(fn (ClientService $s) => $s->isLive());
             $issued = $c->invoices->where('status', 'issued');
             $overdue = $issued->filter(fn (Invoice $i) => $i->isOverdue());
             $scheduled = $c->invoices->where('status', 'scheduled');
@@ -159,7 +159,7 @@ class AccountInsights
             $column = match (true) {
                 $overdue->isNotEmpty() => 'overdue',
                 $toIssue->isNotEmpty() => 'to_issue',
-                $issued->isNotEmpty() => 'due',
+                $issued->isNotEmpty() || $c->services->contains(fn (ClientService $s) => $s->status === 'pending_payment') => 'due',
                 $renewal !== null => 'renewal',
                 $active->isNotEmpty() => 'ok',
                 $c->services->contains(fn (ClientService $s) => $s->effectiveStatus() === 'pending') => 'pending',
