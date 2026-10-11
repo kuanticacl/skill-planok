@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
-import { ExternalLink, KeyRound, MailPlus, Plus, Power, Trash2, UserRound } from '@lucide/vue';
+import { Eye, ExternalLink, KeyRound, MailPlus, Plus, Power, Trash2, UserRound } from '@lucide/vue';
 import { ref } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import DataCard from '@/components/DataCard.vue';
@@ -34,6 +34,7 @@ const act = (u: PortalUser, action: 'reset' | 'toggle') => {
     router.post(`/portal-users/${u.id}/${action}`, {}, { preserveScroll: true, onFinish: () => (busy.value = null) });
 };
 const toDelete = ref<PortalUser | null>(null);
+const preview = (userId?: number) => router.post(`/clients/${props.clientId}/portal-preview`, userId ? { user_id: userId } : {});
 const seen = (u: PortalUser) => (u.last_login_at ? `Último ingreso ${fmtDate(u.last_login_at)}` : u.invited_at ? `Invitado ${fmtDate(u.invited_at)} · aún no ingresa` : '');
 </script>
 
@@ -41,7 +42,10 @@ const seen = (u: PortalUser) => (u.last_login_at ? `Último ingreso ${fmtDate(u.
     <DataCard>
         <div class="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3">
             <span class="flex items-center gap-2 font-semibold"><KeyRound class="size-4" /> Acceso al portal de clientes</span>
-            <Button size="sm" variant="outline" @click="open = true"><Plus /> Dar acceso</Button>
+            <div class="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" title="Abre el portal tal como lo ve el cliente (solo lectura)" @click="preview()"><Eye /> Ver como cliente</Button>
+                <Button size="sm" variant="outline" @click="open = true"><Plus /> Dar acceso</Button>
+            </div>
         </div>
         <ul v-if="portal.users.length" class="divide-y">
             <li v-for="u in portal.users" :key="u.id" class="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
@@ -53,6 +57,7 @@ const seen = (u: PortalUser) => (u.last_login_at ? `Último ingreso ${fmtDate(u.
                     </div>
                 </div>
                 <div class="flex gap-1">
+                    <Button variant="ghost" size="icon-sm" title="Ver el portal como este usuario" @click="preview(u.id)"><Eye /></Button>
                     <Button variant="ghost" size="sm" :disabled="busy === u.id" title="Genera una contraseña nueva y la envía por correo" @click="act(u, 'reset')"><Spinner v-if="busy === u.id" /><MailPlus v-else /> Reenviar acceso</Button>
                     <Button variant="ghost" size="icon-sm" :title="u.is_active ? 'Desactivar' : 'Reactivar'" @click="act(u, 'toggle')"><Power /></Button>
                     <Button variant="ghost" size="icon-sm" class="text-destructive" title="Eliminar acceso" @click="toDelete = u"><Trash2 /></Button>

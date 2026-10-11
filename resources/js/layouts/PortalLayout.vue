@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { FileText, Home, LogOut, Package, Receipt, UserRound } from '@lucide/vue';
+import { Eye, FileText, Home, LogOut, Package, Receipt, UserRound } from '@lucide/vue';
 import { computed } from 'vue';
 import BrandLogo from '@/components/BrandLogo.vue';
 import { Toaster } from '@/components/ui/sonner';
@@ -18,12 +18,18 @@ const nav = [
     { label: 'Mi cuenta', href: '/portal/cuenta', icon: UserRound },
 ];
 const active = (n: (typeof nav)[number]) => (n.exact ? path.value === n.href : path.value.startsWith(n.href));
+const preview = computed(() => page.props.portal_preview as { client: string | null; user: string | null } | null);
 const logout = () => router.post('/logout');
+const exitPreview = () => router.post('/portal-preview/exit');
 </script>
 
 <template>
     <div class="min-h-svh bg-muted/40">
-        <header class="sticky top-0 z-30 bg-sidebar text-sidebar-foreground shadow-sm">
+        <div v-if="preview" class="sticky top-0 z-40 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 bg-amber-400 px-4 py-2 text-sm font-medium text-amber-950">
+            <span class="flex items-center gap-2"><Eye class="size-4" /> Vista previa: así ve el portal <strong>{{ preview.user ?? preview.client }}</strong><span v-if="preview.user"> ({{ preview.client }})</span> · solo lectura</span>
+            <button type="button" class="rounded-full bg-amber-950 px-3 py-1 text-xs font-semibold text-amber-50 hover:bg-amber-900" @click="exitPreview">Salir de la vista previa</button>
+        </div>
+        <header :class="['sticky z-30 bg-sidebar text-sidebar-foreground shadow-sm', preview ? 'top-[2.4rem]' : 'top-0']">
             <div class="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 md:px-6">
                 <Link href="/portal" class="flex items-center gap-3">
                     <BrandLogo class="h-7 w-[8.4rem] shrink-0 text-white" />
@@ -35,8 +41,8 @@ const logout = () => router.post('/logout');
                 </nav>
 
                 <div class="ml-auto flex items-center gap-3">
-                    <span class="hidden max-w-48 truncate text-sm text-white/80 lg:block">{{ user.name }}</span>
-                    <button type="button" class="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white" title="Cerrar sesión" @click="logout"><LogOut class="size-4" /><span class="hidden sm:inline">Salir</span></button>
+                    <span class="hidden max-w-48 truncate text-sm text-white/80 lg:block">{{ preview ? (preview.user ?? preview.client) : user.name }}</span>
+                    <button v-if="!preview" type="button" class="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white" title="Cerrar sesión" @click="logout"><LogOut class="size-4" /><span class="hidden sm:inline">Salir</span></button>
                 </div>
             </div>
         </header>

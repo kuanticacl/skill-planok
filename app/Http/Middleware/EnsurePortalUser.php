@@ -13,6 +13,11 @@ class EnsurePortalUser
     {
         $user = $request->user();
 
+        // Vista previa: el equipo con permiso ve el portal tal como lo ve el cliente (solo lectura).
+        if ($user && ! $user->isPortal() && $request->session()->has('portal_preview') && $user->hasPermission('portal.manage')) {
+            return $next($request);
+        }
+
         if (! $user || ! $user->isPortal() || ! $user->is_active) {
             return $user && ! $user->isPortal() ? redirect('/dashboard') : abort(403);
         }

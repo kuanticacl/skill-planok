@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Agent\AgentActions;
 use App\Services\Agent\CrmAgent;
+use App\Services\Agent\PendingActions;
 use App\Services\Agent\DocumentReader;
 use App\Services\Ai\AiFailed;
 use App\Services\Ai\AiGateway;
 use App\Services\Ai\AiNotConfigured;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 class AgentController extends Controller
@@ -48,6 +52,47 @@ class AgentController extends Controller
         } catch (AiFailed $e) {
             return response()->json(['message' => $e->getMessage()], 502);
         }
+    }
+
+    /** La persona confirmó una edición o eliminación propuesta por el Agent: se aplica ahora, con sus permisos. */
+    public function confirm(Request $request, string $id): JsonResponse
+    {
+        $action = PendingActions::take($request->user()->id, $id);
+        if (! $action) {
+            return response()->json(['ok' => false, 'message' => 'Esta acción venció o ya fue resuelta. Pídesela de nuevo al Agent.'], 410);
+        }
+
+        try {
+            $message = DB::transaction(fn () => (new AgentActions($request->user()))->run($action));
+        } catch (ValidationException $e) {
+            return response()->json(['ok' => false, 'message' => collect($e->errors())->flatten()->implode(' ')], 422);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json(['ok' => false, 'message' => 'No se pudo aplicar el cambio.'], 500);
+        }
+
+        return response()->json(['ok' => true, 'message' => $message, 'url' => $this->recordUrl($action)]);
+    }
+
+    public function cancel(Request $request, string $id): JsonResponse
+    {
+        PendingActions::take($request->user()->id, $id);
+
+        return response()->json(['ok' => true]);
+    }
+
+    /** @param  array<string, mixed>  $a */
+    private function recordUrl(array $a): ?string
+    {
+        if ($a['op'] === 'delete') {
+            return in_array($a['entity'], ['lead', 'client', 'proposal'], true) ? url('/trash?type='.($a['entity'] === 'lead' ? 'leads' : ($a['entity'] === 'client' ? 'clients' : 'proposals'))) : null;
+        }
+
+        return match ($a['entity']) {
+            'lead' => url('/leads/'.$a['id']), 'client' => url('/clients/'.$a['id']), 'proposal' => url('/proposals/'.$a['id']),
+            'contract' => url('/contracts/'.$a['id']), 'invoice' => url('/billing'), default => null,
+        };
     }
 
     /** Lee archivos adjuntos y devuelve su texto (no se guardan). */

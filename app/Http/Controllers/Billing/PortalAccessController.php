@@ -37,6 +37,24 @@ class PortalAccessController extends Controller
         return $this->done($this->access->reset($user), 'Contraseña nueva generada.', $user->email);
     }
 
+    /** Abre el portal tal como lo ve el cliente (solo lectura), opcionalmente como un acceso concreto. */
+    public function preview(Request $request, Client $client): RedirectResponse
+    {
+        $userId = $request->integer('user_id') ?: null;
+        abort_if($userId && ! $client->portalUsers()->whereKey($userId)->exists(), 404);
+
+        $request->session()->put('portal_preview', ['client_id' => $client->id, 'user_id' => $userId, 'return' => '/clients/'.$client->id]);
+
+        return redirect('/portal');
+    }
+
+    public function exitPreview(Request $request): RedirectResponse
+    {
+        $return = $request->session()->pull('portal_preview')['return'] ?? '/clients';
+
+        return redirect($return);
+    }
+
     public function toggle(User $user): RedirectResponse
     {
         abort_unless($user->isPortal(), 404);

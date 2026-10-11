@@ -99,7 +99,9 @@ class PortalController extends Controller
 
     public function account(Request $request): Response
     {
-        $user = $request->user();
+        $preview = $this->preview($request);
+        // En la vista previa se muestra el acceso elegido (o un contacto de ejemplo), nunca los datos del usuario del equipo.
+        $user = $preview ? (\App\Models\User::where('client_id', $preview['client_id'])->find($preview['user_id']) ?? new \App\Models\User(['name' => 'Contacto de la empresa', 'email' => 'contacto@empresa.cl'])) : $request->user();
         $client = $this->client($request);
         $lead = $user->lead_id ? Lead::find($user->lead_id) : null;
 
@@ -109,12 +111,15 @@ class PortalController extends Controller
                 'name' => $user->name, 'email' => $user->email, 'phone' => $user->phone,
                 'job_title' => $lead?->job_title,
             ],
-            'must_change_password' => (bool) $user->must_change_password,
+            'must_change_password' => $preview ? false : (bool) $user->must_change_password,
+            'preview' => $preview !== null,
         ]);
     }
 
     public function updateProfile(Request $request): RedirectResponse
     {
+        $this->denyInPreview($request);
+
         $data = $request->validate(['name' => ['required', 'string', 'max:255'], 'phone' => ['nullable', 'string', 'max:40']]);
         $request->user()->update($data);
         $this->toast('Tus datos fueron actualizados.');
@@ -124,6 +129,8 @@ class PortalController extends Controller
 
     public function updatePassword(Request $request): RedirectResponse
     {
+        $this->denyInPreview($request);
+
         $data = $request->validate([
             'current_password' => ['required', 'current_password'],
             'password' => ['required', 'confirmed', Password::min(10)->letters()->numbers()],
@@ -138,9 +145,26 @@ class PortalController extends Controller
         return back();
     }
 
+    /** Empresa que se muestra: la del acceso, o la elegida en la vista previa del equipo. */
     private function client(Request $request): Client
     {
+        if ($preview = $this->preview($request)) {
+            return Client::findOrFail($preview['client_id']);
+        }
+
         return $request->user()->client()->firstOrFail();
+    }
+
+    /** @return array{client_id: int, user_id: int|null}|null */
+    private function preview(Request $request): ?array
+    {
+        return $request->user()->isPortal() ? null : $request->session()->get('portal_preview');
+    }
+
+    /** En la vista previa no se puede modificar nada (las acciones de cuenta actuarían sobre el usuario del equipo). */
+    private function denyInPreview(Request $request): void
+    {
+        abort_if($this->preview($request) !== null, 403, 'Estás en la vista previa del portal: no se puede modificar nada desde aquí.');
     }
 
     /** @return array<string, mixed> */

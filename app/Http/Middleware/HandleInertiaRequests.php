@@ -54,6 +54,10 @@ class HandleInertiaRequests extends Middleware
             'ai_available' => fn () => $user && $user->hasPermission('ai.use')
                 ? \Illuminate\Support\Facades\Cache::remember('ai.available', 60, fn () => app(\App\Services\Ai\AiGateway::class)->isAvailable())
                 : false,
+            // Vista previa del portal (equipo viendo como el cliente).
+            'portal_preview' => fn () => $user && ! $user->isPortal() && ($pv = $request->session()->get('portal_preview'))
+                ? ['client' => \App\Models\Client::withTrashed()->whereKey($pv['client_id'])->value('name'), 'user' => $pv['user_id'] ? \App\Models\User::whereKey($pv['user_id'])->value('name') : null]
+                : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

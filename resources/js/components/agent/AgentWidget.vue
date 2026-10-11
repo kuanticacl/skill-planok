@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router, usePage } from '@inertiajs/vue3';
-import { ArrowUp, Check, ExternalLink, FileText, Maximize2, Mic, Minimize2, Paperclip, Sparkles, Square, Trash2, X } from '@lucide/vue';
+import { ArrowUp, Check, ExternalLink, TriangleAlert, FileText, Maximize2, Mic, Minimize2, Paperclip, Sparkles, Square, Trash2, X } from '@lucide/vue';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -10,7 +10,8 @@ import { cn } from '@/lib/utils';
 
 type Action = { tool: string; label: string; url: string | null; ok: boolean };
 type Attachment = { name: string; text?: string; chars?: number; truncated?: boolean };
-type Msg = { role: 'user' | 'assistant'; content: string; actions?: Action[]; attachments?: Attachment[]; error?: boolean };
+type Approval = { id: string; title: string; lines: string[]; destructive: boolean; op: string; state?: 'waiting' | 'working' | 'done' | 'cancelled' | 'error'; result?: string; url?: string | null };
+type Msg = { role: 'user' | 'assistant'; content: string; actions?: Action[]; approvals?: Approval[]; attachments?: Attachment[]; error?: boolean };
 type Pending = { id: number; name: string; status: 'loading' | 'ok' | 'error'; text?: string; chars?: number; truncated?: boolean; error?: string };
 
 const page = usePage();
@@ -337,8 +338,8 @@ const send = async (text?: string) => {
         }));
 
     try {
-        const res = await sendJson<{ reply: string; actions: Action[] }>('POST', '/agent/chat', { messages: history });
-        messages.value.push({ role: 'assistant', content: res.reply, actions: res.actions });
+        const res = await sendJson<{ reply: string; actions: Action[]; pending?: Approval[] }>('POST', '/agent/chat', { messages: history });
+        messages.value.push({ role: 'assistant', content: res.reply, actions: res.actions, approvals: res.pending?.length ? res.pending.map((p) => ({ ...p, state: 'waiting' as const })) : undefined });
         if (res.actions?.some((a) => a.ok && /^(create|add|move|update)_/.test(a.tool))) router.reload();
     } catch (e) {
         const msg = e instanceof HttpError ? (e.body?.message ?? (e.fieldErrors ? Object.values(e.fieldErrors)[0] : null) ?? `Error ${e.status}`) : 'No se pudo conectar con el Agent.';
@@ -347,6 +348,31 @@ const send = async (text?: string) => {
         busy.value = false;
         scrollDown();
         nextTick(() => field.value?.focus());
+    }
+};
+
+/** Confirmar o cancelar una edición/eliminación que propuso el Agent (la acción se aplica en el servidor, con tus permisos). */
+const resolve = async (a: Approval, ok: boolean) => {
+    if (a.state !== 'waiting') return;
+    a.state = ok ? 'working' : 'cancelled';
+    try {
+        if (!ok) {
+            await sendJson('POST', `/agent/actions/${a.id}/cancel`);
+            messages.value.push({ role: 'assistant', content: `Cancelaste «${a.title}»: no se aplicó ningún cambio.` });
+            return;
+        }
+        const res = await sendJson<{ message: string; url: string | null }>('POST', `/agent/actions/${a.id}/confirm`);
+        a.state = 'done';
+        a.result = res.message;
+        a.url = res.url;
+        messages.value.push({ role: 'assistant', content: `Listo: ${res.message}` });
+        router.reload();
+    } catch (e) {
+        a.state = 'error';
+        a.result = e instanceof HttpError ? (e.body?.message ?? `Error ${e.status}`) : 'No se pudo conectar.';
+        messages.value.push({ role: 'assistant', content: `No se aplicó «${a.title}»: ${a.result}`, error: true });
+    } finally {
+        scrollDown();
     }
 };
 
@@ -444,6 +470,17 @@ const visit = (url: string) => {
                                         <button v-if="a.url" class="shrink-0 text-primary" title="Abrir" @click="visit(a.url)"><ExternalLink class="size-3.5" /></button>
                                     </li>
                                 </ul>
+                                <div v-for="a in m.approvals" :key="a.id" :class="cn('space-y-2 rounded-xl border p-3 text-xs', a.destructive ? 'border-destructive/40 bg-destructive/5' : 'border-primary/30 bg-primary/5')">
+                                    <p class="flex items-start gap-1.5 text-sm font-semibold"><TriangleAlert v-if="a.destructive" class="mt-0.5 size-4 shrink-0 text-destructive" />{{ a.title }}</p>
+                                    <ul class="space-y-0.5 text-muted-foreground"><li v-for="(l, k) in a.lines" :key="k">• {{ l }}</li></ul>
+                                    <div v-if="a.state === 'waiting' || a.state === 'working'" class="flex gap-2 pt-1">
+                                        <Button size="sm" :variant="a.destructive ? 'destructive' : 'default'" :disabled="a.state === 'working'" @click="resolve(a, true)"><Spinner v-if="a.state === 'working'" /> {{ a.destructive ? 'Sí, eliminar' : 'Confirmar cambio' }}</Button>
+                                        <Button size="sm" variant="outline" :disabled="a.state === 'working'" @click="resolve(a, false)">Cancelar</Button>
+                                    </div>
+                                    <p v-else-if="a.state === 'done'" class="flex items-center gap-1.5 font-medium text-brand-green"><Check class="size-3.5" /> {{ a.result }} <button v-if="a.url" class="text-primary" title="Abrir" @click="visit(a.url)"><ExternalLink class="size-3.5" /></button></p>
+                                    <p v-else-if="a.state === 'cancelled'" class="font-medium text-muted-foreground">Cancelado: no se aplicó.</p>
+                                    <p v-else-if="a.state === 'error'" class="font-medium text-destructive">{{ a.result }}</p>
+                                </div>
                             </div>
                         </div>
 

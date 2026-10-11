@@ -25,6 +25,8 @@ class TrashController extends Controller
         'leads' => ['label' => 'Clientes', 'model' => Lead::class],
         'clients' => ['label' => 'Empresas', 'model' => Client::class],
         'proposals' => ['label' => 'Propuestas', 'model' => Proposal::class],
+        'contracts' => ['label' => 'Servicios', 'model' => \App\Models\ClientService::class],
+        'invoices' => ['label' => 'Cobros', 'model' => \App\Models\Invoice::class],
         'sources' => ['label' => 'Orígenes', 'model' => LeadSource::class],
     ];
 
@@ -52,7 +54,8 @@ class TrashController extends Controller
         DB::transaction(function () use ($type, $record, &$restored) {
             match ($type) {
                 'leads' => $this->restoreLead($record, $restored),
-                'proposals' => $record->restore(),
+                'proposals', 'invoices' => $record->restore(),
+                'contracts' => $this->restoreContract($record, $restored),
                 'clients' => $this->restoreClient($record, $restored),
                 'sources' => $this->restoreSource($record, $restored),
             };
@@ -76,6 +79,8 @@ class TrashController extends Controller
             'leads' => [$m->full_name, collect([$m->company, $m->email])->filter()->implode(' · ')],
             'clients' => [$m->name, collect([$m->tax_id, $m->email])->filter()->implode(' · ')],
             'proposals' => [$m->number.' · '.$m->title, $m->recipient['company'] ?? ''],
+            'contracts' => [$m->name, $m->client?->name ?? ''],
+            'invoices' => [($m->number ? $m->number.' · ' : '').$m->concept, $m->client?->name ?? ''],
             'sources' => [$m->name, $m->slug],
         };
 
@@ -121,6 +126,13 @@ class TrashController extends Controller
 
         $leads = $this->cascaded(Lead::onlyTrashed()->where('source_id', $source->id), $at)->get();
         $restored['leads'] = $this->restoreLeads($leads);
+    }
+
+    private function restoreContract(\App\Models\ClientService $service, array &$restored): void
+    {
+        $at = $service->deleted_at;
+        $service->restore();
+        $restored['cobros'] = $this->cascaded(\App\Models\Invoice::onlyTrashed()->where('client_service_id', $service->id), $at)->get()->each->restore()->count();
     }
 
     private function restoreClient(Client $client, array &$restored): void

@@ -148,6 +148,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Accesos de una empresa al portal de clientes
     Route::middleware('can:portal.manage')->group(function () {
         Route::post('clients/{client}/portal-users', [PortalAccessController::class, 'store'])->name('portal-users.store');
+        Route::post('clients/{client}/portal-preview', [PortalAccessController::class, 'preview'])->name('portal-preview.start');
         Route::post('portal-users/{user}/reset', [PortalAccessController::class, 'reset'])->middleware('throttle:20,1')->name('portal-users.reset');
         Route::post('portal-users/{user}/toggle', [PortalAccessController::class, 'toggle'])->name('portal-users.toggle');
         Route::delete('portal-users/{user}', [PortalAccessController::class, 'destroy'])->name('portal-users.destroy');
@@ -218,6 +219,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('chat', [AgentController::class, 'chat'])->middleware('throttle:20,1')->name('chat');
         Route::post('attachments', [AgentController::class, 'attachments'])->middleware('throttle:30,1')->name('attachments');
         Route::post('transcribe', [AgentController::class, 'transcribe'])->middleware('throttle:30,1')->name('transcribe');
+        Route::post('actions/{id}/confirm', [AgentController::class, 'confirm'])->middleware('throttle:30,1')->name('actions.confirm');
+        Route::post('actions/{id}/cancel', [AgentController::class, 'cancel'])->name('actions.cancel');
     });
 
     Route::middleware('can:demo.purge')->group(function () {
@@ -347,6 +350,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+
+Route::post('portal-preview/exit', [PortalAccessController::class, 'exitPreview'])->middleware('auth')->name('portal-preview.exit');
 
 // Portal de clientes (host propio opcional: clientes.ecortes.cl). Solo accesos con rol «cliente» y empresa asignada.
 Route::prefix('portal')->middleware(['auth', 'auth.session', 'portal'])->name('portal.')->group(function () {
