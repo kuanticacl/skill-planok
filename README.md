@@ -252,6 +252,19 @@ Integrada con el **SDK oficial `laravel/ai`**. Todo es opcional: sin proveedor c
 - **Plantillas por defecto en el editor visual:** `bienvenida-usuario`, `recuperar-password`, `gracias-contacto`, `gracias-cotizacion` y `propuesta-comercial` se definen con bloques (`resources/email-designs/*.json`, generados con `node scripts/build-email-designs.mjs` usando el mismo compilador del editor), así que se abren y modifican en *Plantillas → Visual*. Si cambias su diseño en el CRM, el sistema no lo pisa.
 - **Empresas relacionadas:** si en el futuro hay marcas hermanas, `Agency::holding()` (con logos en `public/brand/partners`) agrega el pie «Empresas relacionadas» en propuestas y correos; hoy está vacío y no se muestra.
 
+## 9. Portal de clientes, servicios contratados y cobranza
+
+El mismo proyecto incluye un **portal para tus clientes** (`clientes.ecortes.cl`, variable `PORTAL_DOMAIN`) donde cada contacto de una empresa ve sus **propuestas, servicios contratados y facturas** (por pagar y pagadas). Sin `PORTAL_DOMAIN` funciona igual en `/portal` del CRM.
+
+- **Accesos:** en la ficha de la **Empresa → «Acceso al portal»** se da acceso a uno o varios contactos: se genera una contraseña y se envía un correo de bienvenida (plantilla *Bienvenida al portal de clientes*, editable) con correo, contraseña y enlace. Deben cambiarla al ingresar; desde ahí se puede reenviar (contraseña nueva), desactivar o eliminar. Los accesos son usuarios con el rol de sistema `cliente` y **no entran al CRM interno** ni ven el Agent (lo impone el middleware `EnforcePortalBoundary`).
+- **Servicios contratados** (*Cobranza → Servicios contratados*): empresa, propuesta asociada, valor neto (CLP/UF), ciclo (único, mensual, trimestral, anual), inicio/término, **renovación automática**, día de cobro, enlace de pago y **servicio principal** (p. ej. hosting y dominio anual asociados a un diseño web). El cliente ve nombre, descripción, fechas, renovación y servicios asociados.
+- **Costos y gastos** (permiso `contracts.costs`): se registran por servicio con margen (facturado − gastos). Son **solo internos**: el portal se arma con campos explícitos y nunca los incluye (hay un test que lo verifica).
+- **Facturación** (*Cobranza → Facturación*): la factura la emite tu software externo; aquí se crea el cobro, se **adjunta el PDF** (disco privado, descarga autenticada) y se emite («por pagar», visible al cliente). Estados: por emitir (sin PDF) → por pagar → pagada / anulada; «vencida» se calcula. Se marca pagada con medio y referencia.
+- **Recordatorios automáticos** (`php artisan billing:run`, cada día 9:00 hora de Chile, vía el scheduler): los servicios recurrentes generan solos el cobro del período (10 días antes) y, mientras esté por pagar, se envían correos **5 días antes, el día del vencimiento y 3 y 7 días después** (configurable en *Facturación → Recordatorios* y por servicio). Se detienen al marcar la factura pagada. Los cobros únicos usan el botón **Enviar cobro**.
+- **Permisos nuevos:** `contracts.*`, `billing.*`, `portal.manage` (activarlos en *Roles y permisos*).
+- **Agent:** también gestiona servicios, cobros, gastos y accesos al portal (con confirmación antes de enviar al cliente).
+- **DNS/Dokploy:** crea un registro A/CNAME de `clientes.ecortes.cl` hacia el mismo servidor y agrega ese dominio al servicio `crm-app` del compose (puerto 80).
+
 ## Rendimiento
 
 - **Medir:** los administradores reciben la cabecera `Server-Timing` en cada respuesta (pestaña *Network → Timing* del navegador): `boot` (arranque de PHP), `app` (tiempo total de la aplicación), `db` (tiempo y cantidad de consultas) y memoria. `PERF_HEADERS=true` la emite para todos.

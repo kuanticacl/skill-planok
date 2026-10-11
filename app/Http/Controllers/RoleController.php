@@ -14,7 +14,7 @@ class RoleController extends Controller
     public function index(): Response
     {
         return Inertia::render('roles/Index', [
-            'roles' => Role::withCount('users')->orderBy('name')->get()->map(fn (Role $role) => [
+            'roles' => Role::staff()->withCount('users')->orderBy('name')->get()->map(fn (Role $role) => [
                 'id' => $role->id,
                 'name' => $role->name,
                 'slug' => $role->slug,

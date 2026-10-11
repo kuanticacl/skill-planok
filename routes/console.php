@@ -15,3 +15,6 @@ Schedule::command('leads:rescore --open')->dailyAt('03:30')->withoutOverlapping(
 // UF diaria (findic.cl): se publica de madrugada; el segundo intento cubre caídas de la API.
 Schedule::command('uf:sync')->dailyAt('00:10')->withoutOverlapping();
 Schedule::command('uf:sync')->dailyAt('08:30')->withoutOverlapping();
+
+// Cobranza (portal de clientes): cobros programados de servicios recurrentes y recordatorios de pago, cada mañana (hora de Chile).
+Schedule::command('billing:run')->dailyAt('09:00')->timezone('America/Santiago')->withoutOverlapping();

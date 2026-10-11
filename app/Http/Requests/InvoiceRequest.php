@@ -1,0 +1,46 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class InvoiceRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /** @return array<string, mixed> */
+    public function rules(): array
+    {
+        return [
+            'client_id' => ['required', 'integer', Rule::exists('clients', 'id')->whereNull('deleted_at')],
+            'client_service_id' => ['nullable', 'integer', Rule::exists('client_services', 'id')->whereNull('deleted_at')],
+            'number' => ['nullable', 'string', 'max:60'],
+            'concept' => ['required', 'string', 'max:255'],
+            'period_start' => ['nullable', 'date'],
+            'period_end' => ['nullable', 'date', 'after_or_equal:period_start'],
+            'issue_date' => ['nullable', 'date'],
+            'due_date' => ['required', 'date'],
+            'currency' => ['required', Rule::in(['CLP', 'UF'])],
+            'amount_net' => ['required', 'numeric', 'min:0', 'max:99999999999'],
+            'tax_rate' => ['nullable', 'numeric', 'between:0,100'],
+            'auto_remind' => ['boolean'],
+            'payment_link' => ['nullable', 'url', 'max:500'],
+            'notes' => ['nullable', 'string', 'max:3000'],
+            'pdf' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
+            'issue' => ['boolean'],
+        ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        foreach (['client_service_id', 'number', 'period_start', 'period_end', 'issue_date', 'payment_link', 'notes', 'tax_rate'] as $k) {
+            if ($this->input($k) === '') {
+                $this->merge([$k => null]);
+            }
+        }
+    }
+}

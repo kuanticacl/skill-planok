@@ -62,6 +62,29 @@ return [
                 'agency.manage' => 'Editar los datos de la agencia (firma y pie de propuestas)',
             ],
         ],
+        'contracts' => [
+            'label' => 'Servicios contratados',
+            'icon' => 'package-check',
+            'permissions' => [
+                'contracts.view' => 'Ver servicios contratados',
+                'contracts.create' => 'Crear servicios contratados',
+                'contracts.update' => 'Editar servicios contratados',
+                'contracts.delete' => 'Eliminar servicios contratados',
+                'contracts.costs' => 'Ver y registrar costos y gastos (información interna)',
+            ],
+        ],
+        'billing' => [
+            'label' => 'Facturación y cobranza',
+            'icon' => 'receipt',
+            'permissions' => [
+                'billing.view' => 'Ver cobros y facturas',
+                'billing.manage' => 'Crear cobros, adjuntar facturas y enviar cobros y recordatorios',
+                'billing.mark_paid' => 'Marcar facturas como pagadas',
+                'billing.delete' => 'Eliminar o anular cobros',
+                'billing.settings' => 'Configurar los recordatorios de pago',
+                'portal.manage' => 'Crear y administrar accesos al portal de clientes',
+            ],
+        ],
         'users' => [
             'label' => 'Usuarios',
             'icon' => 'user-cog',
@@ -148,6 +171,7 @@ return [
                 'dashboard.view',
                 'leads.view', 'leads.view_all', 'leads.create', 'leads.update', 'leads.move', 'leads.assign', 'leads.notes',
                 'clients.view', 'clients.create', 'clients.update', 'proposals.view', 'proposals.create', 'proposals.send', 'proposals.delete', 'services.view', 'services.manage', 'agency.manage',
+                'contracts.view', 'contracts.create', 'contracts.update', 'billing.view', 'billing.manage', 'billing.mark_paid', 'portal.manage',
                 'users.view',
                 'templates.view', 'campaigns.view', 'email_logs.view', 'ai.use', 'agent.use',
             ],

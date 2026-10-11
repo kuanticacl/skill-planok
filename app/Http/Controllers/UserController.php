@@ -19,6 +19,7 @@ class UserController extends Controller
         $filters = $request->only(['q', 'role', 'status']);
 
         $users = User::query()
+            ->whereNull('client_id') // los accesos del portal de clientes se administran desde la ficha de la empresa
             ->with('role:id,name,slug')
             ->when($filters['q'] ?? null, fn ($q, $term) => $q->where(fn ($q) => $q
                 ->where('name', 'like', "%{$term}%")
@@ -32,7 +33,7 @@ class UserController extends Controller
 
         return Inertia::render('users/Index', [
             'users' => $users,
-            'roles' => Role::orderBy('name')->get(['id', 'name']),
+            'roles' => Role::staff()->orderBy('name')->get(['id', 'name']),
             'filters' => $filters,
         ]);
     }
@@ -125,6 +126,6 @@ class UserController extends Controller
 
     private function roles()
     {
-        return Role::orderBy('name')->get(['id', 'name', 'description']);
+        return Role::staff()->orderBy('name')->get(['id', 'name', 'description']);
     }
 }

@@ -96,6 +96,8 @@ class TrashController extends Controller
             'clients' => [
                 'leads' => $this->cascaded(Lead::onlyTrashed()->where('client_id', $m->id), $m->deleted_at)->count(),
                 'propuestas' => $this->cascaded(Proposal::onlyTrashed()->where('client_id', $m->id), $m->deleted_at)->count(),
+                'servicios' => $this->cascaded(\App\Models\ClientService::onlyTrashed()->where('client_id', $m->id), $m->deleted_at)->count(),
+                'cobros' => $this->cascaded(\App\Models\Invoice::onlyTrashed()->where('client_id', $m->id), $m->deleted_at)->count(),
             ],
             'leads' => ['propuestas' => $this->cascaded(Proposal::onlyTrashed()->where('lead_id', $m->id), $m->deleted_at)->count()],
             default => [],
@@ -134,6 +136,8 @@ class TrashController extends Controller
             }
         }
         $restored['propuestas'] = $this->cascaded(Proposal::onlyTrashed()->where('client_id', $client->id), $at)->get()->each->restore()->count();
+        $restored['servicios'] = $this->cascaded(\App\Models\ClientService::onlyTrashed()->where('client_id', $client->id), $at)->get()->each->restore()->count();
+        $restored['cobros'] = $this->cascaded(\App\Models\Invoice::onlyTrashed()->where('client_id', $client->id), $at)->get()->each->restore()->count();
     }
 
     private function restoreLead(Lead $lead, array &$restored): void

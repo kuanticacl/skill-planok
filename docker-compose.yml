@@ -24,6 +24,7 @@ services:
       APP_KEY: ${APP_KEY:?Define APP_KEY}
       APP_DEBUG: ${APP_DEBUG:-false}
       APP_URL: ${APP_URL:-https://crm.ecortes.cl}
+      PORTAL_DOMAIN: ${PORTAL_DOMAIN:-clientes.ecortes.cl}
       ASSET_URL: ${ASSET_URL:-}
       APP_LOCALE: ${APP_LOCALE:-es}
       APP_FALLBACK_LOCALE: ${APP_FALLBACK_LOCALE:-es}

@@ -21,7 +21,7 @@ class StoreUserRequest extends FormRequest
             'email' => ['required', 'email:rfc', 'max:255', Rule::unique('users', 'email')],
             'phone' => ['nullable', 'string', 'max:40'],
             'job_title' => ['nullable', 'string', 'max:120'],
-            'role_id' => ['required', 'integer', Rule::exists('roles', 'id')],
+            'role_id' => ['required', 'integer', Rule::exists('roles', 'id')->where(fn ($q) => $q->where('slug', '!=', \App\Models\Role::PORTAL_SLUG))],
             'is_active' => ['boolean'],
             'password' => ['required', 'confirmed', Password::defaults()],
         ];

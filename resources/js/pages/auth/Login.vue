@@ -24,6 +24,7 @@ defineOptions({
 defineProps<{
     status?: string;
     canResetPassword: boolean;
+    portalHost?: boolean;
 }>();
 </script>
 
@@ -36,6 +37,10 @@ defineProps<{
     >
         {{ status }}
     </div>
+
+    <p v-if="portalHost" class="mb-4 rounded-xl bg-primary/10 px-4 py-3 text-center text-sm text-primary">
+        Portal de clientes: revisa tus propuestas, servicios contratados y facturas.
+    </p>
 
     <!-- @chisel-passkeys -->
     <PasskeyVerify />

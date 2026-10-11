@@ -44,6 +44,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user ? [
                     ...$user->toArray(),
                     'role' => $user->role?->only(['id', 'name', 'slug']),
+                    'is_portal' => $user->isPortal(),
                 ] : null,
                 'permissions' => $user?->permissionKeys() ?? [],
             ],

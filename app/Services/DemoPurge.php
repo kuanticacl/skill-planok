@@ -58,6 +58,17 @@ class DemoPurge
                 $done['leads']++;
             });
             $this->clients($mode)->get()->each(function (Client $c) use (&$done) {
+                // Servicios, cobros (con sus PDF), gastos y accesos del portal de la empresa.
+                \App\Models\Invoice::withTrashed()->where('client_id', $c->id)->get()->each(function ($i) {
+                    $i->pdf_path && \Illuminate\Support\Facades\Storage::disk('local')->delete($i->pdf_path);
+                    \App\Models\InvoiceReminder::where('invoice_id', $i->id)->delete();
+                    $i->forceDelete();
+                });
+                \App\Models\ClientService::withTrashed()->where('client_id', $c->id)->get()->each(function ($s) {
+                    $s->expenses()->delete();
+                    $s->forceDelete();
+                });
+                \App\Models\User::where('client_id', $c->id)->delete();
                 $c->forceDelete();
                 $done['clients']++;
             });

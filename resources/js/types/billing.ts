@@ -1,0 +1,48 @@
+import type { Currency } from '@/lib/billingUi';
+
+export type ServiceRow = {
+    id: number;
+    name: string;
+    client: { id: number; name: string } | null;
+    billing_cycle: string;
+    currency: Currency;
+    price: number;
+    start_date: string;
+    end_date: string | null;
+    auto_renew: boolean;
+    status: string;
+    next_charge_on: string | null;
+    parent: { id: number; name: string } | null;
+    children_count: number | null;
+};
+
+export type InvoiceRow = {
+    id: number;
+    number: string | null;
+    concept: string;
+    client: { id: number; name: string } | null;
+    service: { id: number; name: string } | null;
+    client_id: number;
+    client_service_id: number | null;
+    period_start: string | null;
+    period_end: string | null;
+    issue_date: string | null;
+    due_date: string;
+    currency: Currency;
+    amount_net: number;
+    tax_rate: number;
+    amount_total: number;
+    total_clp: number | null;
+    uf_value: number | null;
+    status: 'scheduled' | 'issued' | 'paid' | 'cancelled';
+    display_status: 'scheduled' | 'issued' | 'overdue' | 'paid' | 'cancelled';
+    has_pdf: boolean;
+    pdf_name: string | null;
+    auto_remind: boolean;
+    payment_link: string | null;
+    sent_at: string | null;
+    paid_at: string | null;
+    payment_method: string | null;
+    payment_reference: string | null;
+    notes: string | null;
+};

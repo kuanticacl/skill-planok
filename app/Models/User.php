@@ -30,7 +30,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'phone', 'job_title', 'password', 'role_id', 'is_active', 'last_login_at'])]
+#[Fillable(['name', 'email', 'phone', 'job_title', 'password', 'role_id', 'client_id', 'lead_id', 'is_active', 'must_change_password', 'last_login_at', 'portal_invited_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
@@ -61,6 +61,8 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
+            'portal_invited_at' => 'datetime',
             'last_login_at' => 'datetime',
             /* @chisel-2fa */
             'two_factor_confirmed_at' => 'datetime',
@@ -71,6 +73,18 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
+    }
+
+    /** Empresa a la que pertenece un acceso del portal de clientes (null en usuarios del equipo). */
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class)->withTrashed();
+    }
+
+    /** Los usuarios del portal son contactos de una empresa: no usan el CRM interno. */
+    public function isPortal(): bool
+    {
+        return $this->client_id !== null;
     }
 
     public function isAdmin(): bool

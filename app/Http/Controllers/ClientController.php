@@ -18,7 +18,7 @@ class ClientController extends Controller
         $filters = $request->only(['q', 'status']);
 
         $clients = Client::query()
-            ->withCount(['leads', 'proposals'])
+            ->withCount(['leads', 'proposals', 'services', 'invoices'])
             ->when($filters['q'] ?? null, fn ($q, $term) => $q->where(fn ($q) => $q
                 ->where('name', 'like', "%{$term}%")
                 ->orWhere('legal_name', 'like', "%{$term}%")
@@ -68,9 +68,31 @@ class ClientController extends Controller
                 'created_at' => $lead->created_at->toIso8601String(),
             ]);
 
+        $user = $request->user();
+        $contracts = app(\App\Http\Controllers\Billing\ContractController::class);
+        $invoices = app(\App\Http\Controllers\Billing\InvoiceController::class);
+
         return Inertia::render('clients/Show', [
             'client' => [...$client->load('creator:id,name')->toArray(), 'notes_html' => \App\Support\ProposalText::html($client->notes)],
             'leads' => $leads,
+            'services' => $user->hasPermission('contracts.view')
+                ? $client->services()->with(['parent:id,name'])->withCount('children')->orderByDesc('id')->get()->map(fn ($s) => $contracts->row($s))
+                : null,
+            'invoices' => $user->hasPermission('billing.view')
+                ? $client->invoices()->with('service:id,name')->orderByDesc('due_date')->limit(30)->get()->map(fn ($i) => $invoices->present($i))
+                : null,
+            'portal' => $user->hasPermission('portal.manage') ? [
+                'url' => \App\Support\PortalUrl::login(),
+                'users' => $client->portalUsers()->orderBy('name')->get()->map(fn ($u) => [
+                    'id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'is_active' => $u->is_active,
+                    'must_change_password' => $u->must_change_password, 'last_login_at' => $u->last_login_at?->toIso8601String(), 'invited_at' => $u->portal_invited_at?->toIso8601String(),
+                ]),
+            ] : null,
+            'billingLookups' => [
+                'clients' => [['id' => $client->id, 'name' => $client->name]],
+                'services' => $client->services()->get(['id', 'name', 'client_id', 'currency', 'price']),
+                'taxRate' => config('portal.tax_rate'),
+            ],
         ]);
     }
 
@@ -92,14 +114,15 @@ class ClientController extends Controller
     {
         $leads = $client->leads()->count();
         $proposals = $client->proposals()->count();
+        $billing = $client->services()->count() + $client->invoices()->count();
 
-        if (($leads || $proposals) && ! $request->boolean('confirm_related')) {
+        if (($leads || $proposals || $billing) && ! $request->boolean('confirm_related')) {
             $this->toast('La empresa tiene datos relacionados: confirma la eliminación para enviarlos a la papelera.', 'error');
 
             return back();
         }
 
-        $target = $request->filled('transfer_to') && ($leads || $proposals)
+        $target = $request->filled('transfer_to') && ($leads || $proposals || $billing)
             ? Client::findOrFail($request->validate([
                 'transfer_to' => ['integer', Rule::exists('clients', 'id')->whereNull('deleted_at'), Rule::notIn([$client->id])],
             ])['transfer_to'])

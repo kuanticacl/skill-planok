@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Models\Client;
+use App\Models\ClientService;
+use App\Models\Invoice;
+use App\Models\User;
 use App\Models\Lead;
 use App\Models\LeadSource;
 use App\Models\Proposal;
@@ -50,9 +53,16 @@ class CascadeDelete
             if ($target) {
                 Lead::withTrashed()->where('client_id', $client->id)->update(['client_id' => $target->id]);
                 Proposal::withTrashed()->where('client_id', $client->id)->update(['client_id' => $target->id]);
+                ClientService::withTrashed()->where('client_id', $client->id)->update(['client_id' => $target->id]);
+                Invoice::withTrashed()->where('client_id', $client->id)->update(['client_id' => $target->id]);
+                User::where('client_id', $client->id)->update(['client_id' => $target->id]);
             } else {
                 $this->leads($client->leads()->get());
                 $client->proposals()->get()->each->delete();
+                $client->invoices()->get()->each->delete();
+                $client->services()->get()->each->delete();
+                // Los accesos al portal quedan desactivados (no se borran: se pueden reactivar al restaurar la empresa).
+                User::where('client_id', $client->id)->update(['is_active' => false]);
             }
             $client->delete();
         });

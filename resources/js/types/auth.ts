@@ -6,6 +6,9 @@ export type User = {
     phone?: string | null;
     job_title?: string | null;
     is_active?: boolean;
+    is_portal?: boolean;
+    client_id?: number | null;
+    must_change_password?: boolean;
     role?: { id: number; name: string; slug: string } | null;
     email_verified_at: string | null;
     /* @chisel-2fa */

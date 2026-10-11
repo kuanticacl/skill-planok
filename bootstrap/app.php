@@ -32,9 +32,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // Primero de la pila: mide también las consultas de sesión y caché.
         $middleware->prepend(\App\Http\Middleware\ServerTiming::class);
 
+        $middleware->alias(['portal' => \App\Http\Middleware\EnsurePortalUser::class]);
+
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->web(append: [
+            \App\Http\Middleware\EnforcePortalBoundary::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,

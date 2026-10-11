@@ -35,9 +35,9 @@ const deleteSummary = computed(() => {
     const c = toDelete.value;
     if (!c) return '';
     const n = (k: number | undefined, one: string, many: string) => (k ? `${k} ${k === 1 ? one : many}` : '');
-    return [n(c.leads_count, 'lead', 'leads'), n(c.proposals_count, 'propuesta', 'propuestas')].filter(Boolean).join(' y ');
+    return [n(c.leads_count, 'cliente', 'clientes'), n(c.proposals_count, 'propuesta', 'propuestas'), n(c.services_count, 'servicio contratado', 'servicios contratados'), n(c.invoices_count, 'cobro', 'cobros')].filter(Boolean).join(', ');
 });
-const hasRelated = computed(() => !!toDelete.value && ((toDelete.value.leads_count ?? 0) > 0 || (toDelete.value.proposals_count ?? 0) > 0));
+const hasRelated = computed(() => !!toDelete.value && ((toDelete.value.leads_count ?? 0) > 0 || (toDelete.value.proposals_count ?? 0) > 0 || (toDelete.value.services_count ?? 0) > 0 || (toDelete.value.invoices_count ?? 0) > 0));
 const deleteTargets = computed(() => props.transferTargets.filter((c) => c.id !== toDelete.value?.id));
 const confirmDelete = (extra: { transfer_to?: number | null } = {}) => {
     if (!toDelete.value) return;

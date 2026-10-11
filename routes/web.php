@@ -27,6 +27,11 @@ use App\Http\Controllers\LeadFieldController;
 use App\Http\Controllers\Proposals\ProposalController;
 use App\Http\Controllers\Public\ProposalViewController as PublicProposalController;
 use App\Http\Controllers\Proposals\ServiceController;
+use App\Http\Controllers\Billing\ContractController;
+use App\Http\Controllers\Billing\ExpenseController;
+use App\Http\Controllers\Billing\InvoiceController;
+use App\Http\Controllers\Billing\PortalAccessController;
+use App\Http\Controllers\Portal\PortalController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SourceController;
 use App\Http\Controllers\StageController;
@@ -37,6 +42,10 @@ use Illuminate\Support\Facades\Route;
 // Inicio: lleva a la primera sección a la que el usuario tiene acceso.
 Route::get('/', function (Request $request) {
     $user = $request->user();
+
+    if ($user?->isPortal()) {
+        return redirect('/portal');
+    }
 
     foreach (['dashboard.view' => 'dashboard', 'leads.view' => 'leads.index', 'clients.view' => 'clients.index', 'users.view' => 'users.index'] as $permission => $route) {
         if ($user?->hasPermission($permission)) {
@@ -97,6 +106,45 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('clients/{client}/edit', [ClientController::class, 'edit'])->middleware('can:clients.update')->name('clients.edit');
     Route::put('clients/{client}', [ClientController::class, 'update'])->middleware('can:clients.update')->name('clients.update');
     Route::delete('clients/{client}', [ClientController::class, 'destroy'])->middleware('can:clients.delete')->name('clients.destroy');
+
+    // Servicios contratados (con costos y gastos internos)
+    Route::prefix('contracts')->group(function () {
+        Route::get('/', [ContractController::class, 'index'])->middleware('can:contracts.view')->name('contracts.index');
+        Route::get('create', [ContractController::class, 'create'])->middleware('can:contracts.create')->name('contracts.create');
+        Route::post('/', [ContractController::class, 'store'])->middleware('can:contracts.create')->name('contracts.store');
+        Route::get('{clientService}', [ContractController::class, 'show'])->middleware('can:contracts.view')->name('contracts.show');
+        Route::get('{clientService}/edit', [ContractController::class, 'edit'])->middleware('can:contracts.update')->name('contracts.edit');
+        Route::put('{clientService}', [ContractController::class, 'update'])->middleware('can:contracts.update')->name('contracts.update');
+        Route::delete('{clientService}', [ContractController::class, 'destroy'])->middleware('can:contracts.delete')->name('contracts.destroy');
+        Route::post('{clientService}/expenses', [ExpenseController::class, 'store'])->middleware('can:contracts.costs')->name('contracts.expenses.store');
+        Route::delete('expenses/{expense}', [ExpenseController::class, 'destroy'])->middleware('can:contracts.costs')->name('contracts.expenses.destroy');
+    });
+
+    // Facturación y cobranza
+    Route::prefix('billing')->group(function () {
+        Route::get('/', [InvoiceController::class, 'index'])->middleware('can:billing.view')->name('billing.index');
+        Route::put('settings', [InvoiceController::class, 'settings'])->middleware('can:billing.settings')->name('billing.settings');
+        Route::get('invoices/{invoice}/download', [InvoiceController::class, 'download'])->middleware('can:billing.view')->name('billing.download');
+        Route::middleware('can:billing.manage')->group(function () {
+            Route::post('invoices', [InvoiceController::class, 'store'])->name('billing.store');
+            Route::put('invoices/{invoice}', [InvoiceController::class, 'update'])->name('billing.update');
+            Route::post('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('billing.pdf');
+            Route::post('invoices/{invoice}/issue', [InvoiceController::class, 'issue'])->name('billing.issue');
+            Route::post('invoices/{invoice}/send', [InvoiceController::class, 'send'])->middleware('throttle:30,1')->name('billing.send');
+        });
+        Route::post('invoices/{invoice}/pay', [InvoiceController::class, 'pay'])->middleware('can:billing.mark_paid')->name('billing.pay');
+        Route::post('invoices/{invoice}/reopen', [InvoiceController::class, 'reopen'])->middleware('can:billing.mark_paid')->name('billing.reopen');
+        Route::post('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->middleware('can:billing.delete')->name('billing.cancel');
+        Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy'])->middleware('can:billing.delete')->name('billing.destroy');
+    });
+
+    // Accesos de una empresa al portal de clientes
+    Route::middleware('can:portal.manage')->group(function () {
+        Route::post('clients/{client}/portal-users', [PortalAccessController::class, 'store'])->name('portal-users.store');
+        Route::post('portal-users/{user}/reset', [PortalAccessController::class, 'reset'])->middleware('throttle:20,1')->name('portal-users.reset');
+        Route::post('portal-users/{user}/toggle', [PortalAccessController::class, 'toggle'])->name('portal-users.toggle');
+        Route::delete('portal-users/{user}', [PortalAccessController::class, 'destroy'])->name('portal-users.destroy');
+    });
 
     // Configuración del CRM: orígenes (con API key), etapas del Kanban y campos personalizados
     Route::prefix('crm')->group(function () {
@@ -292,3 +340,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+
+// Portal de clientes (host propio opcional: clientes.ecortes.cl). Solo accesos con rol «cliente» y empresa asignada.
+Route::prefix('portal')->middleware(['auth', 'auth.session', 'portal'])->name('portal.')->group(function () {
+    Route::get('/', [PortalController::class, 'home'])->name('home');
+    Route::get('propuestas', [PortalController::class, 'proposals_index'])->name('proposals');
+    Route::get('servicios', [PortalController::class, 'services_index'])->name('services');
+    Route::get('facturas', [PortalController::class, 'invoices_index'])->name('invoices');
+    Route::get('facturas/{invoice}/pdf', [PortalController::class, 'invoicePdf'])->middleware('throttle:60,1')->name('invoices.pdf');
+    Route::get('cuenta', [PortalController::class, 'account'])->name('account');
+    Route::put('cuenta', [PortalController::class, 'updateProfile'])->name('account.update');
+    Route::put('cuenta/password', [PortalController::class, 'updatePassword'])->middleware('throttle:6,1')->name('account.password');
+});

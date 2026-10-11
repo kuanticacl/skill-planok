@@ -25,6 +25,19 @@ class Role extends Model
         ];
     }
 
+    public const PORTAL_SLUG = 'cliente';
+
+    /** Rol de los accesos al portal de clientes: no tiene permisos del CRM. */
+    public static function portal(): self
+    {
+        return static::firstOrCreate(['slug' => self::PORTAL_SLUG], ['name' => 'Cliente (portal)', 'description' => 'Acceso al portal de clientes: ve sus propuestas, servicios y facturas.', 'permissions' => [], 'is_system' => true]);
+    }
+
+    public function scopeStaff($query)
+    {
+        return $query->where('slug', '!=', self::PORTAL_SLUG);
+    }
+
     public function users(): HasMany
     {
         return $this->hasMany(User::class);

@@ -28,6 +28,22 @@ class Client extends Model
         return $this->hasMany(Proposal::class);
     }
 
+    public function services(): HasMany
+    {
+        return $this->hasMany(ClientService::class);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    /** Accesos al portal de clientes de esta empresa. */
+    public function portalUsers(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

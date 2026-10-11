@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { Building2, Globe, Mail, MapPin, Pencil, Phone } from '@lucide/vue';
+import { Building2, Globe, Mail, MapPin, Pencil, Phone, Plus } from '@lucide/vue';
 import DataCard from '@/components/DataCard.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,11 @@ import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableR
 import { usePermissions } from '@/composables/usePermissions';
 import { edit, index } from '@/routes/clients';
 import type { ClientRow } from '@/types';
+import type { InvoiceRow, ServiceRow } from '@/types/billing';
+import InvoiceList from '@/components/billing/InvoiceList.vue';
+import PortalAccessCard from '@/components/billing/PortalAccessCard.vue';
+import StatusPill from '@/components/billing/StatusPill.vue';
+import { cycleLabels, cyclePer, fmtDate as fmtD, money } from '@/lib/billingUi';
 
 type LeadRow = {
     id: number;
@@ -20,7 +25,14 @@ type LeadRow = {
     created_at: string;
 };
 
-const props = defineProps<{ client: ClientRow; leads: LeadRow[] }>();
+const props = defineProps<{
+    client: ClientRow;
+    leads: LeadRow[];
+    services: ServiceRow[] | null;
+    invoices: InvoiceRow[] | null;
+    portal: { url: string; users: { id: number; name: string; email: string; is_active: boolean; must_change_password: boolean; last_login_at: string | null; invited_at: string | null }[] } | null;
+    billingLookups: { clients: { id: number; name: string }[]; services: { id: number; name: string; client_id: number; currency: string; price: number }[]; taxRate: number };
+}>();
 const { can } = usePermissions();
 
 defineOptions({ layout: { breadcrumbs: [{ title: 'Empresas', href: index() }] } });
@@ -93,5 +105,31 @@ const info = [
                 </Table>
             </DataCard>
         </div>
+
+        <PortalAccessCard v-if="portal" :client-id="client.id" :portal="portal" :contacts="leads.filter((l) => l.email)" />
+
+        <DataCard v-if="services !== null">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3">
+                <span class="font-semibold">Servicios contratados ({{ services.length }})</span>
+                <Button v-if="can('contracts.create')" size="sm" variant="outline" as-child><Link :href="`/contracts/create?client=${client.id}`"><Plus /> Nuevo servicio</Link></Button>
+            </div>
+            <Table>
+                <TableHeader><TableRow class="hover:bg-transparent"><TableHead>Servicio</TableHead><TableHead class="hidden sm:table-cell">Valor neto</TableHead><TableHead class="hidden md:table-cell">Vigencia</TableHead><TableHead>Estado</TableHead></TableRow></TableHeader>
+                <TableBody>
+                    <TableEmpty v-if="!services.length" :colspan="4">Sin servicios contratados.</TableEmpty>
+                    <TableRow v-for="sv in services" :key="sv.id">
+                        <TableCell><Link :href="`/contracts/${sv.id}`" class="font-medium hover:text-primary">{{ sv.name }}</Link><p class="text-xs text-muted-foreground">{{ cycleLabels[sv.billing_cycle] }}<span v-if="sv.parent"> · asociado a {{ sv.parent.name }}</span></p></TableCell>
+                        <TableCell class="hidden whitespace-nowrap tabular-nums sm:table-cell">{{ money(sv.price, sv.currency) }} <span class="text-xs text-muted-foreground">{{ cyclePer[sv.billing_cycle] }}</span></TableCell>
+                        <TableCell class="hidden text-sm md:table-cell">{{ fmtD(sv.start_date) }} → {{ sv.end_date ? fmtD(sv.end_date) : 'sin término' }}<p v-if="sv.auto_renew" class="text-xs text-brand-green">Renovación automática</p></TableCell>
+                        <TableCell><StatusPill kind="service" :status="sv.status" /></TableCell>
+                    </TableRow>
+                </TableBody>
+            </Table>
+        </DataCard>
+
+        <DataCard v-if="invoices !== null">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3"><span class="font-semibold">Cobros y facturas</span><Button v-if="can('billing.view')" size="sm" variant="ghost" as-child><Link :href="`/billing?client=${client.id}&status=`">Ver en Facturación</Link></Button></div>
+            <InvoiceList :invoices="invoices" :clients="billingLookups.clients" :services="billingLookups.services" :tax-rate="billingLookups.taxRate" empty-text="Sin cobros registrados." />
+        </DataCard>
     </div>
 </template>

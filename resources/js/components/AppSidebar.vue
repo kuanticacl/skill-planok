@@ -25,6 +25,8 @@ import {
     Users,
     FileSignature,
     Package,
+    PackageCheck,
+    Receipt,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
@@ -85,6 +87,13 @@ const groups: NavGroup[] = [
             { title: 'Empresas', href: clients(), icon: Building2, permission: 'clients.view' },
             { title: 'Propuestas', href: proposals(), icon: FileSignature, permission: 'proposals.view' },
             { title: 'Servicios y tarifas', href: services(), icon: Package, permission: 'services.view' },
+        ],
+    },
+    {
+        label: 'Cobranza',
+        items: [
+            { title: 'Servicios contratados', href: '/contracts', icon: PackageCheck, permission: 'contracts.view' },
+            { title: 'Facturación', href: '/billing', icon: Receipt, permission: 'billing.view' },
         ],
     },
     {
