@@ -128,6 +128,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('invoices/{invoice}/download', [InvoiceController::class, 'download'])->middleware('can:billing.view')->name('billing.download');
         Route::middleware('can:billing.manage')->group(function () {
             Route::post('invoices', [InvoiceController::class, 'store'])->name('billing.store');
+            Route::post('invoices/extract', [InvoiceController::class, 'extract'])->middleware(['can:ai.use', 'throttle:15,1'])->name('billing.extract');
             Route::put('invoices/{invoice}', [InvoiceController::class, 'update'])->name('billing.update');
             Route::post('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('billing.pdf');
             Route::post('invoices/{invoice}/issue', [InvoiceController::class, 'issue'])->name('billing.issue');

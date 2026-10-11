@@ -25,6 +25,7 @@ const props = defineProps<{
     services: { id: number; name: string; client_id: number; currency: string; price: number }[];
     taxRate: number;
     emptyText?: string;
+    aiAvailable?: boolean;
 }>();
 
 const { can } = usePermissions();
@@ -103,7 +104,7 @@ const removeInvoice = computed(() => toDelete.value);
                             <template v-if="can('billing.manage')">
                                 <DropdownMenuItem v-if="['scheduled', 'issued'].includes(i.status)" @select="openPdf(i)"><Paperclip /> {{ i.has_pdf ? 'Reemplazar PDF' : i.status === 'scheduled' ? 'Adjuntar PDF y emitir' : 'Adjuntar PDF' }}</DropdownMenuItem>
                                 <DropdownMenuItem v-if="i.status === 'issued'" @select="post(`/billing/invoices/${i.id}/send`, i.id)"><Send /> {{ sendLabel(i) }}</DropdownMenuItem>
-                                <DropdownMenuItem v-if="!['paid', 'cancelled'].includes(i.status)" @select="edit(i)"><Pencil /> Editar</DropdownMenuItem>
+                                <DropdownMenuItem v-if="i.status !== 'cancelled'" @select="edit(i)"><Pencil /> Editar</DropdownMenuItem>
                             </template>
                             <DropdownMenuItem v-if="can('billing.mark_paid') && ['issued', 'scheduled'].includes(i.status)" @select="openPay(i)"><CheckCircle2 /> Marcar como pagada</DropdownMenuItem>
                             <DropdownMenuItem v-if="can('billing.mark_paid') && ['paid', 'cancelled'].includes(i.status)" @select="post(`/billing/invoices/${i.id}/reopen`)"><RotateCcw /> Reabrir</DropdownMenuItem>
@@ -119,7 +120,7 @@ const removeInvoice = computed(() => toDelete.value);
         </TableBody>
     </Table>
 
-    <InvoiceFormDialog v-model:open="editOpen" :invoice="editing" :clients="clients" :services="services" :tax-rate="taxRate" />
+    <InvoiceFormDialog v-model:open="editOpen" :invoice="editing" :clients="clients" :services="services" :tax-rate="taxRate" :ai-available="aiAvailable" />
 
     <Dialog :open="!!pdfFor" @update:open="(v: boolean) => !v && (pdfFor = null)">
         <DialogContent class="sm:max-w-md">

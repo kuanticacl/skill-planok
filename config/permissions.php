@@ -124,7 +124,7 @@ return [
             'label' => 'Inteligencia artificial',
             'icon' => 'sparkles',
             'permissions' => [
-                'ai.use' => 'Usar el asistente de IA (mailings y análisis de clientes)',
+                'ai.use' => 'Usar el asistente de IA (mailings, análisis de clientes y lectura de facturas)',
                 'ai.manage' => 'Configurar proveedores de IA y API keys',
                 'agent.use' => 'Usar el Agent (asistente que opera el CRM por chat)',
             ],

@@ -32,12 +32,16 @@ class InvoiceRequest extends FormRequest
             'notes' => ['nullable', 'string', 'max:3000'],
             'pdf' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
             'issue' => ['boolean'],
+            'paid' => ['boolean'],
+            'paid_at' => ['nullable', 'date'],
+            'payment_method' => ['nullable', 'string', 'max:60'],
+            'payment_reference' => ['nullable', 'string', 'max:120'],
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        foreach (['client_service_id', 'number', 'period_start', 'period_end', 'issue_date', 'payment_link', 'notes', 'tax_rate'] as $k) {
+        foreach (['paid_at', 'payment_method', 'payment_reference', 'client_service_id', 'number', 'period_start', 'period_end', 'issue_date', 'payment_link', 'notes', 'tax_rate'] as $k) {
             if ($this->input($k) === '') {
                 $this->merge([$k => null]);
             }

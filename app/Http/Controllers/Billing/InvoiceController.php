@@ -22,6 +22,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /** Cobranza interna: cobros y facturas (PDF externo), pagos, envíos y recordatorios. */
 class InvoiceController extends Controller
 {
+    /** Campos del formulario que no son columnas del cobro. */
+    private const NON_COLUMNS = ['pdf', 'issue', 'paid', 'paid_at', 'payment_method', 'payment_reference'];
+
     public function __construct(private InvoiceService $invoices) {}
 
     public function index(Request $request): Response
@@ -62,32 +65,44 @@ class InvoiceController extends Controller
             'services' => ClientService::orderBy('name')->get(['id', 'name', 'client_id', 'currency', 'price']),
             'taxRate' => config('portal.tax_rate'),
             'reminderOffsets' => ReminderRunner::defaultOffsets(),
+            'aiAvailable' => app(\App\Services\Ai\AiGateway::class)->isAvailable(),
             'bank' => ['accounts' => BankAccounts::all(), 'note' => BankAccounts::note(), 'types' => BankAccounts::TYPES],
         ]);
     }
 
     public function store(InvoiceRequest $request): RedirectResponse
     {
-        $data = $request->safe()->except(['pdf', 'issue']);
-        $invoice = $this->invoices->create($data, $request->user());
+        $data = $request->safe()->except(self::NON_COLUMNS);
+        $paid = $request->boolean('paid') && $request->user()->hasPermission('billing.mark_paid');
+        // Una factura antigua ya pagada no genera recordatorios ni avisos al cliente.
+        $invoice = $this->invoices->create($paid ? [...$data, 'auto_remind' => false] : $data, $request->user());
 
         if ($request->hasFile('pdf')) {
             $this->invoices->attachPdf($invoice, $request->file('pdf'));
-            if ($request->boolean('issue')) {
+            if ($request->boolean('issue') || $paid) {
                 $this->invoices->issue($invoice);
             }
         }
+        if ($paid) {
+            $this->invoices->markPaid($invoice, $request->input('payment_method'), $request->input('payment_reference'), $request->filled('paid_at') ? \Illuminate\Support\Carbon::parse($request->input('paid_at')) : null);
+        }
 
-        $this->toast('Cobro registrado.');
+        $this->toast($paid ? 'Factura pagada registrada (queda en el historial, sin enviar avisos).' : 'Cobro registrado.');
 
         return back();
     }
 
     public function update(InvoiceRequest $request, Invoice $invoice): RedirectResponse
     {
-        abort_if(in_array($invoice->status, ['paid', 'cancelled'], true), 422, 'Una factura pagada o anulada no se edita: reábrela primero.');
+        abort_if($invoice->status === 'cancelled', 422, 'Una factura anulada no se edita: reábrela primero.');
 
-        $this->invoices->update($invoice, $request->safe()->except(['pdf', 'issue']));
+        $this->invoices->update($invoice, $request->safe()->except(self::NON_COLUMNS));
+        if ($invoice->status === 'paid' && $request->user()->hasPermission('billing.mark_paid')) {
+            $invoice->forceFill([
+                'payment_method' => $request->input('payment_method'), 'payment_reference' => $request->input('payment_reference'),
+                ...($request->filled('paid_at') ? ['paid_at' => \Illuminate\Support\Carbon::parse($request->input('paid_at'))] : []),
+            ])->save();
+        }
         if ($request->hasFile('pdf')) {
             $this->invoices->attachPdf($invoice, $request->file('pdf'));
         }
@@ -98,6 +113,18 @@ class InvoiceController extends Controller
         $this->toast('Cobro actualizado.');
 
         return back();
+    }
+
+    /** Lee el PDF de una factura con IA y devuelve los datos para precargar el formulario (no guarda nada). */
+    public function extract(Request $request, \App\Services\Billing\InvoiceExtractor $extractor): \Illuminate\Http\JsonResponse
+    {
+        $request->validate(['pdf' => ['required', 'file', 'mimes:pdf', 'max:10240']]);
+
+        try {
+            return response()->json($extractor->extract($request->file('pdf')));
+        } catch (\App\Services\Ai\AiFailed|\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
     }
 
     public function pdf(Request $request, Invoice $invoice): RedirectResponse

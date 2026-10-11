@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
+import { Sparkles, TriangleAlert } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
 import FormField from '@/components/FormField.vue';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,9 @@ import { NativeSelect } from '@/components/ui/native-select';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { usePermissions } from '@/composables/usePermissions';
 import { money } from '@/lib/billingUi';
+import { HttpError } from '@/lib/http';
 import type { InvoiceRow } from '@/types/billing';
 
 const props = defineProps<{
@@ -18,7 +21,9 @@ const props = defineProps<{
     clients: { id: number; name: string }[];
     services: { id: number; name: string; client_id: number; currency: string; price: number }[];
     taxRate: number;
+    aiAvailable?: boolean;
 }>();
+const { can } = usePermissions();
 const open = defineModel<boolean>('open', { default: false });
 
 const blank = () => ({
@@ -26,6 +31,7 @@ const blank = () => ({
     client_service_id: (props.defaults?.client_service_id ?? '') as number | string,
     number: '', concept: '', period_start: '', period_end: '', issue_date: '', due_date: new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 10),
     currency: 'CLP', amount_net: '', tax_rate: String(props.taxRate), auto_remind: false, payment_link: '', notes: '', pdf: null as File | null, issue: false,
+    paid: false, paid_at: new Date().toISOString().slice(0, 10), payment_method: 'Transferencia', payment_reference: '',
 });
 const form = useForm(blank());
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -40,10 +46,16 @@ watch(open, (o) => {
               client_id: i.client_id, client_service_id: i.client_service_id ?? '', number: i.number ?? '', concept: i.concept, period_start: i.period_start ?? '', period_end: i.period_end ?? '',
               issue_date: i.issue_date ?? '', due_date: i.due_date, currency: i.currency, amount_net: String(i.amount_net), tax_rate: String(i.tax_rate), auto_remind: i.auto_remind,
               payment_link: i.payment_link ?? '', notes: i.notes ?? '', pdf: null, issue: false,
+              paid: i.status === 'paid', paid_at: i.paid_at ? i.paid_at.slice(0, 10) : new Date().toISOString().slice(0, 10), payment_method: i.payment_method ?? 'Transferencia', payment_reference: i.payment_reference ?? '',
           }
         : blank());
     if (fileInput.value) fileInput.value.value = '';
+    aiNote.value = null;
+    aiWarnings.value = [];
 });
+
+const isPaidInvoice = computed(() => props.invoice?.status === 'paid');
+const canPay = computed(() => can('billing.mark_paid'));
 
 const clientServices = computed(() => props.services.filter((s) => s.client_id === Number(form.client_id)));
 
@@ -62,11 +74,54 @@ const total = computed(() => {
     return form.currency === 'UF' ? Math.round(t * 100) / 100 : Math.round(t);
 });
 
-const onFile = (e: Event) => (form.pdf = (e.target as HTMLInputElement).files?.[0] ?? null);
+// ---- lectura del PDF con IA ----
+const reading = ref(false);
+const aiNote = ref<string | null>(null);
+const aiWarnings = ref<string[]>([]);
+
+type Extracted = { fields: Record<string, string | number | boolean>; client: { id: number; name: string } | null; warnings: string[] };
+const readWithAi = async () => {
+    if (!form.pdf) return;
+    reading.value = true;
+    aiNote.value = null;
+    aiWarnings.value = [];
+    try {
+        const body = new FormData();
+        body.append('pdf', form.pdf);
+        const xsrf = document.cookie.split('; ').find((c) => c.startsWith('XSRF-TOKEN='))?.split('=')[1];
+        const res = await fetch('/billing/invoices/extract', { method: 'POST', credentials: 'same-origin', body, headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', ...(xsrf ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrf) } : {}) } });
+        if (!res.ok) throw new HttpError(res.status, await res.json().catch(() => null));
+        const d = (await res.json()) as Extracted;
+        const f = d.fields;
+        if (!props.invoice && d.client) form.client_id = d.client.id;
+        if (f.number) form.number = String(f.number);
+        if (f.concept && !form.concept) form.concept = String(f.concept);
+        if (f.currency) form.currency = String(f.currency);
+        if (f.amount_net !== undefined) form.amount_net = String(f.amount_net);
+        if (f.tax_rate !== undefined) form.tax_rate = String(f.tax_rate);
+        if (f.issue_date) form.issue_date = String(f.issue_date);
+        if (f.due_date) form.due_date = String(f.due_date);
+        else if (f.issue_date) form.due_date = String(f.issue_date);
+        if (f.period_start) form.period_start = String(f.period_start);
+        if (f.period_end) form.period_end = String(f.period_end);
+        if (f.paid_indicated && canPay.value && !props.invoice) { form.paid = true; form.paid_at = String(f.issue_date ?? form.paid_at); }
+        aiWarnings.value = d.warnings;
+        aiNote.value = d.client ? `Leí la factura ${f.number ?? ''} de ${d.client.name}. Revisa los datos antes de guardar.` : `Leí la factura ${f.number ?? ''}. Revisa los datos antes de guardar.`;
+    } catch (e) {
+        aiWarnings.value = [e instanceof HttpError ? (e.body?.message ?? 'No pude leer el PDF.') : 'No pude leer el PDF.'];
+    } finally {
+        reading.value = false;
+    }
+};
+
+const onFile = (e: Event) => {
+    form.pdf = (e.target as HTMLInputElement).files?.[0] ?? null;
+    if (form.pdf && props.aiAvailable && !props.invoice) void readWithAi();
+};
 
 const submit = () => {
     const url = props.invoice ? `/billing/invoices/${props.invoice.id}` : '/billing/invoices';
-    form.transform((d) => ({ ...d, ...(props.invoice ? { _method: 'put' } : {}), issue: d.pdf ? d.issue : false }))
+    form.transform((d) => ({ ...d, ...(props.invoice ? { _method: 'put' } : {}), issue: d.pdf ? d.issue : false, ...(d.paid ? { auto_remind: false } : { paid: false, paid_at: '', payment_method: '', payment_reference: '' }) }))
         .post(url, { forceFormData: true, preserveScroll: true, onSuccess: () => (open.value = false) });
 };
 </script>
@@ -95,6 +150,7 @@ const submit = () => {
 
                 <FormField label="N° de factura" for="inv-number" hint="Folio del documento emitido." :error="form.errors.number"><Input id="inv-number" v-model="form.number" placeholder="F-1024" /></FormField>
                 <FormField label="Vencimiento" for="inv-due" required :error="form.errors.due_date"><Input id="inv-due" v-model="form.due_date" type="date" /></FormField>
+                <FormField label="Emisión" for="inv-issue" :error="form.errors.issue_date"><Input id="inv-issue" v-model="form.issue_date" type="date" /></FormField>
                 <FormField label="Período desde" for="inv-ps" :error="form.errors.period_start"><Input id="inv-ps" v-model="form.period_start" type="date" /></FormField>
                 <FormField label="Período hasta" for="inv-pe" :error="form.errors.period_end"><Input id="inv-pe" v-model="form.period_end" type="date" /></FormField>
                 <FormField label="Enlace de pago" for="inv-link" class="sm:col-span-2" hint="Opcional (Flow, Webpay, transferencia…)." :error="form.errors.payment_link"><Input id="inv-link" v-model="form.payment_link" type="url" placeholder="https://" /></FormField>
@@ -102,11 +158,31 @@ const submit = () => {
                 <FormField label="PDF de la factura" for="inv-pdf" class="sm:col-span-2" :hint="invoice?.has_pdf ? `Ya hay un PDF adjunto (${invoice.pdf_name}). Elige otro para reemplazarlo.` : 'Máx. 10 MB.'" :error="form.errors.pdf">
                     <input id="inv-pdf" ref="fileInput" type="file" accept="application/pdf" class="block w-full text-sm file:mr-3 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary" @change="onFile" />
                 </FormField>
-                <label v-if="form.pdf && (!invoice || invoice.status === 'scheduled')" class="flex items-start gap-3 rounded-xl border p-3 text-sm sm:col-span-2">
+                <div v-if="form.pdf && aiAvailable" class="flex flex-wrap items-center gap-2 sm:col-span-2">
+                    <Button type="button" size="sm" variant="outline" :disabled="reading" @click="readWithAi"><Spinner v-if="reading" /><Sparkles v-else /> {{ reading ? 'Leyendo la factura…' : 'Leer datos del PDF con IA' }}</Button>
+                    <span v-if="aiNote" class="text-xs text-brand-green">{{ aiNote }}</span>
+                </div>
+                <ul v-if="aiWarnings.length" class="grid gap-1 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-800 sm:col-span-2 dark:text-amber-300">
+                    <li v-for="w in aiWarnings" :key="w" class="flex gap-2"><TriangleAlert class="mt-0.5 size-3.5 shrink-0" /> {{ w }}</li>
+                </ul>
+
+                <div v-if="canPay" class="grid gap-3 rounded-xl border p-3 text-sm sm:col-span-2">
+                    <label class="flex items-start gap-3">
+                        <Switch :model-value="form.paid" :disabled="isPaidInvoice" @update:model-value="(v: boolean) => (form.paid = v)" />
+                        <span><strong>{{ isPaidInvoice ? 'Factura pagada' : 'Ya está pagada (factura antigua)' }}</strong><span v-if="!isPaidInvoice" class="block text-xs text-muted-foreground">Para llevar el historial: queda como pagada, sin recordatorios ni avisos al cliente.</span></span>
+                    </label>
+                    <div v-if="form.paid" class="grid gap-3 sm:grid-cols-3">
+                        <FormField label="Fecha de pago" for="inv-paid-at" :error="form.errors.paid_at"><Input id="inv-paid-at" v-model="form.paid_at" type="date" /></FormField>
+                        <FormField label="Medio de pago" for="inv-paid-m" :error="form.errors.payment_method"><NativeSelect id="inv-paid-m" v-model="form.payment_method"><option>Transferencia</option><option>Webpay</option><option>Flow</option><option>MercadoPago</option><option>Tarjeta</option><option>Efectivo / cheque</option><option>Otro</option></NativeSelect></FormField>
+                        <FormField label="Referencia" for="inv-paid-r" :error="form.errors.payment_reference"><Input id="inv-paid-r" v-model="form.payment_reference" placeholder="N° de operación" /></FormField>
+                    </div>
+                </div>
+
+                <label v-if="form.pdf && !form.paid && (!invoice || invoice.status === 'scheduled')" class="flex items-start gap-3 rounded-xl border p-3 text-sm sm:col-span-2">
                     <Switch :model-value="form.issue" @update:model-value="(v: boolean) => (form.issue = v)" />
                     <span><strong>Emitir ahora</strong><span class="block text-xs text-muted-foreground">Queda «por pagar» y el cliente la ve en su portal.</span></span>
                 </label>
-                <label class="flex items-start gap-3 rounded-xl border p-3 text-sm sm:col-span-2">
+                <label v-if="!form.paid" class="flex items-start gap-3 rounded-xl border p-3 text-sm sm:col-span-2">
                     <Switch :model-value="form.auto_remind" @update:model-value="(v: boolean) => (form.auto_remind = v)" />
                     <span><strong>Recordatorios automáticos</strong><span class="block text-xs text-muted-foreground">Envía correos antes y después del vencimiento mientras esté por pagar. Si es un cobro único, déjalo apagado y usa «Enviar cobro».</span></span>
                 </label>

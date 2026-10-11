@@ -32,6 +32,7 @@ const props = defineProps<{
     services: { id: number; name: string; client_id: number; currency: string; price: number }[];
     taxRate: number;
     reminderOffsets: number[];
+    aiAvailable: boolean;
     bank: { accounts: { bank: string; account_type: string; number: string; holder: string; tax_id: string; email: string }[]; note: string; types: string[] };
 }>();
 
@@ -107,12 +108,12 @@ void router;
                 <div class="relative"><Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" /><Input v-model="filters.q" placeholder="Buscar por N° de factura, concepto o empresa…" class="pl-9" /></div>
                 <NativeSelect v-model="filters.client"><option value="">Todas las empresas</option><option v-for="c in clients" :key="c.id" :value="c.id">{{ c.name }}</option></NativeSelect>
             </div>
-            <InvoiceList :invoices="invoices.data" show-client :clients="clients" :services="services" :tax-rate="taxRate" />
+            <InvoiceList :invoices="invoices.data" show-client :clients="clients" :services="services" :tax-rate="taxRate" :ai-available="aiAvailable" />
             <Pagination :paginator="invoices" />
         </DataCard>
     </div>
 
-    <InvoiceFormDialog v-model:open="newOpen" :invoice="null" :clients="clients" :services="services" :tax-rate="taxRate" />
+    <InvoiceFormDialog v-model:open="newOpen" :invoice="null" :clients="clients" :services="services" :tax-rate="taxRate" :ai-available="aiAvailable" />
 
     <BankAccountsDialog v-model:open="bankOpen" :accounts="bank.accounts" :note="bank.note" :types="bank.types" />
 
