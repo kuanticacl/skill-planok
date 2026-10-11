@@ -1,60 +1,89 @@
-# ECORTESCL CRM
+# CRM Suite
 
-CRM interno de **ECORTESCL** ([ecortes.cl](https://www.ecortes.cl)) para gestionar prospectos y propuestas de una software factory y agencia de growth marketing, con
-Kanban comercial y un módulo completo de **email marketing sobre Resend**.
-Laravel 13 · Inertia 3 · Vue 3 (TypeScript) · Tailwind 4 · shadcn-vue · SQLite (configurable).
+Plataforma web para **gestionar el ciclo comercial completo** de una empresa de servicios: captación de prospectos, seguimiento en un tablero Kanban, propuestas comerciales con firma del cliente, email marketing, un asistente de IA que opera el sistema y un **portal de clientes** con servicios contratados, facturas y cobranza automática.
 
-Identidad visual de ECORTESCL (software factory y growth marketing), tomada de ecortes.cl: azul marino `#121826`, verde `#64D989`, fuente **Open Sans**, logo con isotipo verde (`public/brand/ecortes-logo*.png`) y botones tipo píldora.
+**Stack:** Laravel 13 · PHP 8.3+ · Inertia 3 · Vue 3 (TypeScript) · Tailwind CSS 4 · shadcn-vue · MariaDB / SQLite · Redis · Docker.
+
+---
 
 ## Contenido
 
-- [Qué incluye](#qué-incluye) · [Puesta en marcha](#puesta-en-marcha) · [Roles y permisos](#roles-y-permisos)
-- [API de ingreso de leads](#api-de-ingreso-de-leads)
-- [Email marketing](#email-marketing): [Resend](#1-conectar-resend) · [Plantillas](#2-plantillas-de-email) · [Boletines](#3-boletines-y-audiencias) · [API de envío](#4-api-de-envío) · [Automatizaciones](#5-automatizaciones) · [Seguimiento y bajas](#6-seguimiento-bajas-y-webhook)
-- [Estructura](#estructura) · [Comandos útiles](#comandos-útiles)
+1. [Qué incluye](#1-qué-incluye)
+2. [Primeros pasos](#2-primeros-pasos)
+3. [Configuración](#3-configuración)
+4. [Roles y permisos](#4-roles-y-permisos)
+5. [Módulos](#5-módulos)
+   - [Prospectos, clientes y Kanban](#51-prospectos-clientes-y-kanban) · [Propuestas comerciales](#52-propuestas-comerciales) · [Email marketing](#53-email-marketing) · [Inteligencia artificial y Agent](#54-inteligencia-artificial-y-agent) · [Portal de clientes y cobranza](#55-portal-de-clientes-y-cobranza)
+6. [API](#6-api)
+7. [Tareas programadas y colas](#7-tareas-programadas-y-colas)
+8. [Despliegue](#8-despliegue)
+9. [Personalización de marca](#9-personalización-de-marca)
+10. [Rendimiento](#10-rendimiento)
+11. [Estructura del proyecto](#11-estructura-del-proyecto) · [Comandos útiles](#12-comandos-útiles)
 
-## Qué incluye
+---
 
-| Módulo | Descripción |
+## 1. Qué incluye
+
+| Área | Capacidades |
 | --- | --- |
-| **Usuarios, roles y permisos** | CRUD de usuarios (activo/inactivo), roles con matriz de permisos aplicada en rutas, policies y vistas. |
-| **Dashboard + Kanban** | Recuentos por origen y tablero con *drag & drop*. Tarjetas con prioridad, valor estimado, etiquetas, próximo seguimiento (vencido/hoy), tiempo en etapa y alertas de inactividad; **panel lateral** del lead sin salir del tablero; **selección múltiple** con acciones masivas (mover, asignar, prioridad, etiquetar, eliminar); filtros avanzados (origen, responsable, prioridad, etiqueta, seguimiento vencido…), orden por columna, columnas colapsables, creación rápida por columna, motivo al descartar y valor al concretar, densidad y campos visibles configurables, auto-refresco. |
-| **Clientes** (antes «Leads») | Terminología del CRM: **cliente** = la persona o contacto comercial que se gestiona en el Kanban; **empresa** = la organización con RUT y razón social. (En el código y la API siguen llamándose `lead` / `client`: `/leads`, `lead_id`, `/clients`, `client_id`). El valor estimado se ingresa en **CLP o UF** y se guarda con su equivalente en pesos (UF del día). Nombre, apellido, correo, teléfono, cargo, empresa + UTM + metadatos de captura (IP, ubicación, navegador, landing, referrer). Notas (con opción **privada**), asignación, historial de seguimiento y campos personalizados. |
-| **Orígenes y API** | Cada origen tiene su propia **API key**; el origen del lead se reconoce por la key con que llega. |
-| **Etapas del Kanban** | Nombre, color, tipo (en curso / concretado / descartado) y orden configurables. |
-| **Clientes** | CRUD con ficha y leads asociados. |
-| **Email marketing** | Plantillas con editor visual y HTML, boletines con audiencias y programación, API de envío, automatizaciones, tracking de aperturas/clics, bajas y webhooks de Resend. |
+| **Comercial** | Dashboard, **Kanban** con arrastre y panel lateral, ficha de cliente (persona) y de **empresa**, orígenes con API key, etapas configurables, campos personalizados, puntaje de prospectos (0–100). |
+| **Propuestas** | Constructor con catálogo de servicios, tarifas en **UF o CLP**, IVA, descuentos, versiones, **PDF**, enlace público con **firma del cliente** (aceptar, rechazar o pedir ajustes). |
+| **Email marketing** | Editor visual de plantillas, boletines con audiencias, automatizaciones, API de envío, tracking y bajas sobre **Resend**. |
+| **Inteligencia artificial** | Proveedores intercambiables (OpenAI, Claude, Gemini, Groq, Mistral, DeepSeek, xAI, OpenRouter o compatible OpenAI), análisis de prospectos, redacción de propuestas y correos, lectura de facturas en PDF, monitor de consumo y costos. |
+| **Agent** | Chat flotante que opera el sistema en lenguaje natural (crear, buscar, editar y eliminar **con tu confirmación**), con archivos adjuntos y voz. |
+| **Portal de clientes y cobranza** | Portal propio para cada cliente (propuestas, servicios, facturas, datos de pago), servicios contratados con renovación, facturación con PDF externo, recordatorios automáticos y dashboards de cuentas. |
+| **Administración** | Usuarios, roles y permisos granulares, papelera con restauración, historial de actividad, limpieza de datos de prueba, monitor de rendimiento. |
 
-## Puesta en marcha
+---
 
-Requisitos: PHP ≥ 8.3, Composer, Node ≥ 22.
+## 2. Primeros pasos
+
+**Requisitos:** PHP ≥ 8.3 (8.4 en Docker), Composer, Node ≥ 22. Para leer PDFs en el Agent y en la lectura de facturas se usa `pdftotext` (poppler; ya incluido en la imagen Docker).
 
 ```bash
 composer install && npm install
 cp .env.example .env && php artisan key:generate
 touch database/database.sqlite
 php artisan migrate --seed        # roles, etapas, orígenes y usuario administrador
-php artisan storage:link          # para subir imágenes en las plantillas de email
+php artisan storage:link
 composer run dev                  # servidor + worker de cola + Vite → http://localhost:8000
 ```
 
-Usuario administrador inicial (configurable con `ADMIN_EMAIL`, `ADMIN_NAME` y `ADMIN_PASSWORD`):
-**admin@ecortes.cl** / `password` (solo en entornos no productivos; en producción `ADMIN_PASSWORD` es obligatorio).
+Usuario administrador inicial: define `ADMIN_EMAIL`, `ADMIN_NAME` y `ADMIN_PASSWORD` en el `.env`. En entornos no productivos la contraseña por defecto es `password`; **en producción `ADMIN_PASSWORD` es obligatoria**.
 
-Datos de demostración opcionales (usuarios, clientes y 48 leads de ejemplo):
+Datos de demostración opcionales:
 
 ```bash
-php artisan db:seed --class=DemoSeeder      # usuarios demo con contraseña "password"
+php artisan crm:seed-demo          # una empresa con su cliente y propuestas por cada origen (idempotente)
+php artisan db:seed --class=DemoSeeder
 ```
 
-> **Producción:** define `APP_URL` con la URL pública (la usan los enlaces de seguimiento, la baja y el webhook),
-> mantén un worker (`php artisan queue:work`, p. ej. con Supervisor) y agrega el cron de Laravel
-> (`* * * * * php artisan schedule:run`) para los boletines programados. En local: `php artisan schedule:work`.
+---
 
-## Roles y permisos
+## 3. Configuración
 
-Los permisos viven en [`config/permissions.php`](config/permissions.php), agrupados (`leads.view`, `campaigns.send`, …).
-Agregar uno nuevo basta con sumarlo ahí: aparece solo en la matriz de roles y queda disponible como:
+Las variables principales (ver `.env.example` y `.env.dokploy.example`):
+
+| Variable | Descripción |
+| --- | --- |
+| `APP_URL` | URL pública. La usan los enlaces de seguimiento, bajas, webhooks y correos. |
+| `DB_*` | Base de datos (SQLite en local; MariaDB/MySQL en producción). |
+| `REDIS_*`, `SESSION_DRIVER`, `CACHE_STORE` | Sesiones y caché en Redis (recomendado en producción). |
+| `ADMIN_EMAIL`, `ADMIN_NAME`, `ADMIN_PASSWORD` | Administrador inicial (se crea solo si el sistema está vacío). |
+| `RESEND_API_KEY` | Opcional: también se configura desde la interfaz. Sin clave el sistema funciona en **modo prueba** (registra los correos sin enviarlos). |
+| `PORTAL_DOMAIN`, `PORTAL_URL` | Dominio del portal de clientes (p. ej. `clientes.tudominio.com`). Vacío = el portal queda en `/portal`. |
+| `BILLING_CHARGE_AHEAD_DAYS`, `BILLING_TAX_RATE` | Anticipación con que se generan los cobros recurrentes (10) e IVA por defecto (19). |
+| `SEED_DEMO` | En Docker, carga datos de demostración al iniciar. |
+| `TRUSTED_PROXIES`, `PERF_HEADERS` | Proxy inverso y cabeceras de diagnóstico de rendimiento. |
+
+Desde la interfaz se configuran además: datos de la empresa (firma y pie de propuestas), remitente y dominio de correo, proveedores de IA, orígenes, etapas, campos personalizados y datos bancarios.
+
+---
+
+## 4. Roles y permisos
+
+Los permisos viven en [`config/permissions.php`](config/permissions.php), agrupados (`leads.view`, `proposals.send`, `billing.manage`…). Agregar uno nuevo basta con sumarlo ahí: aparece solo en la matriz de roles y queda disponible como:
 
 ```php
 Route::get(...)->middleware('can:clients.create');   // rutas
@@ -65,255 +94,224 @@ const { can } = usePermissions();                    // Vue
 can('leads.delete')
 ```
 
-- El rol **Administrador** (`admin`) siempre tiene todos los permisos y no se puede editar ni eliminar.
-- `leads.view` muestra solo los leads **asignados** al usuario; `leads.view_all` muestra todos.
-- Permisos de email: `templates.view|manage`, `campaigns.view|create|send`, `lists.manage`, `automations.manage`,
-  `email_logs.view`, `email_settings.manage`.
+- El rol **Administrador** (`admin`) siempre tiene todos los permisos y no se puede editar ni eliminar. Hay roles base (Ejecutivo comercial, Supervisor, Solo lectura) editables.
+- `leads.view` muestra solo los prospectos **asignados**; `leads.view_all` muestra todos.
+- Grupos relevantes: `leads.*`, `clients.*`, `proposals.*`, `services.*`, `templates.*`, `campaigns.*`, `contracts.*` (incluye `contracts.costs`, información interna), `billing.*`, `portal.manage`, `ai.*`, `agent.use`, `trash.manage`, `demo.purge`.
+- Los accesos del **portal de clientes** usan un rol de sistema sin permisos del CRM y están aislados del sistema interno por middleware.
 
-## API de ingreso de leads
+---
 
-`POST /api/v1/leads` · el origen se identifica por la **API key del origen** (*Orígenes y API*).
+## 5. Módulos
+
+### 5.1 Prospectos, clientes y Kanban
+
+- **Terminología:** *cliente* = la persona o contacto comercial que se gestiona en el Kanban; *empresa* = la organización (RUT, razón social, giro, dirección y contacto). En código y API se llaman `lead` y `client`.
+- **Kanban:** arrastre entre etapas, panel lateral sin salir del tablero, selección múltiple con acciones masivas, filtros avanzados, columnas colapsables, creación rápida, motivo al descartar y valor al concretar, alertas de inactividad y seguimiento vencido.
+- **Valor estimado en CLP o UF:** se guarda el monto original y su equivalente en pesos (UF del día) para sumar y ordenar.
+- **Ficha:** datos de contacto, UTM y metadatos de captura, notas (con opción privada), asignación, historial, propuestas asociadas y campos personalizados.
+- **Orígenes:** cada origen (formulario, landing, campaña…) tiene su **API key**; el prospecto se atribuye por la clave con que llega.
+- **Puntaje y perfilamiento (0–100):** determinista y explicable (perfil y contacto, intención y origen, avance comercial, dinamismo). Se recalcula con cada dato nuevo y cada noche; temperatura A/B/C/D, filtro y orden en el Kanban.
+- **Papelera:** eliminar envía a la papelera con sus datos relacionados y se puede restaurar. Al borrar un origen o empresa se informa lo que arrastra y se puede **transferir** a otro registro.
+
+### 5.2 Propuestas comerciales
+
+- **Constructor:** servicios del catálogo (ajustables por propuesta) y servicios únicos, duración en meses, descuento (% o monto), IVA, vigencia y secciones editables (resumen, objetivos, alcance, plan, condiciones). Los totales siempre los calcula el servidor.
+- **UF:** las propuestas se arman por defecto en UF (se puede elegir CLP). El valor viene de [findic.cl](https://findic.cl/api/uf), con historial en base de datos; **al enviar la propuesta la UF queda congelada** y el documento indica la UF de referencia.
+- **Documento y PDF:** el mismo documento se usa en la vista previa, la ficha, el enlace público y el PDF generado en el servidor (dompdf, sin navegador).
+- **Enlace público** `/p/{token}` (sin sesión, `noindex`): registra vistas y permite al cliente **firmar y aceptar** (firma dibujada, nombre y RUT), **rechazar** o **solicitar ajustes**, dejando IP, fecha y comentarios. Cada hito queda en el historial y se avisa al responsable por correo.
+- **Versiones y Kanban:** varias propuestas por prospecto, «Nueva versión» duplica como borrador; las etapas pueden **requerir propuesta** y el sistema ofrece crearla al mover la tarjeta. Se puede asociar una propuesta existente a un prospecto.
+- **Texto enriquecido:** editor TipTap con HTML sanitizado por lista blanca.
+- **Catálogo** (*Catálogo*): servicios pre armados con categoría, modalidad (pago único o mensual), tarifa neta, descripción y entregables.
+
+### 5.3 Email marketing
+
+Todo vive bajo **Email marketing**: Boletines, Plantillas, Audiencias, Automatizaciones, Historial de envíos, Bajas y rebotes, API e integraciones y Configuración.
+
+1. **Conectar Resend:** crea una API key y verifica tu dominio en [resend.com](https://resend.com); en *Configuración de email* pega la clave, define remitente, nombre de empresa y dirección postal, y pulsa **Enviar prueba**.
+2. **Plantillas:** editor **visual por bloques** (encabezado, título, texto, imagen, botón, imagen + texto, lista dinámica, divisor, redes, pie, HTML libre) y editor HTML con vista previa escritorio/móvil, envío de prueba y ejemplos de API. HTML compatible con Gmail/Outlook.
+3. **Variables y sintaxis:**
+   ```
+   {{ first_name }}                         variable (escapada)
+   {{ first_name | default:"estimado/a" }}  valor por defecto
+   {{ monto | money }}  {{ fecha | date:"d/m/Y" }}  {{ x | upper }} (lower, capitalize, truncate:40, url, nl2br)
+   {{{ html_crudo }}}                       sin escapar
+   {{#if empresa}} … {{else}} … {{/if}}     condicional ({{#unless x}})
+   {{#each items}}{{ this.nombre }}{{/each}}  bucle
+   ```
+   Variables del sistema: `unsubscribe_url`, `view_url`, `to_name`, `to_email`, `current_year`, `company_name`.
+4. **Boletines y audiencias:** listas manuales (pegar desde Excel/CSV) combinadas con prospectos y empresas del CRM filtrables; deduplicación y exclusión de bajas, rebotes y spam; conteo en vivo, envío inmediato o programado, por lotes con pausa/reanudar/cancelar y embudo de resultados (enviados → entregados → abiertos → clics).
+5. **Automatizaciones:** reglas sin código que envían una plantilla cuando ingresa un prospecto o cambia de etapa, con condiciones por origen/etapa, retraso y destino (correo del prospecto o aviso interno).
+6. **Seguimiento y bajas:** aperturas (pixel) y clics (redirección firmada); enlace de baja con *one-click* (`List-Unsubscribe-Post`); bajas, rebotes permanentes y reclamos de spam se excluyen de todo envío futuro. **Webhook de Resend** en `https://TU-DOMINIO/webhooks/resend` (firma Svix; pega el *signing secret* en la configuración).
+7. **Plantillas del sistema** (editables): bienvenida de usuario, recuperación de contraseña, respuestas a formularios, propuesta comercial, propuesta respondida, bienvenida al portal, cobro de factura y recordatorio de pago. Se definen en `resources/email-designs/*.json` (generadas con `node scripts/build-email-designs.mjs`); si las modificas en el sistema, no se sobrescriben.
+
+### 5.4 Inteligencia artificial y Agent
+
+Integrada con el SDK oficial `laravel/ai`. Todo es opcional: sin proveedor el sistema funciona igual.
+
+- **Proveedores** (*Inteligencia artificial → Proveedores*): claves **cifradas** en base de datos (nunca llegan al navegador ni a `.env`), prueba de conexión, uno **por defecto** y modelo de transcripción configurable. Cada llamada queda registrada en `ai_runs`.
+- **Asistentes:** redacción de propuestas y de correos (el diseño lo impone el sistema), descripción y sugerencia de servicios, análisis por prospecto (resumen, señales, riesgos, próximos pasos, mensaje sugerido) y **lectura de facturas en PDF** que precarga folio, fechas, neto/IVA, concepto y empresa para que los revises.
+- **Privacidad:** por defecto no se envían nombre, correo, teléfono ni notas al proveedor; la lectura de facturas y el Agent sí envían los datos necesarios para su función.
+- **Monitor de consumo y gastos:** llamadas, tokens, costo estimado (precio por millón de tokens, editable por modelo), fallos, gráficos diarios, desglose por modelo/función/usuario y **presupuesto mensual** con proyección.
+- **Agent (chat flotante, `agent.use`):**
+  - Opera el sistema en lenguaje natural: buscar, crear (empresas con RUT validado, prospectos, propuestas, servicios, cobros, accesos al portal), registrar seguimientos, mover de etapa, consultar estados y resumir la cobranza.
+  - **Editar y eliminar siempre con tu confirmación:** el chat muestra un recuadro «antes → después» con **Confirmar / Cancelar**; solo al confirmar se aplica en el servidor con tus permisos (la acción vence a los 30 minutos y es de un solo uso). Casi todo va a la papelera.
+  - Cada herramienta actúa **como el usuario** (mismos permisos y visibilidad). Ofrece **archivos adjuntos** (PDF, Word, Excel, TXT, CSV, MD, JSON; hasta 5 de 10 MB), **voz** (transcripción en servidor o dictado del navegador) y **modo foco** a pantalla centrada.
+  - Los usuarios del portal de clientes no tienen acceso al Agent.
+
+### 5.5 Portal de clientes y cobranza
+
+- **Portal** (`PORTAL_DOMAIN` o `/portal`): cada contacto de una empresa ve sus **propuestas, servicios contratados, facturas** (por pagar y pagadas, con descarga del PDF), datos de transferencia y su cuenta. Responsive e idéntico en identidad al resto del sistema.
+- **Accesos:** desde la ficha de la empresa se crean uno o varios accesos; se genera una contraseña y se envía un correo de bienvenida con los datos de ingreso (el cliente debe cambiarla al entrar). Se pueden reenviar, desactivar o eliminar.
+- **Ver como cliente:** vista previa de solo lectura del portal tal como lo ve un cliente (con barra para salir).
+- **Servicios contratados** (*Cobranza → Servicios*): empresa, propuesta asociada, valor neto (CLP/UF), ciclo (único, mensual, trimestral, anual), inicio y término, **renovación automática**, día de cobro, enlace de pago y **servicios asociados** (p. ej. hosting y dominio de un sitio web). Estados: Activo, Pendiente de pago, Bloqueado y Cancelado; «Por iniciar» y «Finalizado» se deducen de las fechas.
+- **Costos y gastos** por servicio y margen (`contracts.costs`): **solo uso interno**; el portal se arma con campos explícitos y nunca los incluye.
+- **Facturación** (*Cobranza → Facturación*): la factura la emite tu software externo; aquí se crea el cobro, se **adjunta el PDF** (almacenamiento privado), se emite, se envía y se marca pagada (con medio y referencia). Se pueden registrar **facturas antiguas ya pagadas** sin generar avisos. Estados: por emitir → por pagar → pagada / anulada; «vencida» se calcula.
+- **Cobranza automática:** los servicios recurrentes generan solos el cobro de cada período y envían **recordatorios antes, el día y después del vencimiento** (configurables globalmente y por servicio); los cobros únicos se envían con el botón *Enviar cobro*. Los recordatorios se detienen al marcar el pago.
+- **Datos bancarios:** hasta 5 cuentas para transferencias, visibles en el portal (con botón copiar) y en los correos de cobro.
+- **Dashboard y Kanban de cuentas:** ingreso recurrente mensual y anual, cuentas activas, por cobrar, vencido, cobrado, facturado vs cobrado, antigüedad de la deuda, renovaciones y rentabilidad; el Kanban de **cuentas** clasifica cada empresa por su situación (En mora, Por facturar, Por cobrar, Renovación próxima, Al día…) y el de **cobros** permite arrastrar una factura a «Pagadas» o a «Por pagar».
+
+---
+
+## 6. API
+
+Dos APIs REST bajo `https://TU-DOMINIO/api/v1`, con límites de uso y respuestas JSON.
+
+### Ingreso de prospectos — `POST /api/v1/leads`
+
+Autenticación con la **API key del origen** (`X-Api-Key`).
 
 ```bash
 curl -X POST https://TU-DOMINIO/api/v1/leads \
-  -H "X-Api-Key: qb_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
-  -H "Content-Type: application/json" \
+  -H "X-Api-Key: TU_API_KEY_DE_ORIGEN" -H "Content-Type: application/json" \
   -d '{
     "first_name": "María", "last_name": "González",
-    "email": "maria@ejemplo.cl", "phone": "+56912345678",
-    "company": "Inmobiliaria Ejemplo", "job_title": "Gerente comercial",
-    "message": "Quiero cotizar una campaña",
-    "utm_source": "google", "utm_medium": "cpc", "utm_campaign": "proyecto-otono",
-    "landing_url": "https://tusitio.cl/contacto", "referrer": "https://www.google.com/",
-    "ip": "200.1.2.3",
-    "custom": { "proyecto_de_interes": "Torre Norte" },
+    "email": "maria@ejemplo.com", "phone": "+56912345678",
+    "company": "Empresa Ejemplo", "job_title": "Gerente comercial",
+    "message": "Quiero cotizar un proyecto",
+    "utm_source": "google", "utm_medium": "cpc", "utm_campaign": "campana-otono",
+    "landing_url": "https://tusitio.com/contacto",
+    "custom": { "proyecto_de_interes": "Sitio web" },
     "email_template": "bienvenida"
   }'
 ```
 
-- Requerido: `first_name` (o `name`) y al menos `email` o `phone`.
-- Se aceptan `utm_*`, `ip`, `user_agent`, `referrer`, `landing_url`, `country`, `region`, `city`, `latitude`, `longitude`.
-- Campos personalizados dentro de `custom` (o sueltos) con su **clave**. Cualquier otro dato se guarda en los metadatos
-  del lead y queda **disponible como variable** en los emails.
-- `audience` (nombre) suscribe el correo del lead a esa audiencia de *Email marketing → Audiencias* (se crea si no existe); ideal para formularios de boletín. La respuesta incluye `audience.status`.
-- `email_template` (slug) envía además esa plantilla al lead recién creado; `email_variables` agrega variables extra.
-- Sin `ip`/`user_agent` se toman de la petición; la ubicación se completa con headers del CDN (`CF-IPCountry`, `X-Vercel-IP-*`…).
-  **Si llamas desde el backend de un sitio, envía la `ip` del visitante.**
-- Respuestas: `201` · `401` key inválida · `403` origen desactivado · `422` validación · `429` límite (120/min por key).
+- Requerido: `first_name` (o `name`) y al menos `email` o `phone`. Se aceptan `utm_*`, `ip`, `user_agent`, `referrer`, `landing_url`, `country`, `region`, `city`.
+- Campos personalizados dentro de `custom` (o sueltos) con su clave; cualquier otro dato queda en los metadatos y disponible como variable en los correos.
+- `audience` suscribe el correo a una audiencia; `email_template` envía además esa plantilla; `email_variables` agrega variables.
+- Si llamas desde el backend de un sitio, **envía la `ip` del visitante**.
+- Respuestas: `201` · `401` clave inválida · `403` origen desactivado · `422` validación · `429` límite (120/min por clave).
 
-# Email marketing
+### Envío de emails — `POST /api/v1/emails/send`
 
-Todo vive bajo **Email marketing** en el menú: Boletines, Plantillas, Audiencias, Automatizaciones, Historial de envíos,
-Bajas y rebotes, API e integraciones y Configuración.
-
-## 1. Conectar Resend
-
-1. En [resend.com](https://resend.com) crea una **API key** y **verifica tu dominio** de envío.
-2. En el CRM: *Email → Configuración* → pega la API key, define remitente (`hola@tudominio.cl`), nombre de empresa y dirección
-   postal (pie legal de los boletines). También puedes usar `RESEND_API_KEY` en el `.env`.
-3. Pulsa **Enviar prueba** para validar la conexión.
-
-Mientras no haya API key el CRM está en **modo prueba**: arma y "envía" todo pero solo lo registra en el log, sin salir ningún correo.
-
-## 2. Plantillas de email
-
-*Email → Plantillas → Nueva plantilla*. Parte de una base (bienvenida de landing, boletín, seguimiento de cotización, en blanco)
-o pega tu propio HTML.
-
-- **Editor visual por bloques**: encabezado, título, texto (`**negrita**`, `*cursiva*`, `[enlace](url)`), imagen (URL o subida), botón,
-  imagen + texto, **lista dinámica** (repite una tarjeta por cada elemento recibido: proyectos, propiedades…), divisor,
-  espaciador, redes, pie de página y HTML libre. Se arrastran para ordenar y se editan con un panel de propiedades.
-  El HTML resultante usa tablas y estilos en línea (compatible con Gmail/Outlook) y se apila en móvil.
-- **Editor HTML** con vista previa en vivo, y alternancia Visual ⇄ HTML.
-- Vista previa **escritorio/móvil**, clic en el correo para seleccionar el bloque, envío de **prueba** inmediato y botón **API**
-  con ejemplos listos (cURL, Node, PHP, query string) usando las variables de esa plantilla.
-- Asunto y *preheader* con variables. Atajo `Ctrl/Cmd + S` para guardar.
-
-### Variables y sintaxis
-
-Las variables se detectan solas al escribir `{{ nombre }}`; en la pestaña *Variables* defines un **valor de ejemplo** (vista previa y
-pruebas) y un **valor por defecto** (si la API no lo envía).
-
-```
-{{ first_name }}                         variable (se escapa para HTML)
-{{ lead.company }}                       ruta con puntos
-{{ first_name | default:"estimado/a" }}  valor por defecto
-{{ monto | money }}  {{ fecha | date:"d/m/Y" }}  {{ x | upper }} (lower, capitalize, truncate:40, url, nl2br, raw)
-{{{ html_crudo }}}                       sin escapar
-{{#if empresa}} … {{else}} … {{/if}}     condicional   ({{#unless x}}…{{/unless}})
-{{#each proyectos}}{{ this.nombre }} #{{@index}}{{/each}}   bucle
-```
-
-Variables del sistema: `unsubscribe_url`, `view_url`, `to_name`, `to_email`, `current_year`, `company_name`.
-Con leads, listas o la API también llegan `first_name`, `last_name`, `name`, `email`, `phone`, `company`, `job_title`, `source`, `stage`,
-`utm_*`, tus campos personalizados y `lead.*`.
-
-**Tipo de plantilla:** *Marketing* agrega enlace de baja y cabeceras `List-Unsubscribe` (one-click). *Transaccional* es para avisos
-individuales (bienvenida, cotización).
-
-## 3. Boletines y audiencias
-
-- **Audiencias** (*Email → Audiencias*): listas manuales; pega filas desde Excel/CSV (`email, nombre, empresa…`; si hay encabezados, las
-  columnas extra pasan a ser variables).
-- **Boletines** (*Email → Boletines → Nuevo*): plantilla, asunto, preheader y **audiencia combinada**: listas + leads del CRM
-  (filtrables por origen, etapa, prioridad, responsable, etiquetas y fechas) + clientes. Se deduplica por correo y se excluyen
-  bajas, rebotes y spam. Muestra el **conteo en vivo**, vista previa, envío de prueba, **enviar ahora o programar**.
-- El envío corre en cola, por lotes de 50 (API *batch* de Resend, respetando su límite de solicitudes), con **pausa, reanudar y cancelar**.
-  El contenido se congela al iniciar el envío.
-- **Resultados**: embudo (enviados → entregados → abiertos → clics), rebotes, spam, bajas, enlaces más clicados y estado por destinatario.
-
-## 4. API de envío
-
-Crea una key en *Email → API e integraciones* (con permisos `emails.send`, `emails.read`). Base: `https://TU-DOMINIO/api/v1`,
-autenticación `Authorization: Bearer qbk_…` (o `X-Api-Key`). **Úsala solo desde un servidor**, nunca en JavaScript público.
+Crea una clave en *Email marketing → API e integraciones* (permisos `emails.send`, `emails.read`). Autenticación `Authorization: Bearer <clave>` (o `X-Api-Key`). **Úsala solo desde un servidor.**
 
 ```bash
 curl -X POST https://TU-DOMINIO/api/v1/emails/send \
-  -H "Authorization: Bearer qbk_xxxxxxxx" -H "Content-Type: application/json" \
-  -d '{
-    "template": "bienvenida",
-    "to": { "email": "maria@ejemplo.cl", "name": "María González" },
-    "variables": { "first_name": "María", "proyecto": "Torre Norte",
-                   "items": [{ "nombre": "Depto 2D", "precio": 98000000 }] }
-  }'
+  -H "Authorization: Bearer TU_CLAVE" -H "Content-Type: application/json" \
+  -d '{ "template": "bienvenida",
+        "to": { "email": "maria@ejemplo.com", "name": "María González" },
+        "variables": { "first_name": "María", "items": [{ "nombre": "Plan Pro" }] } }'
 ```
 
 | Parámetro | Descripción |
 | --- | --- |
-| `template` \* / `template_id` | Slug o id de la plantilla (debe estar activa). |
+| `template` \* / `template_id` | Slug o id de la plantilla activa. |
 | `to` \* | Correo, `{email, name}` o arreglo (máx. 50). |
-| `variables` | Valores de las variables. **Cualquier otro parámetro** (JSON, formulario o *query string*) también se toma como variable: `?template=x&to=a@b.cl&first_name=María`. |
-| `lead_id` | Carga los datos de ese lead como variables. |
-| `subject`, `from_email` | Reemplazan el asunto / remitente. |
-| `delay_minutes` / `send_at` | Programa el envío. |
-| `track_opens`, `track_clicks` | Medir aperturas/clics (por defecto `false` en transaccionales). |
-| Header `Idempotency-Key` | Evita envíos duplicados si reintentas. |
+| `variables` | Valores de variables; cualquier otro parámetro también se toma como variable. |
+| `lead_id` | Carga los datos de ese prospecto como variables. |
+| `subject`, `from_email`, `delay_minutes` / `send_at` | Reemplazan asunto/remitente o programan. |
+| `track_opens`, `track_clicks` | Medición (apagada por defecto en transaccionales). |
+| Header `Idempotency-Key` | Evita duplicados al reintentar. |
 
-Responde **202** `{"data":[{"id":"uuid","to":"…","status":"queued","warnings":{"missing_variables":[]}}]}` · `GET /emails/{id}` consulta
-estado, aperturas, clics y eventos · `401` key inválida · `403` sin permiso · `404` plantilla · `422` validación · `429` 60/min por key.
-Las direcciones en la lista de bajas devuelven `status: "suppressed"` y no se envían.
+Responde `202` con el estado en cola; `GET /emails/{id}` consulta estado, aperturas, clics y eventos. Límite: 60/min por clave.
 
-## 5. Automatizaciones
+---
 
-*Email → Automatizaciones*: reglas sin código que envían una plantilla cuando pasa algo con un lead.
+## 7. Tareas programadas y colas
 
-- **Cuándo:** ingresa un lead nuevo · un lead cambia de etapa.
-- **Condiciones:** origen(es) y/o etapa(s) de destino.
-- **Qué:** plantilla, asunto opcional, retraso (minutos/horas/días), destino (correo del lead o una dirección fija para avisos internos)
-  y valores fijos de variables (por defecto; el dato del lead prevalece).
+El sistema necesita un **worker de cola** (`php artisan queue:work`) y el **scheduler** de Laravel (`* * * * * php artisan schedule:run`; en local `php artisan schedule:work`). En Docker ambos corren bajo Supervisor.
 
-Ejemplo **landing → correo de bienvenida**: el formulario de la landing llama (desde tu servidor) a `POST /api/v1/leads` con la key del
-origen «Landing page» y los datos del formulario (incluyendo cualquier parámetro extra, p. ej. `proyecto`). El lead aparece en el Kanban
-y la automatización «Cuando ingresa un lead desde Landing page → plantilla Bienvenida» le envía el correo usando esos datos como
-variables. Alternativa directa: agregar `"email_template": "bienvenida"` en la misma llamada.
+| Tarea | Frecuencia | Qué hace |
+| --- | --- | --- |
+| `campaigns:dispatch-due` | cada minuto | Envía los boletines programados. |
+| `uf:sync` | 00:10 y 08:30 | Actualiza el valor de la UF y su historial. |
+| `leads:rescore --open` | 03:30 | Recalcula puntajes de prospectos en curso. |
+| `billing:run` | 09:00 (hora de Chile) | Genera los cobros de servicios recurrentes y envía los recordatorios de pago. |
 
-## 6. Seguimiento, bajas y webhook
+---
 
-- **Aperturas** (pixel) y **clics** (redirección firmada) se miden por mensaje; las aperturas pueden estar infladas por la protección
-  de privacidad de Apple Mail.
-- **Baja:** enlace `{{ unsubscribe_url }}` (se agrega solo en boletines si falta) con página de confirmación y *one-click*
-  (`List-Unsubscribe-Post`). Las bajas, **rebotes permanentes** y **reclamos de spam** van a *Bajas y rebotes* y se excluyen de todo envío
-  futuro; se pueden reactivar a mano.
-- **Webhook de Resend** (entregas, rebotes, spam): en [resend.com/webhooks](https://resend.com/webhooks) agrega
-  `https://TU-DOMINIO/webhooks/resend`, marca los eventos `email.*` y pega el *signing secret* (`whsec_…`) en *Email → Configuración*.
-  Se verifica la firma Svix; sin secret configurado se rechazan todas las llamadas.
-- **Historial de envíos:** todos los correos (boletines, API, automatizaciones, pruebas) con estado, eventos y variables usadas.
+## 8. Despliegue
 
-## 7. Inteligencia artificial (opcional)
+El sistema está pensado para correr en contenedores, **incluida la base de datos**, con el patrón de [Dokploy](https://dokploy.com) (también funciona con cualquier orquestador compatible con Docker Compose).
 
-Integrada con el **SDK oficial `laravel/ai`**. Todo es opcional: sin proveedor configurado el CRM funciona igual (el puntaje de leads es automático y no usa IA).
+- `Dockerfile` multi-stage: instala dependencias, compila los assets (Wayfinder + Vite) y deja una imagen final PHP-FPM + Nginx + Supervisor sin Node. Supervisor ejecuta **web**, **cola** y **scheduler**.
+- `docker-compose.yml`: servicios de aplicación, **MariaDB 11.4** y **Redis** (sesiones y caché, persistente). **Sin puertos publicados**: el enrutamiento lo gestiona el proxy (Traefik); la base y Redis solo son visibles en la red interna. Volúmenes para archivos (`storage`) y datos.
+- `docker/entrypoint.sh`: espera la base, ejecuta `migrate --force`, instala los datos base **solo si el sistema está vacío** y cachea configuración, rutas, eventos y vistas.
+- Detrás de un proxy se confía en `X-Forwarded-*` (`TRUSTED_PROXIES`), de modo que URLs, cookies seguras y assets salen en `https`.
 
-- **Proveedores** (*Inteligencia artificial → Proveedores*): OpenAI, Claude (Anthropic), OpenRouter, MiniMax, Gemini, DeepSeek, Groq, Mistral, xAI o cualquier API compatible con OpenAI (URL base propia). Pega la API key, **Guardar y probar**, y marca uno **por defecto**. Permisos: `ai.manage` (configurar) y `ai.use` (usar).
-- **Seguridad de las claves:** se guardan **cifradas** en la base (cast `encrypted`, depende de `APP_KEY`), nunca se envían al navegador (solo `••••1234`), no se escriben en `.env` y los errores se muestran sin la clave. Cada llamada queda en `ai_runs` (proveedor, tokens, duración) para controlar el consumo.
-- **Asistente de mailings:** en *Plantillas → Nueva* («Crear con IA»), botón **IA** del editor y ✨ junto al asunto (6 propuestas). La IA solo redacta; el **diseño lo impone el sistema** (`BrandedEmailDesign`): logo oficial (`public/brand/ecortes-logo.png`, requiere `APP_URL` público), naranja `#3DBB6C`, tipografía, botones en píldora y pie con baja. Descarta HTML libre, colores propios y enlaces/imágenes que no sean de ecortes.cl o entregados por ti. No recibe datos de leads.
-- **Puntaje y perfilamiento de leads (0–100):** `LeadScorer` es determinista y explicable (Perfil y contacto 30 · Intención y origen 20 · Avance comercial 30 · Dinamismo 20). Se recalcula con cada dato nuevo (edición, etapa, seguimientos, notas, aperturas/clics de correo) y cada noche (`leads:rescore`, requiere el cron del scheduler). Temperatura A/B/C/D, filtro y orden en el Kanban. El **peso del origen** (0–10) se configura en *Orígenes y API*. La ficha muestra el desglose, el % de perfil completo, los datos que faltan (con su impacto) y señales inferidas.
-- **Análisis con IA por lead** (pestaña *Perfil e IA*): resumen, señales/riesgos, próximos pasos con canal y plazo, primer mensaje sugerido, preguntas de calificación y mejoras de perfil que **tú aplicas con un clic**. Puede ajustar el puntaje ±10 con su motivo. Opción *Analizar leads automáticamente* en la configuración.
-- **Privacidad:** por defecto no se envían nombre, correo, teléfono ni notas al proveedor; actívalo en *Preferencias* si lo necesitas.
+**Pasos:** crea el servicio *Compose* con el repositorio y `./docker-compose.yml`, carga las variables de `.env.dokploy.example` (define `APP_KEY`, credenciales de base de datos y `ADMIN_PASSWORD`), asigna el dominio con HTTPS al servicio de la aplicación (puerto 80) y apunta el DNS al servidor. Si usas el portal en otro dominio, agrégalo también al servicio y define `PORTAL_DOMAIN`. Tras el primer ingreso cambia la contraseña del administrador y configura el correo (Resend), la IA, los datos de tu empresa y los datos bancarios desde la propia interfaz.
 
-## 8. Clientes, servicios y propuestas comerciales
+> **Producción:** mantén un worker de cola y el scheduler activos, define `APP_URL` con la URL pública y respalda el volumen de la base de datos y el de archivos (PDF de facturas y firmas).
 
-- **Clientes como empresas:** nombre de fantasía, razón social, **RUT** (se valida el dígito verificador y se formatea como `76.123.456-0`), giro, dirección, comuna, ciudad y contacto principal.
-- **Servicios y tarifas** (*Servicios y tarifas*): catálogo de servicios pre armados con categoría, modalidad (**pago único** o **mensual**), tarifa neta en **UF** (o CLP), descripción y entregables. Permisos `services.view` / `services.manage`.
-- **Propuestas** (*Propuestas*): se arman con servicios del catálogo (ajustables por propuesta sin tocar el catálogo) y **servicios únicos** creados solo para ese cliente. Soportan duración en meses para servicios mensuales, descuento (% o monto), IVA, vigencia y secciones editables (resumen, objetivos, alcance, plan, condiciones). Los totales siempre los recalcula el servidor.
-- **Documento de marca:** la propuesta se ve (y se descarga como PDF desde «Descargar PDF», con estilos de impresión A4) con la identidad de ECORTESCL: logo, naranja `#3DBB6C`, 'Open Sans', tarjetas redondeadas y botones en píldora. El mismo documento se usa en la vista previa en vivo, en la ficha y en el enlace público.
-- **PDF real:** botón «Descargar PDF» en la ficha y en el enlace público; se genera en el servidor (dompdf, sin navegador) con 'Open Sans', el logo y el estilo glass (portada con fondo de red de nodos, chips translúcidos y azul de marca). Incluye firma de ECORTESCL y del cliente, bloque «Software Factory & Growth Marketing» a la izquierda, **ubicación, contacto y redes** a la derecha, y los **logos de tecnologías** (Laravel, Vue, Nuxt, Node, Vercel, Google) pequeños al final.
-- **Datos de la agencia** (*Configuración CRM → Datos de la agencia*, permiso `agency.manage`): razón social, RUT, dirección, correo, teléfono y redes sociales que salen en la firma y el pie (vienen precargados con los datos legales de ecortes.cl; las redes se muestran solo si las completas).
-- **Enlace público** `/p/{token}` (sin iniciar sesión, `noindex`): registra la primera vista y las visitas, y permite **aceptar o rechazar** con nombre y comentario (queda IP y fecha). Cada hito queda en el historial del lead. Se puede enviar por correo desde el CRM (plantilla transaccional *Propuesta comercial*, editable en Plantillas; requiere el worker de colas) o compartir el enlace por WhatsApp y marcarla como enviada.
-- **Versiones:** un lead o cliente puede tener varias propuestas; «Nueva versión» duplica una existente como borrador. Una propuesta aceptada o rechazada queda bloqueada.
-- **Kanban:** en *Etapas del Kanban* marca las etapas que **requieren propuesta** (por defecto «Propuesta» y «Concretado»). Al mover un lead a una de ellas sin propuesta, el CRM ofrece crearla; la tarjeta muestra la última propuesta (monto y estado) y la ficha del lead tiene la pestaña *Propuestas*. Al enviar una propuesta, si el lead no tiene valor estimado, se usa el de la propuesta.
-- **Ayuda de IA (opcional, `ai.use`):** redactar la propuesta completa (resumen, objetivos, alcance, plan), mejorar cada sección (más breve, persuasivo, formal, corregir o con tus instrucciones), describir servicios y entregables, y **sugerir servicios del catálogo** según la necesidad y el mensaje del lead. La IA no recibe nombres: trabaja con los marcadores `[CLIENTE]` y `[CONTACTO]`; las condiciones comerciales son fijas y no las inventa.
-- **UF:** trabajamos en UF. Las propuestas se arman por defecto en UF (se puede elegir CLP) y muestran el equivalente en pesos. El valor de la UF viene de [findic.cl](https://findic.cl/api/uf) (`uf:sync` corre a las 00:10 y 08:30, y se guarda el historial en `uf_values`). Mientras la propuesta es borrador usa la UF del día; **al enviarla queda congelada** y el documento/PDF indica «UF de referencia · fecha» (p. ej. *1 UF = $41.122,74 al 08 de octubre de 2026*). Los valores UF llevan 2 decimales.
-- **Texto enriquecido:** descripciones, secciones de la propuesta, notas, observaciones del cliente y bloques de texto del editor de correos usan un editor TipTap (negrita, cursiva, listas, enlaces). Se guarda como HTML sanitizado (lista blanca) en el servidor; el texto antiguo en formato simple sigue funcionando.
-- **Agent (chat flotante):** botón «Agent» en todas las pantallas (permiso `agent.use`) que abre un chat con IA para operar el CRM en lenguaje natural: pegas el texto de una propuesta y crea el cliente (valida RUT, evita duplicados), el lead y la propuesta en borrador con servicios y totales calculados por el servidor; registra seguimientos y notas, agenda el próximo seguimiento, mueve leads de etapa, consulta el estado de propuestas y resume el CRM. Usa el proveedor de IA por defecto (*Inteligencia artificial → Proveedores*) con *tool calling* del SDK `laravel/ai`; cada herramienta actúa **como el usuario** (mismos permisos y visibilidad). No elimina datos, no envía correos a clientes ni toca la configuración. Cada llamada queda en `ai_runs` y las acciones en el historial del lead. **Archivos:** adjunta (clip, arrastrar o pegar) PDF, Word `.docx`, Excel `.xlsx`, TXT, CSV, MD o JSON (hasta 5 de 10 MB; se lee hasta 60.000 caracteres de cada uno); el texto se extrae en el servidor (PDF con `pdftotext`/poppler, ya incluido en la imagen Docker; no hay OCR para PDF escaneados). **Voz:** botón de micrófono; si hay un proveedor de IA con transcripción (OpenAI, Gemini, Groq, Mistral u OpenAI-compatible) se graba y transcribe en el servidor con el **modelo de transcripción** que configuras en *Inteligencia artificial → Proveedores → Configurar* (p. ej. `gpt-4o-mini-transcribe` en OpenAI, `whisper-large-v3-turbo` en Groq; vacío = el predeterminado del proveedor) y puedes verificarlo con **Probar voz**; Claude, DeepSeek y xAI no transcriben audio (se usa otro proveedor habilitado) se graba y transcribe en el servidor, si no se usa el dictado del navegador (Chrome/Edge/Safari). Al detener, el texto se envía solo. **Modo foco:** el botón superior izquierdo del chat lo abre como modal centrado y amplio (Esc para volver). Código en `app/Services/Agent` (herramientas en `Tools/`, `DocumentReader`) y `resources/js/components/agent`.
-- **Consumo y gastos de IA** (*Inteligencia artificial → Consumo y gastos*, permiso `ai.manage`): monitor de todas las llamadas a IA (Agent, propuestas, mailings, análisis de leads, voz) con tarjetas de resumen (gasto estimado, llamadas, tokens entrada/salida, % de fallos, latencia), **gráficos diarios** (gasto, llamadas correctas vs con error, tokens), desglose por modelo, función y usuario, **fallos** (errores más frecuentes y los últimos 25, sin API keys), selector de 7/30/90 días y de proveedor, y **presupuesto mensual** con proyección de fin de mes. El costo es una **estimación** (tokens × precio por millón de tokens): hay precios de referencia para modelos conocidos de OpenAI, Anthropic, Gemini y DeepSeek y puedes fijar el precio de cualquier modelo (lápiz de la tabla «Por modelo»); los modelos sin precio se avisan y no suman al gasto. Fuente: tabla `ai_runs`.
-- **Datos demo:** `php artisan crm:seed-demo` crea 1 cliente + lead + propuestas por cada origen, en distintos estados (borrador, enviada, vista, aceptada, rechazada, vencida). En Docker se ejecuta al iniciar con `SEED_DEMO=true`. Es idempotente.
-- **Sitio ecortes.cl:** `php artisan crm:landing-kit` (corre solo al iniciar en Docker, una única vez) crea los orígenes *Formulario Contacto* y *Formulario Cotización* (cada uno con su API key; el formulario del sitio envía a `POST /api/v1/leads`), la audiencia *Boletín ECORTESCL*, los campos del lead (`tipo_servicio`, `presupuesto`, `plazo`, `fecha_preferida`, `interes`) y las plantillas `gracias-contacto` y `gracias-cotizacion`.
-- **Correos a usuarios (Resend):** al crear un usuario se envía la plantilla `bienvenida-usuario` con su correo, contraseña inicial y enlace de acceso; «¿Olvidaste tu contraseña?» usa `recuperar-password` (enlace con vencimiento). Ambas se crean solas la primera vez y se editan en *Email marketing → Plantillas*. Las contraseñas y enlaces de un solo uso se ocultan (`••••••••`) del historial de envíos una vez enviados. Requiere Resend configurado y el worker de colas.
-- **Plantillas por defecto en el editor visual:** `bienvenida-usuario`, `recuperar-password`, `gracias-contacto`, `gracias-cotizacion` y `propuesta-comercial` se definen con bloques (`resources/email-designs/*.json`, generados con `node scripts/build-email-designs.mjs` usando el mismo compilador del editor), así que se abren y modifican en *Plantillas → Visual*. Si cambias su diseño en el CRM, el sistema no lo pisa.
-- **Empresas relacionadas:** si en el futuro hay marcas hermanas, `Agency::holding()` (con logos en `public/brand/partners`) agrega el pie «Empresas relacionadas» en propuestas y correos; hoy está vacío y no se muestra.
+---
 
-## 9. Portal de clientes, servicios contratados y cobranza
+## 9. Personalización de marca
 
-El mismo proyecto incluye un **portal para tus clientes** (`clientes.ecortes.cl`, variable `PORTAL_DOMAIN`) donde cada contacto de una empresa ve sus **propuestas, servicios contratados y facturas** (por pagar y pagadas). Sin `PORTAL_DOMAIN` funciona igual en `/portal` del CRM.
+La identidad visual es configurable sin tocar la lógica:
 
-- **Accesos:** en la ficha de la **Empresa → «Acceso al portal»** se da acceso a uno o varios contactos: se genera una contraseña y se envía un correo de bienvenida (plantilla *Bienvenida al portal de clientes*, editable) con correo, contraseña y enlace. Deben cambiarla al ingresar; desde ahí se puede reenviar (contraseña nueva), desactivar o eliminar. Los accesos son usuarios con el rol de sistema `cliente` y **no entran al CRM interno** ni ven el Agent (lo impone el middleware `EnforcePortalBoundary`).
-- **Servicios contratados** (*Cobranza → Servicios contratados*): empresa, propuesta asociada, valor neto (CLP/UF), ciclo (único, mensual, trimestral, anual), inicio/término, **renovación automática**, día de cobro, enlace de pago y **servicio principal** (p. ej. hosting y dominio anual asociados a un diseño web). El cliente ve nombre, descripción, fechas, renovación y servicios asociados.
-- **Costos y gastos** (permiso `contracts.costs`): se registran por servicio con margen (facturado − gastos). Son **solo internos**: el portal se arma con campos explícitos y nunca los incluye (hay un test que lo verifica).
-- **Facturación** (*Cobranza → Facturación*): la factura la emite tu software externo; aquí se crea el cobro, se **adjunta el PDF** (disco privado, descarga autenticada) y se emite («por pagar», visible al cliente). Estados: por emitir (sin PDF) → por pagar → pagada / anulada; «vencida» se calcula. Se marca pagada con medio y referencia.
-- **Facturas antiguas y lectura con IA:** al crear un cobro puedes marcar «Ya está pagada (factura antigua)» (fecha, medio y referencia): queda en el historial sin recordatorios ni avisos. Al elegir el PDF, la IA configurada lo lee y precarga folio, fechas, neto/IVA, concepto y empresa (por RUT); siempre se muestran para revisar y avisa si algo no cuadra. Solo lee PDFs con texto (no escaneados).
-- **Recordatorios automáticos** (`php artisan billing:run`, cada día 9:00 hora de Chile, vía el scheduler): los servicios recurrentes generan solos el cobro del período (10 días antes) y, mientras esté por pagar, se envían correos **5 días antes, el día del vencimiento y 3 y 7 días después** (configurable en *Facturación → Recordatorios* y por servicio). Se detienen al marcar la factura pagada. Los cobros únicos usan el botón **Enviar cobro**.
-- **Transferencias:** en *Facturación → Datos bancarios* cargas hasta 5 cuentas (banco, tipo, N°, titular, RUT y correo para el comprobante, más una nota). Se muestran en el portal con botón para copiar y dentro de los correos de cobro y recordatorio. Al registrar el pago eliges «Transferencia» y su referencia.
-- **Dashboard y Kanban de cuentas** (*Cobranza*): el dashboard muestra ingreso recurrente mensual y anual, cuentas activas, por cobrar / vencido / cobrado, facturado vs cobrado (6 meses), antigüedad de la deuda, cuentas por ingreso, renovaciones a 90 días, cobros por facturar y (con `contracts.costs`) rentabilidad. El Kanban de **cuentas** ubica cada empresa sola en: En mora, Por facturar, Por cobrar, Renovación próxima, Al día, Por iniciar o Sin servicios activos; el Kanban de **cobros** permite arrastrar una factura a «Pagadas» (registra el pago) o de «Por emitir» a «Por pagar» (emite).
-- **Nombres del menú:** *Catálogo* (antes «Servicios y tarifas») y *Servicios* (antes «Servicios contratados»).
-- **Ver como cliente:** en la ficha de la empresa → «Acceso al portal» → **Ver como cliente** (o el ojo de cada acceso) abre el portal tal como lo ve ese cliente, en solo lectura y con una barra amarilla para salir (requiere `portal.manage`). No se puede modificar nada desde la vista previa.
-- **El Agent edita y elimina con tu confirmación:** `update_record` y `delete_record` (cliente, empresa, propuesta, servicio, cobro y gasto) nunca actúan solos: el chat muestra un recuadro «antes → después» con **Confirmar / Cancelar**, y recién al confirmar se aplica en el servidor con tus permisos (la acción vence a los 30 min y es de un solo uso). Casi todo va a la **Papelera** (ahora también para Servicios y Cobros).
-- **Estados de un servicio:** Activo, **Pendiente de pago**, **Bloqueado** y Cancelado (se eligen al editar, también con el Agent). «Por iniciar» (aún no parte) y «Finalizado» (terminó sin renovación) se deducen de las fechas. Activo y Pendiente de pago siguen generando cobros; Bloqueado y Cancelado los detienen.
-- **Permisos nuevos:** `contracts.*`, `billing.*`, `portal.manage` (activarlos en *Roles y permisos*).
-- **Agent:** también gestiona servicios, cobros, gastos y accesos al portal (con confirmación antes de enviar al cliente).
-- **DNS/Dokploy:** crea un registro A/CNAME de `clientes.ecortes.cl` hacia el mismo servidor y agrega ese dominio al servicio `crm-app` del compose (puerto 80).
+- **Datos de la empresa** (*Configuración → Datos de la agencia*, permiso `agency.manage`): razón social, RUT, dirección, correo, teléfono y redes que salen en la firma y el pie de propuestas y correos.
+- **Logo y colores:** logos en `public/brand/`, paleta y tipografía en `resources/css/app.css` (variables `--primary`, `--sidebar`, etc.) y color de la barra de progreso en `resources/js/app.ts`. El logo del menú está en `resources/js/components/BrandLogo.vue`.
+- **Textos de IA:** el *contexto de marca* que reciben los asistentes se edita desde la interfaz (por defecto en `app/Services/Ai/BrandContext.php`).
+- **Plantillas de correo:** se editan en *Email marketing → Plantillas*; los diseños base están en `resources/email-designs`.
+- **Catálogo, etapas, orígenes y campos personalizados:** se administran desde *Configuración*.
 
-## Rendimiento
+---
 
-- **Medir:** los administradores reciben la cabecera `Server-Timing` en cada respuesta (pestaña *Network → Timing* del navegador): `boot` (arranque de PHP), `app` (tiempo total de la aplicación), `db` (tiempo y cantidad de consultas) y memoria. `PERF_HEADERS=true` la emite para todos.
-- **Redis** (servicio `*-crm-redis` del stack, persistente con AOF y con contraseña): guarda **sesiones y caché** (límites de peticiones incluidos). La cola de trabajos sigue en la base de datos para no perder tareas pendientes (`QUEUE_CONNECTION=redis` es opcional). Si Redis no estuviera disponible, se puede volver a la base con `SESSION_DRIVER=database` y `CACHE_STORE=database`. Al activarlo por primera vez se cierran las sesiones abiertas (hay que volver a iniciar sesión).
-- **Arranque en frío:** el contenedor cachea configuración, **rutas**, eventos y vistas al iniciar; OPcache sin revalidación (192 MB) y caché de rutas de archivos; MariaDB con `skip-name-resolve` y buffer pool de 256 MB.
-- **Navegador:** los enlaces del menú precargan la pantalla al pasar el mouse (`prefetch`) y, ya con sesión, se calientan en segundo plano los módulos de Dashboard, Leads, Clientes y Propuestas; los assets llevan caché de 1 año y compresión gzip.
+## 10. Rendimiento
 
-## Estructura
+- **Medir:** los administradores reciben la cabecera `Server-Timing` (`boot`, `app`, `db` con cantidad de consultas y memoria); `PERF_HEADERS=true` la emite para todos.
+- **Redis** para sesiones y caché; la cola permanece en base de datos para no perder tareas (`QUEUE_CONNECTION=redis` es opcional).
+- **Arranque en frío:** caché de configuración, rutas, eventos y vistas; OPcache sin revalidación; MariaDB con `skip-name-resolve`.
+- **Navegador:** precarga de pantallas al pasar el mouse, calentamiento en segundo plano de los módulos más usados, assets con caché de 1 año y compresión gzip.
+
+---
+
+## 11. Estructura del proyecto
 
 ```
-app/Services/LeadService.php            leads: creación, movimiento, asignación, historial, disparo de automatizaciones
-app/Services/Email/                     motor de plantillas, proveedores (Resend/log), composición, audiencias, envío por lotes
-app/Jobs/                               SendEmailMessage, SendCampaignBatch, StartCampaign, AnalyzeLead
-app/Services/Ai/                        AiGateway (SDK laravel/ai), catálogo de proveedores, asistente de mailings, diseño de marca
-app/Services/Leads/                     LeadScorer (puntaje/perfil) y LeadAnalyst (IA)
-app/Http/Controllers/Api/               API de leads y de envío de emails
-app/Http/Controllers/Email/             plantillas, boletines, listas, automatizaciones, historial, ajustes
-app/Http/Controllers/Public|Webhooks/   tracking, baja, "ver en el navegador" y webhook de Resend
-config/permissions.php                  catálogo de permisos y roles base
-resources/js/lib/emailBuilder.ts        compilador de bloques → HTML de email
-resources/js/components/kanban|email/   tablero Kanban y editor de plantillas
+app/Services/LeadService.php        prospectos: alta, movimiento, asignación, historial y automatizaciones
+app/Services/Email/                 motor de plantillas, proveedores (Resend/log), composición, audiencias, envío por lotes
+app/Services/Ai/                    AiGateway (SDK laravel/ai), catálogo de proveedores, asistentes, consumo y costos
+app/Services/Agent/                 Agent: herramientas, acciones con confirmación, lector de documentos
+app/Services/Billing/               servicios contratados, cobros, recordatorios, portal, datos bancarios, indicadores
+app/Services/Proposals/             constructor y cálculo de propuestas
+app/Http/Controllers/               web, API (Api/), portal (Portal/), cobranza (Billing/), email (Email/), público y webhooks
+app/Http/Middleware/                aislamiento del portal, tiempos de respuesta
+app/Jobs/                           envío de correos, boletines y análisis de prospectos
+config/permissions.php              catálogo de permisos y roles base
+resources/js/pages/                 pantallas Inertia (leads, clients, proposals, contracts, billing, accounts, portal, email, ai…)
+resources/js/components/            Kanban, editor de correos, Agent, facturación y componentes de interfaz (shadcn-vue)
+resources/js/lib/emailBuilder.ts    compilador de bloques → HTML de email
+resources/email-designs/            plantillas de correo del sistema
+database/migrations|seeders|factories
+tests/Feature/                      pruebas por módulo (CRM, propuestas, email, IA, Agent, cobranza)
+docker/ · Dockerfile · docker-compose.yml
 ```
 
-## Comandos útiles
+## 12. Comandos útiles
 
 ```bash
 composer run dev                  # servidor + worker de cola + Vite
-php artisan schedule:work         # boletines programados (en producción: cron schedule:run)
-php artisan queue:work            # worker de envíos
-php artisan campaigns:dispatch-due
-php artisan test                  # requiere composer install con dependencias de desarrollo
+php artisan schedule:work         # tareas programadas en local
+php artisan queue:work            # worker de cola
+php artisan billing:run           # cobros recurrentes y recordatorios (manual)
+php artisan crm:seed-demo         # datos de demostración
+php artisan crm:purge-demo        # limpia datos de prueba (ver --help; destructivo)
+php artisan test                  # requiere dependencias de desarrollo (composer install)
 npm run types:check               # tipos TypeScript / Vue
 npm run build                     # build de producción
 ```
 
-## Despliegue con Docker y Dokploy (crm.ecortes.cl)
+---
 
-Todo el CRM corre en contenedores, **incluida la base de datos** (MariaDB 11.4), con el patrón de despliegue de Dokploy:
-
-- `Dockerfile` multi-stage: instala Composer, compila los assets (Wayfinder + Vite) y deja una imagen final PHP 8.4-FPM + Nginx + Supervisor sin Node. Supervisor ejecuta **web**, **cola** (`queue:work`: correos, boletines) y **scheduler** (`schedule:work`: boletines programados, recálculo de puntajes).
-- `docker-compose.yml` (servicios `ecortes-crm` y `ecortes-crm-db`): **sin puertos publicados** — el puerto y el enrutamiento los gestiona Traefik/Dokploy; la base solo es visible en la red interna del stack. Volúmenes: `crm-storage` (archivos, PDF) y `crm-db-data` (base de datos).
-- `docker/entrypoint.sh`: espera la base, ejecuta `migrate --force`, `crm:install` (carga roles, etapas, orígenes, servicios y el administrador **solo si el CRM está vacío**) y cachea configuración.
-- Detrás de Traefik se confía en `X-Forwarded-*` (`TRUSTED_PROXIES`), de modo que URLs, cookies seguras y assets salen en `https://crm.ecortes.cl`.
-
-En Dokploy: *Compose* → origen GitHub (`kuanticacl/skill-planok`, ruta `./docker-compose.yml`) → variables de `.env.dokploy.example` → dominio `crm.ecortes.cl` (servicio `ecortes-crm`, puerto 80, HTTPS Let's Encrypt). El DNS (registro A de `crm.ecortes.cl`) debe apuntar al servidor de Dokploy. Cambia la contraseña del administrador inicial al ingresar y configura Resend, IA y *Datos de la agencia* desde el propio CRM.
+**Licencia y soporte:** proyecto propietario. Consulta con el equipo responsable para soporte, personalización y despliegues.
